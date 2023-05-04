@@ -1,0 +1,9 @@
+FROM debian:sid-slim
+LABEL maintainer=Vanilla OS Contributors
+ARG DEBIAN_FRONTEND=noninteractive
+RUN echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
+ADD includes.container /
+ADD sources /sources
+RUN apt install -y libbtrfs-dev 
+RUN cd /sources/abroot-git && go build -o /usr/local/bin/abroot
+RUN apt install -y htop 

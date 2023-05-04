@@ -2,6 +2,8 @@
 
 Vib (Vanilla Image Builder) is a tool that simplifies the creation of container images by allowing the user to define the steps needed to build the image using a recipe, which consists of a set of modules that define specific steps needed to build the image, such as installing dependencies or compiling source code. 
 
+> **Note:** This is a work in progress.
+
 Highly inspired by the Flatpak manifest format.
 
 ## Recipe Format
