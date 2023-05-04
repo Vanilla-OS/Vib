@@ -1,6 +1,6 @@
 # Vib
 
-Vib (Vanilla Image Builder) is a tool that simplifies the creation of container images by allowing the user to define the steps needed to build the image using a recipe, which consists of a set of modules that define specific steps needed to build the image, such as installing dependencies or compiling source code. 
+Vib (Vanilla Image Builder) is a tool that streamlines the creation of container images. It achieves this by enabling users to define a recipe consisting of a sequence of modules, each specifying a particular action required to build the image. These actions may include installing dependencies or compiling source code. 
 
 > **Note:** This is a work in progress.
 
