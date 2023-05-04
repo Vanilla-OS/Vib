@@ -31,7 +31,7 @@ func BuildRecipe(recipePath string) error {
 	// build the modules*
 	// * actually just build the commands that will be used
 	//   in the Containerfile to build the modules
-	cmds, err := BuildModules(modules)
+	cmds, err := BuildModules(recipe, modules)
 	if err != nil {
 		return err
 	}
@@ -119,13 +119,13 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 }
 
 // BuildModules builds a list of modules commands from a list of modules
-func BuildModules(modules []Module) ([]ModuleCommand, error) {
+func BuildModules(recipe *Recipe, modules []Module) ([]ModuleCommand, error) {
 	cmds := []ModuleCommand{}
 
 	for _, module := range modules {
 		fmt.Printf("Creating build command for %s\n", module.Name)
 
-		cmd, err := BuildModule(module)
+		cmd, err := BuildModule(recipe, module)
 		if err != nil {
 			return nil, err
 		}
@@ -142,10 +142,10 @@ func BuildModules(modules []Module) ([]ModuleCommand, error) {
 // BuildModule builds a module command from a module
 // this is done by calling the appropriate module builder
 // function based on the module type
-func BuildModule(module Module) (string, error) {
+func BuildModule(recipe *Recipe, module Module) (string, error) {
 	switch module.Type {
 	case "apt":
-		return BuildAptModule(module)
+		return BuildAptModule(recipe, module)
 	case "cmake":
 		return BuildCMakeModule(module)
 	case "dpkg":

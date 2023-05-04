@@ -35,11 +35,11 @@
         ]
       },
       {
-        "name": "htop",
+        "name": "vanilla-packages",
         "type": "apt",
         "source": {
-          "packages": [
-            "htop"
+          "paths": [
+            "inst/00-vanilla"
           ]
         }
       }

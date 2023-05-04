@@ -42,6 +42,7 @@ func LoadRecipe(path string) (*Recipe, error) {
 	// the recipe path is stored in the recipe itself
 	// for convenience
 	recipe.Path = recipePath
+	recipe.ParentPath = filepath.Dir(recipePath)
 
 	// assuming the Containerfile location is relative
 	recipe.Containerfile = filepath.Join(filepath.Dir(recipePath), "Containerfile")

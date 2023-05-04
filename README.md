@@ -63,7 +63,7 @@ Each module specifies a specific step needed to build the image. Each module has
 *   `type`: a string indicating the type of module. Currently, the supported types are "apt", "cmake", "dpkg", "dpkg-buildpackage", "go", "make" and "meson".
 *   `source`: an object containing the information necessary to retrieve the source code for the module. The fields within this object depend on the module type.
     *   `packages`: a string indicating the name of the package(s) to install, only used if type is "apt".
-    *   `path`: a list of strings indicating the path to .deb files (or just a list of prefixes to search for .deb files), only used if type is "dpkg" or "dpkg-buildpackage".
+    *   `paths`: a list of strings indicating the path to .deb files (or just a list of prefixes to search for .deb files) when used with"dpkg" or "dpkg-buildpackage", or a list of paths to .inst files which contain a list of packages to install when used with "apt".
     *   `url`: a string indicating the URL to retrieve the source code, only required if source type is "tar" or "git".
     *   `type`: a string indicating the type of source control system, currently "tar" and "git" are supported.
     *   `tag`: a string indicating the git tag to use, only used if type is "git".

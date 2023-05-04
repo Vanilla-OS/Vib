@@ -8,6 +8,7 @@ type Recipe struct {
 	Runs          []string          `json:"runs"`
 	Modules       []Module          `json:"modules"`
 	Path          string
+	ParentPath    string
 	DownloadsPath string
 	SourcesPath   string
 	Containerfile string
@@ -15,7 +16,6 @@ type Recipe struct {
 
 type Module struct {
 	Name       string            `json:"name"`
-	Paths      []string          `json:"paths"`
 	Type       string            `json:"type"`
 	Source     Source            `json:"source"`
 	Modules    []Module          `json:"modules"`
@@ -29,6 +29,7 @@ type Source struct {
 	Commit   string   `json:"commit"`
 	Tag      string   `json:"tag"`
 	Packages []string `json:"packages"`
+	Paths    []string `json:"paths"`
 	Module   string
 }
 
