@@ -19,7 +19,9 @@ jobs:
         go-version: 1.19
 
     - name: Build
-      run: sudo go build -v ./... -o vib
+      run: |
+        go get ./...
+        go build -v ./... -o vib
 
     - name: Upload a Release Asset
       uses: softprops/action-gh-release@v1
