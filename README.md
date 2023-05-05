@@ -11,19 +11,14 @@ Highly inspired by the Flatpak manifest format.
 A recipe is a YAML file that contains the image definitions, the commands to be executed during the build process and the list of modules to add resources to the image:
 
 ```
-{
-    "base": "debian:sid-slim",
-    "labels": {
-        "maintainer": "Vanilla OS Contributors"
-    },
-    "args": {
-        "DEBIAN_FRONTEND": "noninteractive"
-    },
-    "runs": [
-        "echo 'APT::Install-Recommends \"0\";' > /etc/apt/apt.conf.d/01norecommends"
-    ],
-    "modules": []
-}
+base: debian:sid-slim
+labels:
+  maintainer: Vanilla OS Contributors
+args:
+  DEBIAN_FRONTEND: noninteractive
+runs:
+- echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
+modules: []
 ```
 
 ### Description of Fields
@@ -40,21 +35,18 @@ A recipe is a YAML file that contains the image definitions, the commands to be 
 Each module specifies a specific step needed to build the image. Each module has the following format:
 
 ```
-{
-    "name": "module-name",
-    "type": "module-type",
-    "source": {
-        "packages": "module-source-packages",
-        "path": "module-source-path",
-        "url": "module-source-url",
-        "type": "module-source-type",
-        "tag": "module-source-tag",
-        "commit": "module-source-commit"
-    },
-    "buildFlags": [..],
-    "BuildVars": [..],
-    "modules": {}..}
-}
+name: module-name
+type: module-type
+source:
+  packages: module-source-packages
+  path: module-source-path
+  url: module-source-url
+  type: module-source-type
+  tag: module-source-tag
+  commit: module-source-commit
+buildFlags: []
+BuildVars: []
+modules: {}
 ```
 
 ### Description of Fields
