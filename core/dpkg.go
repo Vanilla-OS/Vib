@@ -8,7 +8,7 @@ func BuildDpkgModule(module Module) (string, error) {
 	for i, path := range module.Source.Paths {
 		cmd += fmt.Sprintf(" dpkg -i /sources/%s && apt install -f", path)
 		if i < len(module.Source.Paths)-1 {
-			cmd += " &&"
+			cmd += " && "
 		}
 	}
 	return cmd, nil

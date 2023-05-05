@@ -42,7 +42,7 @@ func BuildAptModule(recipe *Recipe, module Module) (string, error) {
 
 			cmd += "apt install -y " + pkgs
 			if i < len(module.Source.Paths)-1 {
-				cmd += " &&"
+				cmd += " && "
 			}
 
 		}

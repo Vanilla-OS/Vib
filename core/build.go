@@ -66,7 +66,7 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 	// LABELS
 	for key, value := range recipe.Labels {
 		_, err = containerfile.WriteString(
-			fmt.Sprintf("LABEL %s=%s\n", key, value),
+			fmt.Sprintf("LABEL %s='%s'\n", key, value),
 		)
 		if err != nil {
 			return err
@@ -115,6 +115,12 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 		}
 	}
 
+	// CLEANUP
+	_, err = containerfile.WriteString("RUN rm -rf /sources /tmp/* /var/tmp/*\n")
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -158,6 +164,8 @@ func BuildModule(recipe *Recipe, module Module) (string, error) {
 		return BuildMakeModule(module)
 	case "meson":
 		return BuildMesonModule(module)
+	case "shell":
+		return BuildShellModule(module)
 	default:
 		return "", fmt.Errorf("unknown module type %s", module.Type)
 	}
