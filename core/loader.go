@@ -96,5 +96,59 @@ func LoadRecipe(path string) (*Recipe, error) {
 		}
 	}
 
+	// here we expand modules of type "gen-modules"
+	newRecipeModules := []Module{}
+
+	for _, module := range recipe.Modules {
+		if module.Type == "gen-modules" {
+			genModulePaths, err := filepath.Glob(filepath.Join(recipe.ParentPath, module.Path, "*.yml"))
+			if err != nil {
+				return nil, err
+			}
+
+			genModules := []Module{}
+
+			for _, genModulePath := range genModulePaths {
+				genModule, err := GenModule(genModulePath)
+
+				if err != nil {
+					return nil, err
+				}
+
+				genModules = append(genModules, genModule)
+			}
+
+			newRecipeModules = append(newRecipeModules, genModules...)
+			continue
+		}
+
+		newRecipeModules = append(newRecipeModules, module)
+	}
+
+	recipe.Modules = newRecipeModules
+
 	return recipe, nil
+}
+
+// GenModule generate a Module struct from a module path
+func GenModule(modulePath string) (Module, error) {
+	module := &Module{}
+
+	moduleFile, err := os.Open(modulePath)
+	if err != nil {
+		return *module, err
+	}
+	defer moduleFile.Close()
+
+	moduleYAML, err := io.ReadAll(moduleFile)
+	if err != nil {
+		return *module, err
+	}
+
+	err = yaml.Unmarshal(moduleYAML, module)
+	if err != nil {
+		return *module, err
+	}
+
+	return *module, nil
 }

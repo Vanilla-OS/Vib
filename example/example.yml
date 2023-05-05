@@ -6,6 +6,7 @@ args:
   DEBIAN_FRONTEND: noninteractive
 runs:
 - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
+
 modules:
 - name: abroot-git
   type: go
@@ -21,8 +22,13 @@ modules:
     source:
       packages:
       - libbtrfs-dev
-- name: vanilla-packages
+      
+- name: packages
   type: apt
   source:
     paths:
-    - inst/00-vanilla
+    - inst/00-test
+
+- name: packages-modules
+  type: gen-modules
+  path: modules

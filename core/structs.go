@@ -17,6 +17,7 @@ type Recipe struct {
 type Module struct {
 	Name       string            `json:"name"`
 	Type       string            `json:"type"`
+	Path       string            `json:"path"`
 	Source     Source            `json:"source"`
 	Modules    []Module          `json:"modules"`
 	BuildFlags string            `json:"buildFlags"`

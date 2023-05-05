@@ -6,4 +6,6 @@ ADD includes.container /
 ADD sources /sources
 RUN apt install -y libbtrfs-dev 
 RUN cd /sources/abroot-git && go build -o abroot-git
-RUN apt install -y base-files  apx abroot ikaros vanilla-system-operator 
+RUN apt install -y curl 
+RUN apt install -y base-files apx abroot ikaros vanilla-system-operator 
+RUN apt install -y nano 

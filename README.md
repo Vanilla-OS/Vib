@@ -37,6 +37,7 @@ Each module specifies a specific step needed to build the image. Each module has
 ```yaml
 name: module-name
 type: module-type
+path: modules-path
 source:
   packages: module-source-packages
   path: module-source-path
@@ -52,7 +53,8 @@ modules: {}
 ### Description of Fields
 
 *   `name`: a string representing the name of the module. This will be used as the identifier for the module so it must be unique.
-*   `type`: a string indicating the type of module. Currently, the supported types are "apt", "cmake", "dpkg", "dpkg-buildpackage", "go", "make" and "meson".
+*   `type`: a string indicating the type of module. Currently, the supported types are "apt", "cmake", "dpkg", "dpkg-buildpackage", "go", "make", "meson" and "gen-modules".
+*   `path`: a string indicating the path where the modules to generate are located. Only used if type is "gen-modules".
 *   `source`: an object containing the information necessary to retrieve the source code for the module. The fields within this object depend on the module type.
     *   `packages`: a string indicating the name of the package(s) to install, only used if type is "apt".
     *   `paths`: a list of strings indicating the path to .deb files (or just a list of prefixes to search for .deb files) when used with"dpkg" or "dpkg-buildpackage", or a list of paths to .inst files which contain a list of packages to install when used with "apt".

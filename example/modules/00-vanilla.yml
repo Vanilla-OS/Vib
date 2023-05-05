@@ -1,0 +1,10 @@
+name: vanilla-packages
+type: apt
+source:
+  packages:
+  - base-files
+  - apx
+  - abroot
+  - ikaros
+  - vanilla-system-operator
+  
