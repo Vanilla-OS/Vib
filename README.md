@@ -107,7 +107,3 @@ this will parse the recipe.yml to a Containerfile, which can be used to build th
 ```
 podman build -f Containerfile -t image-name
 ```
-
-## TODO
-
-- [ ] Add support for loading modules from different .yml files.
