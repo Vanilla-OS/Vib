@@ -8,7 +8,7 @@ Highly inspired by the Flatpak manifest format.
 
 ## Recipe Format
 
-A recipe is a JSON file that contains the image definitions, the commands to be executed during the build process and the list of modules to add resources to the image:
+A recipe is a YAML file that contains the image definitions, the commands to be executed during the build process and the list of modules to add resources to the image:
 
 ```
 {
@@ -105,10 +105,10 @@ if any other module depends on module C or B, there is no need to specify the de
 To build an image using a recipe, you can use the `vib` command:
 
 ```
-vib build recipe.json
+vib build recipe.yml
 ```
 
-this will parse the recipe.json to a Containerfile, which can be used to build the image with any container image builder, such as `buildah` or `podman`:
+this will parse the recipe.yml to a Containerfile, which can be used to build the image with any container image builder, such as `buildah` or `podman`:
 
 ```
 podman build -f Containerfile -t image-name
@@ -116,4 +116,4 @@ podman build -f Containerfile -t image-name
 
 ## TODO
 
-- [ ] Add support for loading modules from different .json files.
+- [ ] Add support for loading modules from different .yml files.

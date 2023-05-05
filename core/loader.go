@@ -1,10 +1,11 @@
 package core
 
 import (
-	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
 // LoadRecipe loads a recipe from a file and returns a Recipe
@@ -29,12 +30,12 @@ func LoadRecipe(path string) (*Recipe, error) {
 	}
 	defer recipeFile.Close()
 
-	recipeJSON, err := io.ReadAll(recipeFile)
+	recipeYAML, err := io.ReadAll(recipeFile)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal(recipeJSON, recipe)
+	err = yaml.Unmarshal(recipeYAML, recipe)
 	if err != nil {
 		return nil, err
 	}
