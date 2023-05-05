@@ -10,7 +10,7 @@ Highly inspired by the Flatpak manifest format.
 
 A recipe is a YAML file that contains the image definitions, the commands to be executed during the build process and the list of modules to add resources to the image:
 
-```
+```yaml
 base: debian:sid-slim
 labels:
   maintainer: Vanilla OS Contributors
@@ -34,7 +34,7 @@ modules: []
 
 Each module specifies a specific step needed to build the image. Each module has the following format:
 
-```
+```yaml
 name: module-name
 type: module-type
 source:
