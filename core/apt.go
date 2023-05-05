@@ -3,6 +3,7 @@ package core
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -22,7 +23,7 @@ func BuildAptModule(recipe *Recipe, module Module) (string, error) {
 	if len(module.Source.Paths) > 0 {
 		cmd := ""
 
-		for i, path := range module.Source.Paths {
+		for _, path := range module.Source.Paths {
 			instPath := filepath.Join(recipe.ParentPath, path+".inst")
 			pkgs := ""
 			file, err := os.Open(instPath)
@@ -40,13 +41,11 @@ func BuildAptModule(recipe *Recipe, module Module) (string, error) {
 				return "", err
 			}
 
-			cmd += "apt install -y " + pkgs
-			if i < len(module.Source.Paths)-1 {
-				cmd += " && "
-			}
+			cmd += fmt.Sprintf("apt install -y %s && ", pkgs)
 
 		}
 
+		cmd += "apt clean"
 		return cmd, nil
 	}
 
