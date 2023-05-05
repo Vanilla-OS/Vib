@@ -22,10 +22,5 @@ jobs:
     - name: Build
       run: |
         go get ./...
-        go build -v ./... -o vib
-
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: vib
-        path: vib
+        go build -v ./...
+        
