@@ -22,11 +22,10 @@ func BuildGoModule(module Module) (string, error) {
 	}
 
 	cmd := fmt.Sprintf(
-		"cd /sources/%s && go build%s -o %s%s",
+		"cd /sources/%s && go build%s -o %s",
 		module.Name,
 		buildFlags,
 		buildVars["GO_OUTPUT_BIN"],
-		module.Source.Module,
 	)
 
 	return cmd, nil
