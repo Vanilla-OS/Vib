@@ -13,10 +13,14 @@ import (
 // to the downloads directory. Note that modules in this function are
 // returned in the order they should be built.
 func ResolveSources(recipe *Recipe) ([]Module, []Source, error) {
+	fmt.Println("Resolving sources")
+
 	modules := GetAllModules(recipe.Modules)
 	var sources []Source
 
 	for _, module := range modules {
+		fmt.Printf("Resolving source for: %s\n", module.Name)
+
 		if module.Source.URL == "" {
 			continue
 		}
@@ -48,6 +52,8 @@ func GetAllModules(modules []Module) []Module {
 // DownloadSource downloads a source to the downloads directory
 // according to its type (git, tar, ...)
 func DownloadSource(recipe *Recipe, source Source) error {
+	fmt.Printf("Downloading source: %s\n", source.URL)
+
 	if source.Type == "git" {
 		return DownloadGitSource(recipe, source)
 	} else if source.Type == "tar" {
@@ -60,13 +66,17 @@ func DownloadSource(recipe *Recipe, source Source) error {
 // DownloadGitSource downloads a git source to the downloads directory
 // and checks out the commit or tag
 func DownloadGitSource(recipe *Recipe, source Source) error {
+	fmt.Printf("Source is git: %s\n", source.URL)
+
 	dest := filepath.Join(recipe.DownloadsPath, source.Module)
 
-	if source.Commit == "" && source.Tag == "" {
-		return fmt.Errorf("missing source commit or tag")
+	if source.Commit == "" && source.Tag == "" && source.Branch == "" {
+		return fmt.Errorf("missing source commit, tag or branch")
 	}
 
 	if source.Tag != "" {
+		fmt.Printf("Using a tag: %s\n", source.Tag)
+
 		cmd := exec.Command(
 			"git",
 			"clone", source.URL,
@@ -79,10 +89,16 @@ func DownloadGitSource(recipe *Recipe, source Source) error {
 			return err
 		}
 	} else {
+		fmt.Printf("Using a commit: %s\n", source.Commit)
+
+		if source.Branch == "" {
+			return fmt.Errorf("missing source branch, needed to checkout commit")
+		}
+
+		fmt.Printf("Cloning repository: %s\n", source.URL)
 		cmd := exec.Command(
 			"git",
 			"clone", source.URL,
-			"--depth", "1",
 			dest,
 		)
 		err := cmd.Run()
@@ -90,10 +106,27 @@ func DownloadGitSource(recipe *Recipe, source Source) error {
 			return err
 		}
 
+		fmt.Printf("Checking out branch: %s\n", source.Branch)
 		cmd = exec.Command(
 			"git",
-			"checkout", source.Commit,
+			"checkout",
+			"-b", source.Branch,
 		)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Dir = dest
+		err = cmd.Run()
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("Resetting to commit: %s\n", source.Commit)
+		cmd = exec.Command(
+			"git",
+			"reset", "--hard", source.Commit,
+		)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		cmd.Dir = dest
 		err = cmd.Run()
 		if err != nil {
@@ -106,6 +139,8 @@ func DownloadGitSource(recipe *Recipe, source Source) error {
 
 // DownloadTarSource downloads a tar archive to the downloads directory
 func DownloadTarSource(recipe *Recipe, source Source) error {
+	fmt.Printf("Source is tar: %s\n", source.URL)
+
 	dest := filepath.Join(recipe.DownloadsPath, source.Module)
 
 	res, err := http.Get(source.URL)
@@ -133,6 +168,8 @@ func DownloadTarSource(recipe *Recipe, source Source) error {
 // MoveSources moves all sources from the downloads directory to the
 // sources directory
 func MoveSources(recipe *Recipe, sources []Source) error {
+	fmt.Println("Moving sources")
+
 	for _, source := range sources {
 		err := MoveSource(recipe, source)
 		if err != nil {
@@ -147,6 +184,8 @@ func MoveSources(recipe *Recipe, sources []Source) error {
 // sources directory, by extracting if a tar archive or moving if a
 // git repository
 func MoveSource(recipe *Recipe, source Source) error {
+	fmt.Printf("Moving source: %s\n", source.Module)
+
 	if source.Type == "git" {
 		return os.Rename(
 			filepath.Join(recipe.DownloadsPath, source.Module),
