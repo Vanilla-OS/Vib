@@ -140,7 +140,7 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 			}
 		}
 
-		_, err = containerfile.WriteString(unifiedCmd)
+		_, err = containerfile.WriteString(fmt.Sprintf("%s\n", unifiedCmd))
 		if err != nil {
 			return err
 		}
