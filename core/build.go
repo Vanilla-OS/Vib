@@ -6,11 +6,11 @@ import (
 )
 
 // BuildRecipe builds a Containerfile from a recipe path
-func BuildRecipe(recipePath string) error {
+func BuildRecipe(recipePath string) (Recipe, error) {
 	// load the recipe
 	recipe, err := LoadRecipe(recipePath)
 	if err != nil {
-		return err
+		return Recipe{}, err
 	}
 
 	fmt.Printf("Building recipe %s\n", recipe.Name)
@@ -18,14 +18,14 @@ func BuildRecipe(recipePath string) error {
 	// resolve (and download) the sources
 	modules, sources, err := ResolveSources(recipe)
 	if err != nil {
-		return err
+		return Recipe{}, err
 	}
 
 	// move them to the sources directory so they can be
 	// used by the modules during the build
 	err = MoveSources(recipe, sources)
 	if err != nil {
-		return err
+		return Recipe{}, err
 	}
 
 	// build the modules*
@@ -33,16 +33,16 @@ func BuildRecipe(recipePath string) error {
 	//   in the Containerfile to build the modules
 	cmds, err := BuildModules(recipe, modules)
 	if err != nil {
-		return err
+		return Recipe{}, err
 	}
 
 	// build the Containerfile
 	err = BuildContainerfile(recipe, cmds)
 	if err != nil {
-		return err
+		return Recipe{}, err
 	}
 
-	return nil
+	return *recipe, nil
 }
 
 // BuildContainerfile builds a Containerfile from a recipe

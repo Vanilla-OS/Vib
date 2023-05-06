@@ -3,6 +3,7 @@ package core
 type Recipe struct {
 	Base          string `json:"base"`
 	Name          string
+	Id            string
 	Labels        map[string]string `json:"labels"`
 	Args          map[string]string `json:"args"`
 	Runs          []string          `json:"runs"`

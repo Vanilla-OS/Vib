@@ -24,7 +24,7 @@ func buildCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	recipePath := args[0]
-	err := core.BuildRecipe(recipePath)
+	_, err := core.BuildRecipe(recipePath)
 	if err != nil {
 		return err
 	}

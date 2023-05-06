@@ -1,5 +1,6 @@
 base: debian:sid-slim
-name: Vanilla Core
+name: Vib Example
+id: vib-example
 labels:
   maintainer: Vanilla OS Contributors
 args:
