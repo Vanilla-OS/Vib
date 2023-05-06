@@ -4,6 +4,7 @@ type Recipe struct {
 	Base          string `json:"base"`
 	Name          string
 	Id            string
+	SingleLayer   bool              `json:"singlelayer"`
 	Labels        map[string]string `json:"labels"`
 	Args          map[string]string `json:"args"`
 	Runs          []string          `json:"runs"`

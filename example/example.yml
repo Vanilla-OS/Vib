@@ -1,6 +1,7 @@
 base: debian:sid-slim
 name: Vib Example
 id: vib-example
+singlelayer: true
 labels:
   maintainer: Vanilla OS Contributors
 args:
@@ -11,7 +12,7 @@ runs:
 modules:
 - name: abroot-git
   type: go
-  buildVars:
+  buildvars:
     GO_OUTPUT_BIN: "/usr/local/bin/abroot"
   source:
     url: https://github.com/vanilla-os/abroot.git
