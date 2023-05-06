@@ -15,6 +15,7 @@ modules:
   source:
     url: https://github.com/vanilla-os/abroot.git
     type: git
+    branch: main
     commit: efb997f0eeb67deaa5940f7c31a19fe2101d3d49
   modules:
   - name: libbtrfs-dev

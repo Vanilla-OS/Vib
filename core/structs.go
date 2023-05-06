@@ -20,8 +20,8 @@ type Module struct {
 	Path       string            `json:"path"`
 	Source     Source            `json:"source"`
 	Modules    []Module          `json:"modules"`
-	BuildFlags string            `json:"buildFlags"`
-	BuildVars  map[string]string `json:"buildVars"`
+	BuildFlags string            `json:"buildflags"`
+	BuildVars  map[string]string `json:"buildvars"`
 	Commands   []string          `json:"commands"`
 }
 
@@ -30,6 +30,7 @@ type Source struct {
 	Type     string   `json:"type"`
 	Commit   string   `json:"commit"`
 	Tag      string   `json:"tag"`
+	Branch   string   `json:"branch"`
 	Packages []string `json:"packages"`
 	Paths    []string `json:"paths"`
 	Module   string

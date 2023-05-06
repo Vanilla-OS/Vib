@@ -45,8 +45,8 @@ source:
   type: module-source-type
   tag: module-source-tag
   commit: module-source-commit
-buildFlags: []
-BuildVars: []
+buildflags: []
+Buildvars: []
 modules: {}
 ```
 
