@@ -17,7 +17,7 @@ func BuildAptModule(recipe *Recipe, module Module) (string, error) {
 			packages += pkg + " "
 		}
 
-		return "apt install -y " + packages, nil
+		return fmt.Sprintf("apt install -y %s && apt clean", packages), nil
 	}
 
 	if len(module.Source.Paths) > 0 {
