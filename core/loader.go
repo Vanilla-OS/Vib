@@ -97,19 +97,13 @@ func LoadRecipe(path string) (*Recipe, error) {
 	}
 
 	// here we check if the extra Adds path exists
-	tmpAdds := map[string]string{}
-
 	for src := range recipe.Adds {
 		fullPath := filepath.Join(filepath.Dir(recipePath), src)
 		_, err = os.Stat(fullPath)
 		if os.IsNotExist(err) {
 			return nil, err
 		}
-
-		tmpAdds[fullPath] = recipe.Adds[src]
 	}
-
-	recipe.Adds = tmpAdds
 
 	// here we expand modules of type "gen-modules"
 	newRecipeModules := []Module{}
