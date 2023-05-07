@@ -6,8 +6,10 @@ type Recipe struct {
 	Id            string
 	SingleLayer   bool              `json:"singlelayer"`
 	Labels        map[string]string `json:"labels"`
+	Adds          map[string]string `json:"adds"`
 	Args          map[string]string `json:"args"`
 	Runs          []string          `json:"runs"`
+	Cmd           string            `json:"cmd"`
 	Modules       []Module          `json:"modules"`
 	Path          string
 	ParentPath    string

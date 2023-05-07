@@ -94,6 +94,15 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 			}
 		}
 	}
+	// ADDS
+	for key, value := range recipe.Adds {
+		_, err = containerfile.WriteString(
+			fmt.Sprintf("ADD %s %s\n", key, value),
+		)
+		if err != nil {
+			return err
+		}
+	}
 
 	// INCLUDES.CONTAINER
 	_, err = containerfile.WriteString("ADD includes.container /\n")
@@ -122,6 +131,7 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 	// SINGLE LAYER
 	if recipe.SingleLayer {
 		unifiedCmd := "RUN "
+
 		for i, cmd := range recipe.Runs {
 			unifiedCmd += cmd
 			if i != len(recipe.Runs)-1 {
@@ -140,9 +150,11 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 			}
 		}
 
-		_, err = containerfile.WriteString(fmt.Sprintf("%s\n", unifiedCmd))
-		if err != nil {
-			return err
+		if len(unifiedCmd) > 4 {
+			_, err = containerfile.WriteString(fmt.Sprintf("%s\n", unifiedCmd))
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -150,6 +162,16 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 	_, err = containerfile.WriteString("RUN rm -rf /sources /tmp/* /var/tmp/*\n")
 	if err != nil {
 		return err
+	}
+
+	// CMD
+	if recipe.Cmd != "" {
+		_, err = containerfile.WriteString(
+			fmt.Sprintf("CMD %s\n", recipe.Cmd),
+		)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

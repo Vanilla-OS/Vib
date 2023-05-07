@@ -18,6 +18,8 @@ args:
   DEBIAN_FRONTEND: noninteractive
 runs:
 - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
+adds:
+  rootfs.tar.gz: /
 modules: []
 ```
 

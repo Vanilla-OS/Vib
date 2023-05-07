@@ -9,6 +9,6 @@ func BuildDpkgModule(module Module) (string, error) {
 		cmd += fmt.Sprintf(" dpkg -i /sources/%s && apt install -f && ", path)
 	}
 
-	cmd += " && apt clean"
+	cmd += " && apt clean && apt autoremove -y"
 	return cmd, nil
 }
