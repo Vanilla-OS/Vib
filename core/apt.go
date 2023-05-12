@@ -17,7 +17,7 @@ func BuildAptModule(recipe *Recipe, module Module) (string, error) {
 			packages += pkg + " "
 		}
 
-		return fmt.Sprintf("apt install -y %s", packages), nil
+		return fmt.Sprintf("apt install -y %s && apt clean", packages), nil
 	}
 
 	if len(module.Source.Paths) > 0 {
@@ -45,6 +45,8 @@ func BuildAptModule(recipe *Recipe, module Module) (string, error) {
 
 			if i != len(module.Source.Paths)-1 {
 				cmd += "&& "
+			} else {
+				cmd += "&& apt clean"
 			}
 		}
 
