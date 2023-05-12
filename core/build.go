@@ -158,12 +158,6 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 		}
 	}
 
-	// CLEANUP
-	_, err = containerfile.WriteString("RUN rm -rf /sources /tmp/* /var/tmp/*\n")
-	if err != nil {
-		return err
-	}
-
 	// CMD
 	if recipe.Cmd != "" {
 		_, err = containerfile.WriteString(

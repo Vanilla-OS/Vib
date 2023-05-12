@@ -17,13 +17,13 @@ func BuildAptModule(recipe *Recipe, module Module) (string, error) {
 			packages += pkg + " "
 		}
 
-		return fmt.Sprintf("apt install -y %s && apt clean && apt autoremove -y", packages), nil
+		return fmt.Sprintf("apt install -y %s", packages), nil
 	}
 
 	if len(module.Source.Paths) > 0 {
 		cmd := ""
 
-		for _, path := range module.Source.Paths {
+		for i, path := range module.Source.Paths {
 			instPath := filepath.Join(recipe.ParentPath, path+".inst")
 			pkgs := ""
 			file, err := os.Open(instPath)
@@ -41,11 +41,13 @@ func BuildAptModule(recipe *Recipe, module Module) (string, error) {
 				return "", err
 			}
 
-			cmd += fmt.Sprintf("apt install -y %s && ", pkgs)
+			cmd += fmt.Sprintf("apt install -y %s ", pkgs)
 
+			if i != len(module.Source.Paths)-1 {
+				cmd += "&& "
+			}
 		}
 
-		cmd += "apt clean && apt autoremove -y"
 		return cmd, nil
 	}
 
