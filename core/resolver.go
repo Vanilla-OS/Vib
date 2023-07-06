@@ -110,7 +110,7 @@ func DownloadGitSource(recipe *Recipe, source Source) error {
 		cmd = exec.Command(
 			"git",
 			"checkout",
-			"-b", source.Branch,
+			"-B", source.Branch,
 		)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
