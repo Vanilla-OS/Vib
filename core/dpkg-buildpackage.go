@@ -6,7 +6,7 @@ import "fmt"
 // and installs the resulting .deb package
 func BuildDpkgBuildPkgModule(module Module) (string, error) {
 	cmd := fmt.Sprintf(
-		"cd /sources/%s && dpkg-buildpackage -us -uc -b &&",
+		"cd /sources/%s && dpkg-buildpackage -us -uc -b",
 		module.Name,
 	)
 
