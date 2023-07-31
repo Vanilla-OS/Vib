@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // ResolveSources resolves the sources of a recipe and downloads them
@@ -104,6 +105,18 @@ func DownloadGitSource(recipe *Recipe, source Source) error {
 		err := cmd.Run()
 		if err != nil {
 			return err
+		}
+
+		if source.Commit == "latest" {
+			cmd := exec.Command(
+				"git", "--no-pager", "log", "-n", "1", "--pretty=format:\"%H\"", source.Branch,
+			)
+			cmd.Dir = dest
+			latest_tag, err := cmd.Output()
+			if err != nil {
+				return err
+			}
+			source.Commit = strings.Trim(string(latest_tag), "\"")
 		}
 
 		fmt.Printf("Checking out branch: %s\n", source.Branch)
