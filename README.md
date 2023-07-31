@@ -62,8 +62,9 @@ modules: {}
     *   `paths`: a list of strings indicating the path to .deb files (or just a list of prefixes to search for .deb files) when used with"dpkg" or "dpkg-buildpackage", or a list of paths to .inst files which contain a list of packages to install when used with "apt".
     *   `url`: a string indicating the URL to retrieve the source code, only required if source type is "tar" or "git".
     *   `type`: a string indicating the type of source control system, currently "tar" and "git" are supported.
-    *   `tag`: a string indicating the git tag to use, only used if type is "git".
-    *   `commit`: a string indicating the git commit to use, only used if type is "git".
+    *   `tag`: a string indicating the git tag to use, only used if type is "git". Use either this or `branch` and `commit`.
+    *   `branch`: a string indicating the git branch to pull from, only used if type is "git". Use either this and `commit` or `tag`.
+    *   `commit`: a string with the commit hash to use, only used if type is "git". Passing "latest" to this field will use the most recent commmit from the branch specified above. Use either this and `branch` or `tag`.
 *   `buildFlags`: an array of strings indicating any additional build flags or options. Only used if type is "meson" or "go".
 *   `buildVars`: a collection of key-value pairs indicating any additional build variables. Only used if type is "go".
 *   `modules`: an array of objects containing the modules needed to build the source code.
