@@ -27,6 +27,7 @@ type Module struct {
 	BuildFlags string            `json:"buildflags"`
 	BuildVars  map[string]string `json:"buildvars"`
 	Commands   []string          `json:"commands"`
+	Includes   []string          `json:"includes"`
 }
 
 type Source struct {

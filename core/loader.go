@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -109,7 +110,7 @@ func LoadRecipe(path string) (*Recipe, error) {
 	newRecipeModules := []Module{}
 
 	for _, module := range recipe.Modules {
-		if module.Type == "gen-modules" {
+		if module.Type == "gen-modules" { // DEPRECATED: use the "includes" module instead
 			genModulePaths, err := filepath.Glob(filepath.Join(recipe.ParentPath, module.Path, "*.yml"))
 			if err != nil {
 				return nil, err
@@ -128,6 +129,21 @@ func LoadRecipe(path string) (*Recipe, error) {
 			}
 
 			newRecipeModules = append(newRecipeModules, genModules...)
+			continue
+		} else if module.Type == "includes" {
+			if len(module.Includes) == 0 {
+				return nil, errors.New("includes module must have at least one module to include")
+			}
+
+			for _, include := range module.Includes {
+				includeModule, err := GenModule(filepath.Join(recipe.ParentPath, include+".yml"))
+				if err != nil {
+					return nil, err
+				}
+
+				newRecipeModules = append(newRecipeModules, includeModule)
+			}
+
 			continue
 		}
 
