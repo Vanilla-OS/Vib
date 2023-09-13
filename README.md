@@ -32,7 +32,7 @@ modules: []
 *   `modules`: an array of objects containing the modules to add to the container image.
 
 
-## Moule Structure
+## Module Structure
 
 Each module specifies a specific step needed to build the image. Each module has the following format:
 
