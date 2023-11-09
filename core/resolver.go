@@ -153,26 +153,41 @@ func DownloadGitSource(recipe *Recipe, source Source) error {
 // DownloadTarSource downloads a tar archive to the downloads directory
 func DownloadTarSource(recipe *Recipe, source Source) error {
 	fmt.Printf("Source is tar: %s\n", source.URL)
-
+	//Create the destination path
 	dest := filepath.Join(recipe.DownloadsPath, source.Module)
-
+	//Download the resource
 	res, err := http.Get(source.URL)
 	if err != nil {
 		return err
 	}
 
 	defer res.Body.Close()
-
+	//Create the destination tar file
 	file, err := os.Create(dest)
 	if err != nil {
 		return err
 	}
-
+	//Close the file when the function ends
 	defer file.Close()
-
+	//Copy the response body to the destination file
 	_, err = io.Copy(file, res.Body)
 	if err != nil {
 		return err
+	}
+	//Check the tar file checksum
+	if source.Checksum != "" {
+		cmd := exec.Command(
+			"sha256sum", dest,
+		)
+		checksum, err := cmd.Output()
+		if err != nil {
+			return err
+		}
+		//Compare the checksums
+		if strings.Split(string(checksum), " ")[0] != source.Checksum {
+			return fmt.Errorf("tar file checksum doesn't match")
+		}
+
 	}
 
 	return nil
