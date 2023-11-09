@@ -1,6 +1,7 @@
 package core
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
@@ -176,15 +177,15 @@ func DownloadTarSource(recipe *Recipe, source Source) error {
 	}
 	//Check the tar file checksum
 	if source.Checksum != "" {
-		cmd := exec.Command(
-			"sha256sum", dest,
-		)
-		checksum, err := cmd.Output()
+		checksum := sha256.New()
+		//Calculate the checksum
+		_, err = io.Copy(checksum, res.Body)
 		if err != nil {
-			return err
+			return fmt.Errorf("could not calculate tar file checksum")
 		}
+
 		//Compare the checksums
-		if strings.Split(string(checksum), " ")[0] != source.Checksum {
+		if string(checksum.Sum(nil)) != source.Checksum {
 			return fmt.Errorf("tar file checksum doesn't match")
 		}
 
