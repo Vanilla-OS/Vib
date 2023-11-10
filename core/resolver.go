@@ -229,7 +229,7 @@ func MoveSource(recipe *Recipe, source Source) error {
 // checksumValidation validates the checksum of a file
 func checksumValidation(source Source, path string) error {
 	//No checksum provided
-	if source.Checksum == "" {
+	if len(strings.TrimSpace(source.Checksum)) == 0 {
 		return nil
 	}
 	//open and read the Readme.md file
@@ -245,9 +245,6 @@ func checksumValidation(source Source, path string) error {
 		return fmt.Errorf("could not calculate tar file checksum")
 	}
 
-	fmt.Printf("%x", checksum.Sum(nil))
-	//Compare the checksums
-	fmt.Printf("%x", checksum.Sum(nil))
 	if fmt.Sprintf("%x", checksum.Sum(nil)) != source.Checksum {
 
 		return fmt.Errorf("tar file checksum doesn't match")
