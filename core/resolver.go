@@ -59,7 +59,11 @@ func DownloadSource(recipe *Recipe, source Source) error {
 	if source.Type == "git" {
 		return DownloadGitSource(recipe, source)
 	} else if source.Type == "tar" {
-		return DownloadTarSource(recipe, source)
+		err := DownloadTarSource(recipe, source)
+		if err != nil {
+			return err
+		}
+		return checksumValidation(source, filepath.Join(recipe.DownloadsPath, source.Module))
 	} else {
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
@@ -175,21 +179,6 @@ func DownloadTarSource(recipe *Recipe, source Source) error {
 	if err != nil {
 		return err
 	}
-	//Check the tar file checksum
-	if source.Checksum != "" {
-		checksum := sha256.New()
-		//Calculate the checksum
-		_, err = io.Copy(checksum, res.Body)
-		if err != nil {
-			return fmt.Errorf("could not calculate tar file checksum")
-		}
-
-		//Compare the checksums
-		if string(checksum.Sum(nil)) != source.Checksum {
-			return fmt.Errorf("tar file checksum doesn't match")
-		}
-
-	}
 
 	return nil
 }
@@ -235,4 +224,34 @@ func MoveSource(recipe *Recipe, source Source) error {
 	} else {
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
+}
+
+// checksumValidation validates the checksum of a file
+func checksumValidation(source Source, path string) error {
+	//No checksum provided
+	if source.Checksum == "" {
+		return nil
+	}
+	//open and read the Readme.md file
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	//Calculate the checksum
+	checksum := sha256.New()
+	_, err = io.Copy(checksum, file)
+	if err != nil {
+		return fmt.Errorf("could not calculate tar file checksum")
+	}
+
+	fmt.Printf("%x", checksum.Sum(nil))
+	//Compare the checksums
+	fmt.Printf("%x", checksum.Sum(nil))
+	if fmt.Sprintf("%x", checksum.Sum(nil)) != source.Checksum {
+
+		return fmt.Errorf("tar file checksum doesn't match")
+	}
+
+	return nil
 }
