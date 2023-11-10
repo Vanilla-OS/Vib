@@ -232,11 +232,12 @@ func checksumValidation(source Source, path string) error {
 	if len(strings.TrimSpace(source.Checksum)) == 0 {
 		return nil
 	}
-	//open and read the Readme.md file
+	//Open the file
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
+	//Close the file when the function ends
 	defer file.Close()
 	//Calculate the checksum
 	checksum := sha256.New()
@@ -245,6 +246,7 @@ func checksumValidation(source Source, path string) error {
 		return fmt.Errorf("could not calculate tar file checksum")
 	}
 
+	//Validate the checksum
 	if fmt.Sprintf("%x", checksum.Sum(nil)) != source.Checksum {
 
 		return fmt.Errorf("tar file checksum doesn't match")
