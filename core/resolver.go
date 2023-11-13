@@ -1,6 +1,7 @@
 package core
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"net/http"
@@ -58,7 +59,11 @@ func DownloadSource(recipe *Recipe, source Source) error {
 	if source.Type == "git" {
 		return DownloadGitSource(recipe, source)
 	} else if source.Type == "tar" {
-		return DownloadTarSource(recipe, source)
+		err := DownloadTarSource(recipe, source)
+		if err != nil {
+			return err
+		}
+		return checksumValidation(source, filepath.Join(recipe.DownloadsPath, source.Module))
 	} else {
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
@@ -153,23 +158,23 @@ func DownloadGitSource(recipe *Recipe, source Source) error {
 // DownloadTarSource downloads a tar archive to the downloads directory
 func DownloadTarSource(recipe *Recipe, source Source) error {
 	fmt.Printf("Source is tar: %s\n", source.URL)
-
+	//Create the destination path
 	dest := filepath.Join(recipe.DownloadsPath, source.Module)
-
+	//Download the resource
 	res, err := http.Get(source.URL)
 	if err != nil {
 		return err
 	}
 
 	defer res.Body.Close()
-
+	//Create the destination tar file
 	file, err := os.Create(dest)
 	if err != nil {
 		return err
 	}
-
+	//Close the file when the function ends
 	defer file.Close()
-
+	//Copy the response body to the destination file
 	_, err = io.Copy(file, res.Body)
 	if err != nil {
 		return err
@@ -219,4 +224,33 @@ func MoveSource(recipe *Recipe, source Source) error {
 	} else {
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
+}
+
+// checksumValidation validates the checksum of a file
+func checksumValidation(source Source, path string) error {
+	//No checksum provided
+	if len(strings.TrimSpace(source.Checksum)) == 0 {
+		return nil
+	}
+	//Open the file
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	//Close the file when the function ends
+	defer file.Close()
+	//Calculate the checksum
+	checksum := sha256.New()
+	_, err = io.Copy(checksum, file)
+	if err != nil {
+		return fmt.Errorf("could not calculate tar file checksum")
+	}
+
+	//Validate the checksum
+	if fmt.Sprintf("%x", checksum.Sum(nil)) != source.Checksum {
+
+		return fmt.Errorf("tar file checksum doesn't match")
+	}
+
+	return nil
 }
