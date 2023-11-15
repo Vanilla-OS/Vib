@@ -1,5 +1,7 @@
 package core
 
+import "plugin"
+
 type Recipe struct {
 	Base          string `json:"base"`
 	Name          string
@@ -45,4 +47,10 @@ type Source struct {
 type ModuleCommand struct {
 	Name    string
 	Command string
+}
+
+type Plugin struct {
+	Name         string
+	BuildFunc    func([]byte) (string, error)
+	LoadedPlugin *plugin.Plugin
 }
