@@ -2,7 +2,13 @@ package core
 
 import "errors"
 
-func BuildShellModule(module Module) (string, error) {
+type ShellModule struct {
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Commands []string
+}
+
+func BuildShellModule(module ShellModule) (string, error) {
 	if len(module.Commands) == 0 {
 		return "", errors.New("no commands specified")
 	}

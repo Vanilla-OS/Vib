@@ -1,10 +1,19 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/vanilla-os/vib/api"
+)
+
+type DpkgBuildModule struct {
+	Name   string `json:"name"`
+	Type   string `json:"type"`
+	Source api.Source
+}
 
 // BuildDpkgModule builds a module that builds a dpkg project
 // and installs the resulting .deb package
-func BuildDpkgBuildPkgModule(module Module) (string, error) {
+func BuildDpkgBuildPkgModule(module DpkgBuildModule) (string, error) {
 	cmd := fmt.Sprintf(
 		"cd /sources/%s && dpkg-buildpackage -d -us -uc -b",
 		module.Name,

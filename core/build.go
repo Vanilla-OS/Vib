@@ -16,22 +16,22 @@ func BuildRecipe(recipePath string) (Recipe, error) {
 	fmt.Printf("Building recipe %s\n", recipe.Name)
 
 	// resolve (and download) the sources
-	modules, sources, err := ResolveSources(recipe)
-	if err != nil {
-		return Recipe{}, err
-	}
+	//modules, sources, err := ResolveSources(recipe)
+	//if err != nil {
+	//	return Recipe{}, err
+	//}
 
 	// move them to the sources directory so they can be
 	// used by the modules during the build
-	err = MoveSources(recipe, sources)
-	if err != nil {
-		return Recipe{}, err
-	}
+	//err = MoveSources(recipe, sources)
+	//if err != nil {
+	//	return Recipe{}, err
+	//}
 
 	// build the modules*
 	// * actually just build the commands that will be used
 	//   in the Containerfile to build the modules
-	cmds, err := BuildModules(recipe, modules)
+	cmds, err := BuildModules(recipe, recipe.Modules)
 	if err != nil {
 		return Recipe{}, err
 	}
@@ -172,11 +172,11 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 }
 
 // BuildModules builds a list of modules commands from a list of modules
-func BuildModules(recipe *Recipe, modules []Module) ([]ModuleCommand, error) {
+func BuildModules(recipe *Recipe, modules map[string]interface{}) ([]ModuleCommand, error) {
 	cmds := []ModuleCommand{}
 
 	for _, module := range modules {
-		fmt.Printf("Creating build command for %s\n", module.Name)
+		fmt.Printf("Creating build command for %s\n", module.(Module).Name)
 
 		cmd, err := BuildModule(recipe, module)
 		if err != nil {
@@ -184,7 +184,7 @@ func BuildModules(recipe *Recipe, modules []Module) ([]ModuleCommand, error) {
 		}
 
 		cmds = append(cmds, ModuleCommand{
-			Name:    module.Name,
+			Name:    module.(Module).Name,
 			Command: cmd,
 		})
 	}
@@ -195,25 +195,25 @@ func BuildModules(recipe *Recipe, modules []Module) ([]ModuleCommand, error) {
 // BuildModule builds a module command from a module
 // this is done by calling the appropriate module builder
 // function based on the module type
-func BuildModule(recipe *Recipe, module Module) (string, error) {
-	switch module.Type {
+func BuildModule(recipe *Recipe, module interface{}) (string, error) {
+	switch module.(Module).Type {
 	case "apt":
-		return BuildAptModule(recipe, module)
+		return BuildAptModule(recipe, module.(AptModule))
 	case "cmake":
-		return BuildCMakeModule(module)
+		return BuildCMakeModule(module.(CMakeModule))
 	case "dpkg":
-		return BuildDpkgModule(module)
+		return BuildDpkgModule(module.(DpkgModule))
 	case "dpkg-buildpackage":
-		return BuildDpkgBuildPkgModule(module)
+		return BuildDpkgBuildPkgModule(module.(DpkgBuildModule))
 	case "go":
-		return BuildGoModule(module)
+		return BuildGoModule(module.(GoModule))
 	case "make":
-		return BuildMakeModule(module)
+		return BuildMakeModule(module.(Module))
 	case "meson":
-		return BuildMesonModule(module)
+		return BuildMesonModule(module.(Module))
 	case "shell":
-		return BuildShellModule(module)
+		return BuildShellModule(module.(ShellModule))
 	default:
-		return "", fmt.Errorf("unknown module type %s", module.Type)
+		return LoadPlugin(module.(Module).Type, module)
 	}
 }

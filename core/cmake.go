@@ -2,8 +2,15 @@ package core
 
 import "fmt"
 
+type CMakeModule struct {
+	Name       string            `json:"name"`
+	Type       string            `json:"name"`
+	BuildVars  map[string]string `json:"name"`
+	BuildFlags string            `json:"name"`
+}
+
 // BuildCMakeModule builds a module that builds a CMake project
-func BuildCMakeModule(module Module) (string, error) {
+func BuildCMakeModule(module CMakeModule) (string, error) {
 	buildVars := map[string]string{}
 	for k, v := range module.BuildVars {
 		buildVars[k] = v

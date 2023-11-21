@@ -4,13 +4,20 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/vanilla-os/vib/api"
 	"os"
 	"path/filepath"
 )
 
+type AptModule struct {
+	Name   string     `json:"name"`
+	Type   string     `json:"name"`
+	Source api.Source `json:"source"`
+}
+
 // BuildAptModule builds a module that installs packages
 // using the apt package manager
-func BuildAptModule(recipe *Recipe, module Module) (string, error) {
+func BuildAptModule(recipe *Recipe, module AptModule) (string, error) {
 	if len(module.Source.Packages) > 0 {
 		packages := ""
 		for _, pkg := range module.Source.Packages {

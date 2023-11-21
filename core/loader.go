@@ -106,48 +106,36 @@ func LoadRecipe(path string) (*Recipe, error) {
 		}
 	}
 
-	// here we expand modules of type "gen-modules"
-	newRecipeModules := []Module{}
+	// here we expand modules of type "includes"
+	var newRecipeModules map[string]interface{}
 
+	// cannot use the value from the second for loop here
+	// as it always gets reset and the first for loop would not reflect the amount properly
+	lenModules := 0
 	for _, module := range recipe.Modules {
-		if module.Type == "gen-modules" { // DEPRECATED: use the "includes" module instead
-			genModulePaths, err := filepath.Glob(filepath.Join(recipe.ParentPath, module.Path, "*.yml"))
-			if err != nil {
-				return nil, err
-			}
 
-			genModules := []Module{}
+		if module.(map[string]interface{})["Type"] == "includes" {
+			include := module.(IncludesModule)
 
-			for _, genModulePath := range genModulePaths {
-				genModule, err := GenModule(genModulePath)
-
-				if err != nil {
-					return nil, err
-				}
-
-				genModules = append(genModules, genModule)
-			}
-
-			newRecipeModules = append(newRecipeModules, genModules...)
-			continue
-		} else if module.Type == "includes" {
-			if len(module.Includes) == 0 {
+			if len(include.Includes) == 0 {
 				return nil, errors.New("includes module must have at least one module to include")
 			}
 
-			for _, include := range module.Includes {
+			for _, include := range include.Includes {
 				includeModule, err := GenModule(filepath.Join(recipe.ParentPath, include+".yml"))
 				if err != nil {
 					return nil, err
 				}
 
-				newRecipeModules = append(newRecipeModules, includeModule)
+				newRecipeModules[string(rune(lenModules))] = includeModule
+				lenModules += 1
 			}
 
 			continue
 		}
 
-		newRecipeModules = append(newRecipeModules, module)
+		newRecipeModules[string(rune(lenModules))] = module.(map[string]interface{})
+		lenModules += 1
 	}
 
 	recipe.Modules = newRecipeModules
@@ -156,24 +144,24 @@ func LoadRecipe(path string) (*Recipe, error) {
 }
 
 // GenModule generate a Module struct from a module path
-func GenModule(modulePath string) (Module, error) {
-	module := &Module{}
+func GenModule(modulePath string) (map[string]interface{}, error) {
+	var module map[string]interface{}
 
 	moduleFile, err := os.Open(modulePath)
 	if err != nil {
-		return *module, err
+		return module, err
 	}
 	defer moduleFile.Close()
 
 	moduleYAML, err := io.ReadAll(moduleFile)
 	if err != nil {
-		return *module, err
+		return module, err
 	}
 
 	err = yaml.Unmarshal(moduleYAML, module)
 	if err != nil {
-		return *module, err
+		return module, err
 	}
 
-	return *module, nil
+	return module, nil
 }

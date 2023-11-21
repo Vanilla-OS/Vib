@@ -3,6 +3,7 @@ package core
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/vanilla-os/vib/api"
 	"io"
 	"net/http"
 	"os"
@@ -14,11 +15,11 @@ import (
 // ResolveSources resolves the sources of a recipe and downloads them
 // to the downloads directory. Note that modules in this function are
 // returned in the order they should be built.
-func ResolveSources(recipe *Recipe) ([]Module, []Source, error) {
+func ResolveSources(recipe *Recipe) ([]Module, []api.Source, error) {
 	fmt.Println("Resolving sources")
 
 	modules := GetAllModules(recipe.Modules)
-	var sources []Source
+	//var sources []Source
 
 	for _, module := range modules {
 		fmt.Printf("Resolving source for: %s\n", module.Name)
@@ -39,7 +40,7 @@ func ResolveSources(recipe *Recipe) ([]Module, []Source, error) {
 	return modules, sources, nil
 }
 
-// GetAllModules returns a list of all modules in a ordered list
+// GetAllModules returns a list of all modules in an ordered list
 func GetAllModules(modules []Module) []Module {
 	var orderedList []Module
 

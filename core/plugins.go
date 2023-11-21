@@ -3,22 +3,14 @@ package core
 import (
 	"fmt"
 	"plugin"
-	"strings"
 )
 
-var openedPlugins []Plugin
+var openedPlugins map[string]Plugin
 
-func LoadPlugin(name string, module []byte) {
+func LoadPlugin(name string, module interface{}) (string, error) {
 	pluginOpened := false
 	var buildModule Plugin
-	for _, plugin := range openedPlugins {
-		// To avoid loading the same plugin multiple times, we check the openedPlugins variable to see if the plugin
-		// was loaded and added to the variable before
-		if strings.ToLower(plugin.Name) == strings.ToLower(name) {
-			pluginOpened = true
-			buildModule = plugin
-		}
-	}
+	buildModule, pluginOpened = openedPlugins[name]
 	if !pluginOpened {
 		fmt.Println("Loading new plugin")
 		buildModule = Plugin{Name: name}
@@ -31,11 +23,12 @@ func LoadPlugin(name string, module []byte) {
 		if err != nil {
 			panic(err)
 		}
-		buildModule.BuildFunc = buildFunction.(func([]byte) (string, error))
+		buildModule.BuildFunc = buildFunction.(func(interface{}) (string, error))
 		buildModule.LoadedPlugin = loadedPlugin
 
-		openedPlugins = append(openedPlugins, buildModule)
+		openedPlugins[name] = buildModule
 	}
 	fmt.Printf("Using plugin: %s\n", buildModule.Name)
-	fmt.Println(buildModule.BuildFunc([]byte(":3")))
+	fmt.Println(buildModule.BuildFunc(module))
+	return buildModule.BuildFunc(module)
 }

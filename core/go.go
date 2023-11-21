@@ -2,10 +2,17 @@ package core
 
 import "fmt"
 
+type GoModule struct {
+	Name       string `json:"name"`
+	Type       string `json:"type"`
+	BuildVars  map[string]string
+	BuildFlags string
+}
+
 // BuildGoModule builds a module that builds a Go project
 // buildVars are used to customize the build command
 // like setting the output binary name and location
-func BuildGoModule(module Module) (string, error) {
+func BuildGoModule(module GoModule) (string, error) {
 	buildVars := map[string]string{}
 	for k, v := range module.BuildVars {
 		buildVars[k] = v
