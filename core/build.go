@@ -18,19 +18,6 @@ func BuildRecipe(recipePath string) (api.Recipe, error) {
 
 	fmt.Printf("Building recipe %s\n", recipe.Name)
 
-	// resolve (and download) the sources
-	//modules, sources, err := ResolveSources(recipe)
-	//if err != nil {
-	//	return Recipe{}, err
-	//}
-
-	// move them to the sources directory so they can be
-	// used by the modules during the build
-	//err = MoveSources(recipe, sources)
-	//if err != nil {
-	//	return Recipe{}, err
-	//}
-
 	// build the modules*
 	// * actually just build the commands that will be used
 	//   in the Containerfile to build the modules
@@ -211,9 +198,7 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 	var commands string
 	if len(module.Modules) > 0 {
 		for _, nestedModule := range module.Modules {
-			fmt.Println("!!!!!!!!!!!!!!!!!!!!!!!nested module: ", module.Modules, "----", len(module.Modules))
 			buildModule, err := BuildModule(recipe, nestedModule)
-			fmt.Println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", buildModule)
 			if err != nil {
 				return "", err
 			}

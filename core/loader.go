@@ -2,7 +2,6 @@ package core
 
 import (
 	"errors"
-	"fmt"
 	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
 	"io"
@@ -133,7 +132,6 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 
 			for _, include := range include.Includes {
 				includeModule, err := GenModule(filepath.Join(recipe.ParentPath, include+".yml"))
-				fmt.Printf("!!!!adding new module %s\n", includeModule)
 				if err != nil {
 					return nil, err
 				}
