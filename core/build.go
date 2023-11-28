@@ -170,7 +170,6 @@ func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, e
 		if err != nil {
 			return nil, err
 		}
-		fmt.Printf("Creating build command for %s\n", module)
 
 		cmd, err := BuildModule(recipe, moduleInterface)
 		if err != nil {
@@ -206,7 +205,6 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 		}
 	}
 
-	fmt.Println(commands)
 	switch module.Type {
 	case "apt":
 		command, err := BuildAptModule(moduleInterface, recipe)
