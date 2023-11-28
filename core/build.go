@@ -5,6 +5,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
 	"os"
+	"strings"
 )
 
 // BuildRecipe builds a Containerfile from a recipe path
@@ -207,28 +208,78 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("Processing module: %s\n", module.Type)
-	fmt.Println(moduleInterface)
+	var commands string
+	if len(module.Modules) > 0 {
+		for _, nestedModule := range module.Modules {
+			fmt.Println("!!!!!!!!!!!!!!!!!!!!!!!nested module: ", module.Modules, "----", len(module.Modules))
+			buildModule, err := BuildModule(recipe, nestedModule)
+			fmt.Println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", buildModule)
+			if err != nil {
+				return "", err
+			}
+			commands = buildModule + " && " + commands
+		}
+	}
+
+	fmt.Println(commands)
 	switch module.Type {
 	case "apt":
-		return BuildAptModule(moduleInterface, recipe)
+		command, err := BuildAptModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = command + " && " + commands
 	case "cmake":
-		return BuildCMakeModule(moduleInterface, recipe)
+		command, err := BuildCMakeModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = command + " && " + commands
 	case "dpkg":
-		return BuildDpkgModule(moduleInterface, recipe)
+		command, err := BuildDpkgModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = command + " && " + commands
 	case "dpkg-buildpackage":
-		return BuildDpkgBuildPkgModule(moduleInterface, recipe)
+		command, err := BuildDpkgBuildPkgModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = command + " && " + commands
 	case "go":
-		return BuildGoModule(moduleInterface, recipe)
+		command, err := BuildGoModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = command + " && " + commands
 	case "make":
-		return BuildMakeModule(moduleInterface, recipe)
+		command, err := BuildMakeModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = command + " && " + commands
 	case "meson":
-		return BuildMesonModule(moduleInterface, recipe)
+		command, err := BuildMesonModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = command + " && " + commands
 	case "shell":
-		return BuildShellModule(moduleInterface, recipe)
+		command, err := BuildShellModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = command + " && " + commands
 	case "includes":
 		return "", nil
 	default:
-		return LoadPlugin(module.Type, moduleInterface, recipe)
+		command, err := LoadPlugin(module.Type, moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = command + " && " + commands
 	}
+
+	return strings.TrimSuffix(commands, " && "), err
 }

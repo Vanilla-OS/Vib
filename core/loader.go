@@ -167,17 +167,10 @@ func GenModule(modulePath string) (map[string]interface{}, error) {
 		return module, err
 	}
 
-	fmt.Println("====")
-	fmt.Println(&module)
-	fmt.Println(string(moduleYAML))
 	err = yaml.Unmarshal(moduleYAML, &module)
 	if err != nil {
 		return module, err
 	}
-	fmt.Println()
-	fmt.Println("no error")
-	fmt.Println(module)
-	fmt.Println("=====")
 
 	return module, nil
 }
