@@ -9,7 +9,6 @@ type Source struct {
 	Branch   string   `json:"branch"`
 	Packages []string `json:"packages"`
 	Paths    []string `json:"paths"`
-	Module   string
 }
 
 type Recipe struct {

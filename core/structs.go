@@ -8,6 +8,7 @@ import (
 type Module struct {
 	Name    string `json:"name"`
 	Type    string `json:"type"`
+	Modules []map[string]interface{}
 	Content []byte // The entire module unparsed as a []byte, used by plugins
 }
 

@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/vanilla-os/vib/api"
 )
@@ -16,12 +17,16 @@ type CMakeModule struct {
 
 // BuildCMakeModule builds a module that builds a CMake project
 func BuildCMakeModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
-	module := moduleInterface.(CMakeModule)
-	err := api.DownloadSource(recipe.DownloadsPath, module.Source)
+	var module CMakeModule
+	err := mapstructure.Decode(moduleInterface, &module)
 	if err != nil {
 		return "", err
 	}
-	err = api.MoveSource(recipe.DownloadsPath, module.Source)
+	err = api.DownloadSource(recipe.DownloadsPath, module.Source, module.Name)
+	if err != nil {
+		return "", err
+	}
+	err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, module.Source, module.Name)
 	if err != nil {
 		return "", err
 	}

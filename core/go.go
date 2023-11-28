@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
 )
 
@@ -17,13 +18,16 @@ type GoModule struct {
 // buildVars are used to customize the build command
 // like setting the output binary name and location
 func BuildGoModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
-	module := moduleInterface.(GoModule)
-
-	err := api.DownloadSource(recipe.DownloadsPath, module.Source)
+	var module GoModule
+	err := mapstructure.Decode(moduleInterface, &module)
 	if err != nil {
 		return "", err
 	}
-	err = api.MoveSource(recipe.DownloadsPath, module.Source)
+	err = api.DownloadSource(recipe.DownloadsPath, module.Source, module.Name)
+	if err != nil {
+		return "", err
+	}
+	err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, module.Source, module.Name)
 	if err != nil {
 		return "", err
 	}

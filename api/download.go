@@ -13,17 +13,17 @@ import (
 
 // DownloadSource downloads a source to the downloads directory
 // according to its type (git, tar, ...)
-func DownloadSource(downloadPath string, source Source) error {
+func DownloadSource(downloadPath string, source Source, moduleName string) error {
 	fmt.Printf("Downloading source: %s\n", source.URL)
 
 	if source.Type == "git" {
-		return DownloadGitSource(downloadPath, source)
+		return DownloadGitSource(downloadPath, source, moduleName)
 	} else if source.Type == "tar" {
-		err := DownloadTarSource(downloadPath, source)
+		err := DownloadTarSource(downloadPath, source, moduleName)
 		if err != nil {
 			return err
 		}
-		return checksumValidation(source, filepath.Join(downloadPath, source.Module))
+		return checksumValidation(source, filepath.Join(downloadPath, moduleName))
 	} else {
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
@@ -31,10 +31,10 @@ func DownloadSource(downloadPath string, source Source) error {
 
 // DownloadGitSource downloads a git source to the downloads directory
 // and checks out the commit or tag
-func DownloadGitSource(downloadPath string, source Source) error {
+func DownloadGitSource(downloadPath string, source Source, moduleName string) error {
 	fmt.Printf("Source is git: %s\n", source.URL)
 
-	dest := filepath.Join(downloadPath, source.Module)
+	dest := filepath.Join(downloadPath, moduleName)
 
 	if source.Commit == "" && source.Tag == "" && source.Branch == "" {
 		return fmt.Errorf("missing source commit, tag or branch")
@@ -116,10 +116,10 @@ func DownloadGitSource(downloadPath string, source Source) error {
 }
 
 // DownloadTarSource downloads a tar archive to the downloads directory
-func DownloadTarSource(downloadPath string, source Source) error {
+func DownloadTarSource(downloadPath string, source Source, moduleName string) error {
 	fmt.Printf("Source is tar: %s\n", source.URL)
 	//Create the destination path
-	dest := filepath.Join(downloadPath, source.Module)
+	dest := filepath.Join(downloadPath, moduleName)
 	//Download the resource
 	res, err := http.Get(source.URL)
 	if err != nil {
@@ -145,11 +145,11 @@ func DownloadTarSource(downloadPath string, source Source) error {
 
 // MoveSources moves all sources from the downloads directory to the
 // sources directory
-func MoveSources(downloadPath string, sources []Source) error {
+func MoveSources(downloadPath string, sourcesPath string, sources []Source, moduleName string) error {
 	fmt.Println("Moving sources")
 
 	for _, source := range sources {
-		err := MoveSource(downloadPath, source)
+		err := MoveSource(downloadPath, sourcesPath, source, moduleName)
 		if err != nil {
 			return err
 		}
@@ -161,26 +161,26 @@ func MoveSources(downloadPath string, sources []Source) error {
 // MoveSource moves a source from the downloads directory to the
 // sources directory, by extracting if a tar archive or moving if a
 // git repository
-func MoveSource(downloadPath string, source Source) error {
-	fmt.Printf("Moving source: %s\n", source.Module)
+func MoveSource(downloadPath string, sourcesPath string, source Source, moduleName string) error {
+	fmt.Printf("Moving source: %s\n", moduleName)
 
 	if source.Type == "git" {
 		return os.Rename(
-			filepath.Join(downloadPath, source.Module),
-			filepath.Join(downloadPath, source.Module),
+			filepath.Join(downloadPath, moduleName),
+			filepath.Join(sourcesPath, moduleName),
 		)
 	} else if source.Type == "tar" {
 		cmd := exec.Command(
 			"tar",
-			"-xf", filepath.Join(downloadPath, source.Module),
-			"-C", downloadPath,
+			"-xf", filepath.Join(downloadPath, moduleName),
+			"-C", sourcesPath,
 		)
 		err := cmd.Run()
 		if err != nil {
 			return err
 		}
 
-		return os.Remove(filepath.Join(downloadPath, source.Module))
+		return os.Remove(filepath.Join(downloadPath, moduleName))
 	} else {
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
