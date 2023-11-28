@@ -12,7 +12,8 @@ type DpkgModule struct {
 }
 
 // BuildDpkgModule builds a module that installs a .deb package
-func BuildDpkgModule(module DpkgModule) (string, error) {
+func BuildDpkgModule(moduleInterface interface{}, _ *api.Recipe) (string, error) {
+	module := moduleInterface.(DpkgModule)
 	cmd := ""
 	for _, path := range module.Source.Paths {
 		cmd += fmt.Sprintf(" dpkg -i /sources/%s && apt install -f && ", path)

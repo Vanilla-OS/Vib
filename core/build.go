@@ -2,15 +2,17 @@ package core
 
 import (
 	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/vanilla-os/vib/api"
 	"os"
 )
 
 // BuildRecipe builds a Containerfile from a recipe path
-func BuildRecipe(recipePath string) (Recipe, error) {
+func BuildRecipe(recipePath string) (api.Recipe, error) {
 	// load the recipe
 	recipe, err := LoadRecipe(recipePath)
 	if err != nil {
-		return Recipe{}, err
+		return api.Recipe{}, err
 	}
 
 	fmt.Printf("Building recipe %s\n", recipe.Name)
@@ -33,13 +35,13 @@ func BuildRecipe(recipePath string) (Recipe, error) {
 	//   in the Containerfile to build the modules
 	cmds, err := BuildModules(recipe, recipe.Modules)
 	if err != nil {
-		return Recipe{}, err
+		return api.Recipe{}, err
 	}
 
 	// build the Containerfile
 	err = BuildContainerfile(recipe, cmds)
 	if err != nil {
-		return Recipe{}, err
+		return api.Recipe{}, err
 	}
 
 	return *recipe, nil
@@ -47,7 +49,7 @@ func BuildRecipe(recipePath string) (Recipe, error) {
 
 // BuildContainerfile builds a Containerfile from a recipe
 // and a list of modules commands
-func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
+func BuildContainerfile(recipe *api.Recipe, cmds []ModuleCommand) error {
 	containerfile, err := os.Create(recipe.Containerfile)
 	if err != nil {
 		return err
@@ -172,19 +174,23 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 }
 
 // BuildModules builds a list of modules commands from a list of modules
-func BuildModules(recipe *Recipe, modules map[string]interface{}) ([]ModuleCommand, error) {
+func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, error) {
 	cmds := []ModuleCommand{}
+	for _, moduleInterface := range modules {
+		var module Module
+		err := mapstructure.Decode(moduleInterface, &module)
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("Creating build command for %s\n", module)
 
-	for _, module := range modules {
-		fmt.Printf("Creating build command for %s\n", module.(Module).Name)
-
-		cmd, err := BuildModule(recipe, module)
+		cmd, err := BuildModule(recipe, moduleInterface)
 		if err != nil {
 			return nil, err
 		}
 
 		cmds = append(cmds, ModuleCommand{
-			Name:    module.(Module).Name,
+			Name:    module.Name,
 			Command: cmd,
 		})
 	}
@@ -195,25 +201,34 @@ func BuildModules(recipe *Recipe, modules map[string]interface{}) ([]ModuleComma
 // BuildModule builds a module command from a module
 // this is done by calling the appropriate module builder
 // function based on the module type
-func BuildModule(recipe *Recipe, module interface{}) (string, error) {
-	switch module.(Module).Type {
+func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error) {
+	var module Module
+	err := mapstructure.Decode(moduleInterface, &module)
+	if err != nil {
+		return "", err
+	}
+	fmt.Printf("Processing module: %s\n", module.Type)
+	fmt.Println(moduleInterface)
+	switch module.Type {
 	case "apt":
-		return BuildAptModule(recipe, module.(AptModule))
+		return BuildAptModule(moduleInterface, recipe)
 	case "cmake":
-		return BuildCMakeModule(module.(CMakeModule))
+		return BuildCMakeModule(moduleInterface, recipe)
 	case "dpkg":
-		return BuildDpkgModule(module.(DpkgModule))
+		return BuildDpkgModule(moduleInterface, recipe)
 	case "dpkg-buildpackage":
-		return BuildDpkgBuildPkgModule(module.(DpkgBuildModule))
+		return BuildDpkgBuildPkgModule(moduleInterface, recipe)
 	case "go":
-		return BuildGoModule(module.(GoModule))
+		return BuildGoModule(moduleInterface, recipe)
 	case "make":
-		return BuildMakeModule(module.(Module))
+		return BuildMakeModule(moduleInterface, recipe)
 	case "meson":
-		return BuildMesonModule(module.(Module))
+		return BuildMesonModule(moduleInterface, recipe)
 	case "shell":
-		return BuildShellModule(module.(ShellModule))
+		return BuildShellModule(moduleInterface, recipe)
+	case "includes":
+		return "", nil
 	default:
-		return LoadPlugin(module.(Module).Type, module)
+		return LoadPlugin(module.Type, moduleInterface, recipe)
 	}
 }

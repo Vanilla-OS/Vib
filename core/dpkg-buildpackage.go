@@ -13,7 +13,8 @@ type DpkgBuildModule struct {
 
 // BuildDpkgModule builds a module that builds a dpkg project
 // and installs the resulting .deb package
-func BuildDpkgBuildPkgModule(module DpkgBuildModule) (string, error) {
+func BuildDpkgBuildPkgModule(moduleInterface interface{}, _ *api.Recipe) (string, error) {
+	module := moduleInterface.(DpkgBuildModule)
 	cmd := fmt.Sprintf(
 		"cd /sources/%s && dpkg-buildpackage -d -us -uc -b",
 		module.Name,

@@ -1,16 +1,30 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/vanilla-os/vib/api"
+)
 
 type CMakeModule struct {
 	Name       string            `json:"name"`
-	Type       string            `json:"name"`
-	BuildVars  map[string]string `json:"name"`
-	BuildFlags string            `json:"name"`
+	Type       string            `json:"type"`
+	BuildVars  map[string]string `json:"buildvars"`
+	BuildFlags string            `json:"buildflags"`
+	Source     api.Source
 }
 
 // BuildCMakeModule builds a module that builds a CMake project
-func BuildCMakeModule(module CMakeModule) (string, error) {
+func BuildCMakeModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
+	module := moduleInterface.(CMakeModule)
+	err := api.DownloadSource(recipe.DownloadsPath, module.Source)
+	if err != nil {
+		return "", err
+	}
+	err = api.MoveSource(recipe.DownloadsPath, module.Source)
+	if err != nil {
+		return "", err
+	}
 	buildVars := map[string]string{}
 	for k, v := range module.BuildVars {
 		buildVars[k] = v

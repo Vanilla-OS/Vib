@@ -1,26 +1,9 @@
 package core
 
 import (
+	"github.com/vanilla-os/vib/api"
 	"plugin"
 )
-
-type Recipe struct {
-	Base          string `json:"base"`
-	Name          string
-	Id            string
-	SingleLayer   bool                   `json:"singlelayer"`
-	Labels        map[string]string      `json:"labels"`
-	Adds          map[string]string      `json:"adds"`
-	Args          map[string]string      `json:"args"`
-	Runs          []string               `json:"runs"`
-	Cmd           string                 `json:"cmd"`
-	Modules       map[string]interface{} `json:"modules"`
-	Path          string
-	ParentPath    string
-	DownloadsPath string
-	SourcesPath   string
-	Containerfile string
-}
 
 type Module struct {
 	Name    string `json:"name"`
@@ -41,6 +24,6 @@ type ModuleCommand struct {
 
 type Plugin struct {
 	Name         string
-	BuildFunc    func(interface{}) (string, error)
+	BuildFunc    func(interface{}, *api.Recipe) (string, error)
 	LoadedPlugin *plugin.Plugin
 }

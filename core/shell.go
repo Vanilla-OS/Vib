@@ -1,6 +1,11 @@
 package core
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/vanilla-os/vib/api"
+)
 
 type ShellModule struct {
 	Name     string `json:"name"`
@@ -8,7 +13,12 @@ type ShellModule struct {
 	Commands []string
 }
 
-func BuildShellModule(module ShellModule) (string, error) {
+func BuildShellModule(moduleInterface interface{}, _ *api.Recipe) (string, error) {
+	var module ShellModule
+	mapstructure.Decode(moduleInterface, &module)
+	fmt.Println(moduleInterface)
+	fmt.Println(module)
+	fmt.Println(module.Commands)
 	if len(module.Commands) == 0 {
 		return "", errors.New("no commands specified")
 	}

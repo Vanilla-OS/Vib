@@ -2,6 +2,9 @@ package core
 
 import (
 	"errors"
+	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/vanilla-os/vib/api"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,8 +15,8 @@ import (
 // LoadRecipe loads a recipe from a file and returns a Recipe
 // Does not validate the recipe but it will catch some errors
 // a proper validation will be done in the future
-func LoadRecipe(path string) (*Recipe, error) {
-	recipe := &Recipe{}
+func LoadRecipe(path string) (*api.Recipe, error) {
+	recipe := &api.Recipe{}
 
 	// we use the absolute path to the recipe file as the
 	// root path for the recipe and all its files
@@ -107,15 +110,22 @@ func LoadRecipe(path string) (*Recipe, error) {
 	}
 
 	// here we expand modules of type "includes"
-	var newRecipeModules map[string]interface{}
+	var newRecipeModules []interface{}
 
-	// cannot use the value from the second for loop here
-	// as it always gets reset and the first for loop would not reflect the amount properly
-	lenModules := 0
-	for _, module := range recipe.Modules {
+	for _, moduleInterface := range recipe.Modules {
 
-		if module.(map[string]interface{})["Type"] == "includes" {
-			include := module.(IncludesModule)
+		var module Module
+		err := mapstructure.Decode(moduleInterface, &module)
+		if err != nil {
+			return nil, err
+		}
+
+		if module.Type == "includes" {
+			var include IncludesModule
+			err := mapstructure.Decode(moduleInterface, &include)
+			if err != nil {
+				return nil, err
+			}
 
 			if len(include.Includes) == 0 {
 				return nil, errors.New("includes module must have at least one module to include")
@@ -123,19 +133,18 @@ func LoadRecipe(path string) (*Recipe, error) {
 
 			for _, include := range include.Includes {
 				includeModule, err := GenModule(filepath.Join(recipe.ParentPath, include+".yml"))
+				fmt.Printf("!!!!adding new module %s\n", includeModule)
 				if err != nil {
 					return nil, err
 				}
 
-				newRecipeModules[string(rune(lenModules))] = includeModule
-				lenModules += 1
+				newRecipeModules = append(newRecipeModules, includeModule)
 			}
 
 			continue
 		}
 
-		newRecipeModules[string(rune(lenModules))] = module.(map[string]interface{})
-		lenModules += 1
+		newRecipeModules = append(newRecipeModules, moduleInterface)
 	}
 
 	recipe.Modules = newRecipeModules

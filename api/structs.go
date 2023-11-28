@@ -11,3 +11,21 @@ type Source struct {
 	Paths    []string `json:"paths"`
 	Module   string
 }
+
+type Recipe struct {
+	Base          string `json:"base"`
+	Name          string
+	Id            string
+	SingleLayer   bool              `json:"singlelayer"`
+	Labels        map[string]string `json:"labels"`
+	Adds          map[string]string `json:"adds"`
+	Args          map[string]string `json:"args"`
+	Runs          []string          `json:"runs"`
+	Cmd           string            `json:"cmd"`
+	Modules       []interface{}     `json:"modules"`
+	Path          string
+	ParentPath    string
+	DownloadsPath string
+	SourcesPath   string
+	Containerfile string
+}

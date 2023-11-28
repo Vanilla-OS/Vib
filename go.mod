@@ -4,6 +4,8 @@ go 1.20
 
 require github.com/spf13/cobra v1.7.0
 
+require github.com/mitchellh/mapstructure v1.5.0 // indirect
+
 require (
 	github.com/google/uuid v1.3.0
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

@@ -2,12 +2,13 @@ package core
 
 import (
 	"fmt"
+	"github.com/vanilla-os/vib/api"
 	"plugin"
 )
 
 var openedPlugins map[string]Plugin
 
-func LoadPlugin(name string, module interface{}) (string, error) {
+func LoadPlugin(name string, module interface{}, recipe *api.Recipe) (string, error) {
 	pluginOpened := false
 	var buildModule Plugin
 	buildModule, pluginOpened = openedPlugins[name]
@@ -23,12 +24,12 @@ func LoadPlugin(name string, module interface{}) (string, error) {
 		if err != nil {
 			panic(err)
 		}
-		buildModule.BuildFunc = buildFunction.(func(interface{}) (string, error))
+		buildModule.BuildFunc = buildFunction.(func(interface{}, *api.Recipe) (string, error))
 		buildModule.LoadedPlugin = loadedPlugin
 
 		openedPlugins[name] = buildModule
 	}
 	fmt.Printf("Using plugin: %s\n", buildModule.Name)
-	fmt.Println(buildModule.BuildFunc(module))
-	return buildModule.BuildFunc(module)
+	fmt.Println(buildModule.BuildFunc(module, recipe))
+	return buildModule.BuildFunc(module, recipe)
 }

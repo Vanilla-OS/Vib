@@ -11,13 +11,14 @@ import (
 
 type AptModule struct {
 	Name   string     `json:"name"`
-	Type   string     `json:"name"`
+	Type   string     `json:"type"`
 	Source api.Source `json:"source"`
 }
 
 // BuildAptModule builds a module that installs packages
 // using the apt package manager
-func BuildAptModule(recipe *Recipe, module AptModule) (string, error) {
+func BuildAptModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
+	module := moduleInterface.(AptModule)
 	if len(module.Source.Packages) > 0 {
 		packages := ""
 		for _, pkg := range module.Source.Packages {
