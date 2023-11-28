@@ -83,6 +83,10 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 		return nil, err
 	}
 
+	// the plugins directory contains all plugins that vib can load
+	// and use for unknown modules in the recipe
+	recipe.PluginPath = filepath.Join(filepath.Dir(recipePath), "plugins")
+
 	// the includes directory is the place where we store all the
 	// files to be included in the container, this is useful for
 	// example to include configuration files. Each file must follow
