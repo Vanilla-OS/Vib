@@ -26,5 +26,6 @@ type Recipe struct {
 	ParentPath    string
 	DownloadsPath string
 	SourcesPath   string
+	PluginPath    string
 	Containerfile string
 }

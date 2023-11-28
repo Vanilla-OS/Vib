@@ -16,7 +16,7 @@ func LoadPlugin(name string, module interface{}, recipe *api.Recipe) (string, er
 		fmt.Println("Loading new plugin")
 		buildModule = Plugin{Name: name}
 		var err error
-		loadedPlugin, err := plugin.Open(fmt.Sprintf("./plugins/%s.so", name)) // TODO: Proper path resolving
+		loadedPlugin, err := plugin.Open(fmt.Sprintf("%s/%s.so", recipe.PluginPath, name))
 		if err != nil {
 			panic(err)
 		}
