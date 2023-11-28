@@ -9,6 +9,9 @@ import (
 var openedPlugins map[string]Plugin
 
 func LoadPlugin(name string, module interface{}, recipe *api.Recipe) (string, error) {
+    if openedPlugins == nil {
+        openedPlugins = make(map[string]Plugin)
+    }
 	pluginOpened := false
 	var buildModule Plugin
 	buildModule, pluginOpened = openedPlugins[name]
