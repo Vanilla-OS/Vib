@@ -201,7 +201,7 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 			if err != nil {
 				return "", err
 			}
-			commands = buildModule + " && " + commands
+			commands = commands + " && " + buildModule
 		}
 	}
 
@@ -211,49 +211,49 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 		if err != nil {
 			return "", err
 		}
-		commands = command + " && " + commands
+		commands = commands + " && " + command
 	case "cmake":
 		command, err := BuildCMakeModule(moduleInterface, recipe)
 		if err != nil {
 			return "", err
 		}
-		commands = command + " && " + commands
+		commands = commands + " && " + command
 	case "dpkg":
 		command, err := BuildDpkgModule(moduleInterface, recipe)
 		if err != nil {
 			return "", err
 		}
-		commands = command + " && " + commands
+		commands = commands + " && " + command
 	case "dpkg-buildpackage":
 		command, err := BuildDpkgBuildPkgModule(moduleInterface, recipe)
 		if err != nil {
 			return "", err
 		}
-		commands = command + " && " + commands
+		commands = commands + " && " + command
 	case "go":
 		command, err := BuildGoModule(moduleInterface, recipe)
 		if err != nil {
 			return "", err
 		}
-		commands = command + " && " + commands
+		commands = commands + " && " + command
 	case "make":
 		command, err := BuildMakeModule(moduleInterface, recipe)
 		if err != nil {
 			return "", err
 		}
-		commands = command + " && " + commands
+		commands = commands + " && " + command
 	case "meson":
 		command, err := BuildMesonModule(moduleInterface, recipe)
 		if err != nil {
 			return "", err
 		}
-		commands = command + " && " + commands
+		commands = commands + " && " + command
 	case "shell":
 		command, err := BuildShellModule(moduleInterface, recipe)
 		if err != nil {
 			return "", err
 		}
-		commands = command + " && " + commands
+		commands = commands + " && " + command
 	case "includes":
 		return "", nil
 	default:
@@ -261,8 +261,8 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 		if err != nil {
 			return "", err
 		}
-		commands = command + " && " + commands
+		commands = commands + " && " + command
 	}
 
-	return strings.TrimSuffix(commands, " && "), err
+	return strings.TrimPrefix(commands, " && "), err
 }
