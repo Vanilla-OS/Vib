@@ -1,6 +1,6 @@
 module github.com/vanilla-os/vib
 
-go 1.21.4
+go 1.21
 
 require github.com/spf13/cobra v1.7.0
 
