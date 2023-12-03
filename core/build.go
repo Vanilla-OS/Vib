@@ -2,44 +2,34 @@ package core
 
 import (
 	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/vanilla-os/vib/api"
 	"os"
+	"strings"
 )
 
 // BuildRecipe builds a Containerfile from a recipe path
-func BuildRecipe(recipePath string) (Recipe, error) {
+func BuildRecipe(recipePath string) (api.Recipe, error) {
 	// load the recipe
 	recipe, err := LoadRecipe(recipePath)
 	if err != nil {
-		return Recipe{}, err
+		return api.Recipe{}, err
 	}
 
 	fmt.Printf("Building recipe %s\n", recipe.Name)
 
-	// resolve (and download) the sources
-	modules, sources, err := ResolveSources(recipe)
-	if err != nil {
-		return Recipe{}, err
-	}
-
-	// move them to the sources directory so they can be
-	// used by the modules during the build
-	err = MoveSources(recipe, sources)
-	if err != nil {
-		return Recipe{}, err
-	}
-
 	// build the modules*
 	// * actually just build the commands that will be used
 	//   in the Containerfile to build the modules
-	cmds, err := BuildModules(recipe, modules)
+	cmds, err := BuildModules(recipe, recipe.Modules)
 	if err != nil {
-		return Recipe{}, err
+		return api.Recipe{}, err
 	}
 
 	// build the Containerfile
 	err = BuildContainerfile(recipe, cmds)
 	if err != nil {
-		return Recipe{}, err
+		return api.Recipe{}, err
 	}
 
 	return *recipe, nil
@@ -47,7 +37,7 @@ func BuildRecipe(recipePath string) (Recipe, error) {
 
 // BuildContainerfile builds a Containerfile from a recipe
 // and a list of modules commands
-func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
+func BuildContainerfile(recipe *api.Recipe, cmds []ModuleCommand) error {
 	containerfile, err := os.Create(recipe.Containerfile)
 	if err != nil {
 		return err
@@ -172,13 +162,16 @@ func BuildContainerfile(recipe *Recipe, cmds []ModuleCommand) error {
 }
 
 // BuildModules builds a list of modules commands from a list of modules
-func BuildModules(recipe *Recipe, modules []Module) ([]ModuleCommand, error) {
+func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, error) {
 	cmds := []ModuleCommand{}
+	for _, moduleInterface := range modules {
+		var module Module
+		err := mapstructure.Decode(moduleInterface, &module)
+		if err != nil {
+			return nil, err
+		}
 
-	for _, module := range modules {
-		fmt.Printf("Creating build command for %s\n", module.Name)
-
-		cmd, err := BuildModule(recipe, module)
+		cmd, err := BuildModule(recipe, moduleInterface)
 		if err != nil {
 			return nil, err
 		}
@@ -195,25 +188,81 @@ func BuildModules(recipe *Recipe, modules []Module) ([]ModuleCommand, error) {
 // BuildModule builds a module command from a module
 // this is done by calling the appropriate module builder
 // function based on the module type
-func BuildModule(recipe *Recipe, module Module) (string, error) {
+func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error) {
+	var module Module
+	err := mapstructure.Decode(moduleInterface, &module)
+	if err != nil {
+		return "", err
+	}
+	var commands string
+	if len(module.Modules) > 0 {
+		for _, nestedModule := range module.Modules {
+			buildModule, err := BuildModule(recipe, nestedModule)
+			if err != nil {
+				return "", err
+			}
+			commands = commands + " && " + buildModule
+		}
+	}
+
 	switch module.Type {
 	case "apt":
-		return BuildAptModule(recipe, module)
+		command, err := BuildAptModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = commands + " && " + command
 	case "cmake":
-		return BuildCMakeModule(module)
+		command, err := BuildCMakeModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = commands + " && " + command
 	case "dpkg":
-		return BuildDpkgModule(module)
+		command, err := BuildDpkgModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = commands + " && " + command
 	case "dpkg-buildpackage":
-		return BuildDpkgBuildPkgModule(module)
+		command, err := BuildDpkgBuildPkgModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = commands + " && " + command
 	case "go":
-		return BuildGoModule(module)
+		command, err := BuildGoModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = commands + " && " + command
 	case "make":
-		return BuildMakeModule(module)
+		command, err := BuildMakeModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = commands + " && " + command
 	case "meson":
-		return BuildMesonModule(module)
+		command, err := BuildMesonModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = commands + " && " + command
 	case "shell":
-		return BuildShellModule(module)
+		command, err := BuildShellModule(moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = commands + " && " + command
+	case "includes":
+		return "", nil
 	default:
-		return "", fmt.Errorf("unknown module type %s", module.Type)
+		command, err := LoadPlugin(module.Type, moduleInterface, recipe)
+		if err != nil {
+			return "", err
+		}
+		commands = commands + " && " + command
 	}
+
+	return strings.TrimPrefix(commands, " && "), err
 }

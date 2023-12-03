@@ -4,13 +4,26 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/mitchellh/mapstructure"
+	"github.com/vanilla-os/vib/api"
 	"os"
 	"path/filepath"
 )
 
+type AptModule struct {
+	Name   string     `json:"name"`
+	Type   string     `json:"type"`
+	Source api.Source `json:"source"`
+}
+
 // BuildAptModule builds a module that installs packages
 // using the apt package manager
-func BuildAptModule(recipe *Recipe, module Module) (string, error) {
+func BuildAptModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
+	var module AptModule
+	err := mapstructure.Decode(moduleInterface, &module)
+	if err != nil {
+		return "", err
+	}
 	if len(module.Source.Packages) > 0 {
 		packages := ""
 		for _, pkg := range module.Source.Packages {

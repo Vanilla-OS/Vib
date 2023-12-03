@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"github.com/vanilla-os/vib/api"
 	"os"
 	"os/exec"
 )
@@ -44,7 +45,7 @@ func CompileRecipe(recipePath string, runtime string) error {
 	return nil
 }
 
-func compileDocker(recipe Recipe, storePath string) error {
+func compileDocker(recipe api.Recipe, storePath string) error {
 	docker, err := exec.LookPath("docker")
 	if err != nil {
 		return err
@@ -64,7 +65,7 @@ func compileDocker(recipe Recipe, storePath string) error {
 	return cmd.Run()
 }
 
-func compilePodman(recipe Recipe, storePath string) error {
+func compilePodman(recipe api.Recipe, storePath string) error {
 	podman, err := exec.LookPath("podman")
 	if err != nil {
 		return err
