@@ -21,7 +21,7 @@ jobs:
     - name: Build
       run: |
         go get ./...
-        go build -o vib
+        go build -o vib -trimpath
 
     - name: Upload a Release Asset
       uses: softprops/action-gh-release@v1
