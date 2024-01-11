@@ -2,10 +2,11 @@ package core
 
 import (
 	"fmt"
-	"github.com/mitchellh/mapstructure"
-	"github.com/vanilla-os/vib/api"
 	"os"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/vanilla-os/vib/api"
 )
 
 // BuildRecipe builds a Containerfile from a recipe path
@@ -84,6 +85,17 @@ func BuildContainerfile(recipe *api.Recipe, cmds []ModuleCommand) error {
 			}
 		}
 	}
+
+	// EXPOSE
+	if recipe.Expose != 0 {
+		_, err = containerfile.WriteString(
+			fmt.Sprintf("EXPOSE %d\n", recipe.Expose),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
 	// ADDS
 	for key, value := range recipe.Adds {
 		_, err = containerfile.WriteString(
