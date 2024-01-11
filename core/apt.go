@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
-	"github.com/vanilla-os/vib/api"
 	"os"
 	"path/filepath"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/vanilla-os/vib/api"
 )
 
 type AptModule struct {

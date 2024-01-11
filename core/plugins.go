@@ -2,8 +2,9 @@ package core
 
 import (
 	"fmt"
-	"github.com/vanilla-os/vib/api"
 	"plugin"
+
+	"github.com/vanilla-os/vib/api"
 )
 
 var openedPlugins map[string]Plugin

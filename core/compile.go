@@ -2,9 +2,10 @@ package core
 
 import (
 	"fmt"
-	"github.com/vanilla-os/vib/api"
 	"os"
 	"os/exec"
+
+	"github.com/vanilla-os/vib/api"
 )
 
 // CompileRecipe compiles a recipe into a runnable image.

@@ -2,9 +2,10 @@ package core
 
 import (
 	"errors"
+	"strings"
+
 	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
-	"strings"
 )
 
 type ShellModule struct {

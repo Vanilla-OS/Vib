@@ -1,8 +1,9 @@
 package core
 
 import (
-	"github.com/vanilla-os/vib/api"
 	"plugin"
+
+	"github.com/vanilla-os/vib/api"
 )
 
 type Module struct {

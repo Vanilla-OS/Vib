@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/vanilla-os/vib/api"

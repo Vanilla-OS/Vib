@@ -2,11 +2,12 @@ package core
 
 import (
 	"errors"
-	"github.com/mitchellh/mapstructure"
-	"github.com/vanilla-os/vib/api"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/vanilla-os/vib/api"
 
 	"gopkg.in/yaml.v3"
 )
