@@ -130,27 +130,33 @@
         <div class="bg-gray-800 p-6 rounded-lg shadow-lg glass-effect overflow-x-auto">
             <pre class="text-xl text-gray-300">
 <code>base: debian:sid-slim
-labels:
-    maintainer: My Awesome Team
-args:
-    DEBIAN_FRONTEND: noninteractive
-runs:
-- echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
-modules: 
-    - name: 
-    type: go
-    source:
-        type: git
-        url: https://github.com/my-org/my-repo
-        branch: main
-        commit: latest
+    labels:
+      maintainer: My Awesome Team
+    args:
+      DEBIAN_FRONTEND: noninteractive
+    runs:
+      - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
     modules:
-    - name: golang
-        type: apt
+      - name: update
+        type: shell
+        commands:
+          - apt update
+      - name: vib
+        type: go
         source:
-        packages:
-            - golang
-                </code>
+          type: git
+          url: https://github.com/vanilla-os/vib
+          branch: main
+          commit: latest
+        buildVars:
+          GO_OUTPUT_BIN: /usr/bin/vib
+        modules:
+          - name: golang
+            type: apt
+            source:
+              packages:
+              - golang
+              - ca-certificates</code>
             </pre>
         </div>
     </section>
