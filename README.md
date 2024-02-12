@@ -1,6 +1,13 @@
-# Vib
-
-Vib (Vanilla Image Builder) is a tool that streamlines the creation of container images. It achieves this by enabling users to define a recipe consisting of a sequence of modules, each specifying a particular action required to build the image. These actions may include installing dependencies or compiling source code. 
+<div align="center">
+    <img src="docs/brand/logo/svg/full-mono-dark.svg#gh-light-mode-only" height="64">
+    <img src="docs/brand/logo/svg/full-mono-light.svg#gh-dark-mode-only" height="64">
+    <p>Vib (Vanilla Image Builder) is a tool that streamlines the creation of container images. It achieves this by enabling users to define a recipe consisting of a sequence of modules, each specifying a particular action required to build the image. These actions may include installing dependencies or compiling source code. 
+</p>
+    <hr />
+    <a href="https://hosted.weblate.org/engage/vanilla-os/">
+<img src="https://hosted.weblate.org/widgets/vanilla-os/-/first-setup/svg-badge.svg" alt="Stato traduzione" />
+</a>
+</div>
 
 > **Note:** This is a work in progress.
 
