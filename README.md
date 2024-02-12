@@ -6,9 +6,15 @@
     <hr />
 </div>
 
-Highly inspired by the Flatpak manifest format.
+## Links
+
+- [Website](https://vib.vanillaos.org/)
+- [Examples](https://vib.vanillaos.org/examples)
+- [Documentation](https://docs.vanillaos.org/collections/vib)
 
 ## Recipe Format
+
+Highly inspired by the Flatpak manifest format.
 
 A recipe is a YAML file that contains the image definitions, the commands to be executed during the build process and the list of modules to add resources to the image:
 
