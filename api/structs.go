@@ -29,4 +29,5 @@ type Recipe struct {
 	SourcesPath   string
 	PluginPath    string
 	Containerfile string
+	Entrypoint    []string
 }
