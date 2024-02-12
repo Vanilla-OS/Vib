@@ -170,6 +170,16 @@ func BuildContainerfile(recipe *api.Recipe, cmds []ModuleCommand) error {
 		}
 	}
 
+	// ENTRYPOINT
+	if len(recipe.Entrypoint) > 0 {
+		_, err = containerfile.WriteString(
+			fmt.Sprintf("ENTRYPOINT %s\n", strings.Join(recipe.Entrypoint, " ")),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
