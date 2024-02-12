@@ -23,6 +23,11 @@
         body {
             font-family: 'Outfit', sans-serif;
         }
+
+        pre code.hljs[data-highlighted] {
+            background-color: transparent;
+            padding: 0;
+        }
     </style>
 </head>
 
@@ -127,8 +132,8 @@
         <p class="text-xl mb-12 text-center">We choosed YAML as the format for recipes, because it's easy to read and
             write,
             and it's familiar to most developers.</p>
-        <div class="bg-gray-800 p-6 rounded-lg shadow-lg glass-effect overflow-x-auto">
-            <pre class="text-xl text-gray-300"><code>
+        <div class="bg-gray-800 px-6 rounded-lg shadow-lg glass-effect overflow-x-auto">
+            <pre class="text-xl text-gray-300"><code class="language-yaml">
 base: debian:sid-slim
 labels:
     maintainer: My Awesome Team
@@ -141,6 +146,7 @@ modules:
       type: shell
       commands:
         - apt update
+        
     - name: vib
       type: go
       source:
@@ -200,7 +206,9 @@ modules:
             }
         });
     </script>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/a11y-dark.min.css" />
+    <script>hljs.highlightAll();</script>
 </body>
 
 </html>
