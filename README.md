@@ -6,8 +6,6 @@
     <hr />
 </div>
 
-> **Note:** This is a work in progress.
-
 Highly inspired by the Flatpak manifest format.
 
 ## Recipe Format
