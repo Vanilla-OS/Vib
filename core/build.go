@@ -230,58 +230,26 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 		}
 	}
 
-	switch module.Type {
-	case "apt":
-		command, err := BuildAptModule(moduleInterface, recipe)
+	moduleBuilders := map[string]func(interface{}, *api.Recipe) (string, error){
+		"apt":               BuildAptModule,
+		"dnf":               BuildDnfModule,
+		"cmake":             BuildCMakeModule,
+		"dpkg":              BuildDpkgModule,
+		"dpkg-buildpackage": BuildDpkgBuildPkgModule,
+		"go":                BuildGoModule,
+		"make":              BuildMakeModule,
+		"meson":             BuildMesonModule,
+		"shell":             BuildShellModule,
+		"includes":          func(interface{}, *api.Recipe) (string, error) { return "", nil },
+	}
+
+	if moduleBuilder, ok := moduleBuilders[module.Type]; ok {
+		command, err := moduleBuilder(moduleInterface, recipe)
 		if err != nil {
 			return "", err
 		}
 		commands = commands + " && " + command
-	case "cmake":
-		command, err := BuildCMakeModule(moduleInterface, recipe)
-		if err != nil {
-			return "", err
-		}
-		commands = commands + " && " + command
-	case "dpkg":
-		command, err := BuildDpkgModule(moduleInterface, recipe)
-		if err != nil {
-			return "", err
-		}
-		commands = commands + " && " + command
-	case "dpkg-buildpackage":
-		command, err := BuildDpkgBuildPkgModule(moduleInterface, recipe)
-		if err != nil {
-			return "", err
-		}
-		commands = commands + " && " + command
-	case "go":
-		command, err := BuildGoModule(moduleInterface, recipe)
-		if err != nil {
-			return "", err
-		}
-		commands = commands + " && " + command
-	case "make":
-		command, err := BuildMakeModule(moduleInterface, recipe)
-		if err != nil {
-			return "", err
-		}
-		commands = commands + " && " + command
-	case "meson":
-		command, err := BuildMesonModule(moduleInterface, recipe)
-		if err != nil {
-			return "", err
-		}
-		commands = commands + " && " + command
-	case "shell":
-		command, err := BuildShellModule(moduleInterface, recipe)
-		if err != nil {
-			return "", err
-		}
-		commands = commands + " && " + command
-	case "includes":
-		return "", nil
-	default:
+	} else {
 		command, err := LoadPlugin(module.Type, moduleInterface, recipe)
 		if err != nil {
 			return "", err
