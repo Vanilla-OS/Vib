@@ -95,12 +95,15 @@ vib build vib.yaml
 to turn your recipe into a Containerfile. Use that file to build the container image with your container engine. To streamline the process, you can use the `compile` command to build the container image directly:
 
 ```bash
-vib compile vib.yaml docker
+vib compile vib.yaml --runtime docker
 ```
 
-changing `docker` with the container engine you have installed.
+changing `docker` with the container engine you have installed. Both `docker` and `podman` are supported. If you leave out the `--runtime` flag, Vib will use the default container engine giving priority to Docker.
 
-The generated `Containerfile` is compatible with any container engine that supports the OCI format, so you can use it with any container engine that supports this standard. Refer to your container engine's documentation for further information.
+> **Note:**
+> For versions of Vib prior to 0.5.0, the syntax of the `compile` command was different. The `--runtime` flag was not available, and the command was `vib compile vib.yaml docker`.
+
+The generated `Containerfile` is compatible with both Docker and Podman.
 
 ## Next Steps
 
