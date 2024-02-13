@@ -26,9 +26,12 @@ To keep this article concise, we'll cover only the fields that are specific to e
 - [Meson](#meson)
 - [Shell](#shell)
 
-## Apt
+## Apt, Dnf
 
-The Apt module allow to install packages using the APT package manager using the repositories configured in the image. It's suitable for Debian-based distributions.
+This module allow to install packages using the package manager using the repositories configured in the image. You can change the package manager by changing the value of the `type` field. The following are currently supported:
+
+- `apt`: Debian-based systems.
+- `dnf`: Red Hat-based systems.
 
 The following specific fields are available:
 
@@ -38,7 +41,7 @@ The following specific fields are available:
 
 ```yaml
 - name: install-utils
-  type: apt
+  type: apt # or any other supported package manager
   source:
     packages:
       - curl
@@ -49,7 +52,7 @@ In the context of this module, this directive also supports the `packages` and `
 
 ```yaml
 - name: install-utils
-  type: apt
+  type: apt # or any other supported package manager
   source:
     paths:
       - "./utils.inst"
