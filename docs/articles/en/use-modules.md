@@ -79,8 +79,8 @@ modules:
 Supported fields for a git source are:
 
 - `tag`: the tag to checkout, collides with `branch` and `commit`.
-- `branch`: the branch to checkout, collides with `tag` and `commit`.
-- `commit`: the commit to checkout, collides with `tag` and `branch`.
+- `branch`: the branch to checkout, collides with `tag`.
+- `commit`: the commit to checkout, collides with `tag` and `branch`. It can be a commit hash or `latest` to checkout the latest commit.
 
 ## Built-in Modules
 
