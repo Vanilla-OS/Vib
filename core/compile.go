@@ -15,22 +15,14 @@ func CompileRecipe(recipePath string, runtime string) error {
 		return err
 	}
 
-	storePath := fmt.Sprintf("%s/%s", os.Getenv("HOME"), ".vib/store")
-	if _, err := os.Stat(storePath); os.IsNotExist(err) {
-		err = os.MkdirAll(storePath, 0755)
-		if err != nil {
-			return err
-		}
-	}
-
 	switch runtime {
 	case "docker":
-		err = compileDocker(recipe, storePath)
+		err = compileDocker(recipe)
 		if err != nil {
 			return err
 		}
 	case "podman":
-		err = compilePodman(recipe, storePath)
+		err = compilePodman(recipe)
 		if err != nil {
 			return err
 		}
@@ -40,13 +32,12 @@ func CompileRecipe(recipePath string, runtime string) error {
 		return fmt.Errorf("no runtime specified and the prometheus library is not implemented yet")
 	}
 
-	fmt.Printf("Image %s built successfully\n", recipe.Id)
-	fmt.Printf("Remember to point %s to %s\n", runtime, storePath)
+	fmt.Printf("Image %s built successfully using %s\n", recipe.Id, runtime)
 
 	return nil
 }
 
-func compileDocker(recipe api.Recipe, storePath string) error {
+func compileDocker(recipe api.Recipe) error {
 	docker, err := exec.LookPath("docker")
 	if err != nil {
 		return err
@@ -56,7 +47,6 @@ func compileDocker(recipe api.Recipe, storePath string) error {
 		docker, "build",
 		"-t", recipe.Id,
 		"-f", recipe.Containerfile,
-		"--root", storePath,
 		".",
 	)
 	cmd.Stdout = os.Stdout
@@ -66,7 +56,7 @@ func compileDocker(recipe api.Recipe, storePath string) error {
 	return cmd.Run()
 }
 
-func compilePodman(recipe api.Recipe, storePath string) error {
+func compilePodman(recipe api.Recipe) error {
 	podman, err := exec.LookPath("podman")
 	if err != nil {
 		return err
@@ -76,7 +66,6 @@ func compilePodman(recipe api.Recipe, storePath string) error {
 		podman, "build",
 		"-t", recipe.Id,
 		"-f", recipe.Containerfile,
-		"--root", storePath,
 		".",
 	)
 	cmd.Stdout = os.Stdout

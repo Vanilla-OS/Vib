@@ -33,6 +33,9 @@ func BuildRecipe(recipePath string) (api.Recipe, error) {
 		return api.Recipe{}, err
 	}
 
+	fmt.Printf("Recipe %s built successfully\n", recipe.Name)
+	fmt.Printf("Processed %d modules\n", len(recipe.Modules))
+
 	return *recipe, nil
 }
 

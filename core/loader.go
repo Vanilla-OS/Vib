@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -176,4 +177,17 @@ func GenModule(modulePath string) (map[string]interface{}, error) {
 	}
 
 	return module, nil
+}
+
+// TestRecipe validates a recipe by loading it and checking for errors
+func TestRecipe(path string) (*api.Recipe, error) {
+	recipe, err := LoadRecipe(path)
+	if err != nil {
+		fmt.Printf("Error validating recipe: %s\n", err)
+		return nil, err
+	}
+
+	fmt.Printf("Recipe %s validated successfully\n", recipe.Id)
+	fmt.Printf("Found %d modules\n", len(recipe.Modules))
+	return recipe, nil
 }
