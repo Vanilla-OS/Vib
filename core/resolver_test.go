@@ -5,26 +5,24 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/vanilla-os/vib/core"
+	"github.com/vanilla-os/vib/api"
 )
 
 func TestDownloadSource(t *testing.T) {
-	recipe := &core.Recipe{
-		DownloadsPath: "/tmp/",
-	}
-	source := core.Source{
+	tmp := t.TempDir()
+
+	source := api.Source{
 		Type:     "tar",
 		URL:      "https://github.com/Vanilla-OS/Vib/archive/refs/tags/v0.3.1.tar.gz",
-		Module:   "example",
 		Checksum: "d28ab888c7b30fd1cc01e0a581169ea52dfb5bfcefaca721497f82734b6a5a98",
 	}
-	err := core.DownloadSource(recipe, source)
+	err := api.DownloadSource(tmp, source, "test")
 	if err != nil {
 		t.Errorf("DownloadSource returned an error: %v", err)
 	}
 
 	// Check if the file was downloaded
-	dest := filepath.Join(recipe.DownloadsPath, source.Module)
+	dest := filepath.Join(tmp, "test")
 	if _, err := os.Stat(dest); os.IsNotExist(err) {
 		t.Errorf("Downloaded file does not exist: %v", err)
 	}
@@ -32,22 +30,20 @@ func TestDownloadSource(t *testing.T) {
 }
 
 func TestDownloadTarSource(t *testing.T) {
-	recipe := &core.Recipe{
-		DownloadsPath: "/tmp/",
-	}
-	source := core.Source{
+	tmp := t.TempDir()
+
+	source := api.Source{
 		Type:     "tar",
 		URL:      "https://github.com/Vanilla-OS/Vib/archive/refs/tags/v0.3.1.tar.gz",
-		Module:   "example",
 		Checksum: "d28ab888c7b30fd1cc01e0a581169ea52dfb5bfcefaca721497f82734b6a5a98",
 	}
-	err := core.DownloadTarSource(recipe, source)
+	err := api.DownloadTarSource(tmp, source, "test2")
 	if err != nil {
 		t.Errorf("DownloadTarSource returned an error: %v", err)
 	}
 
 	// Check if the file was downloaded
-	dest := filepath.Join(recipe.DownloadsPath, source.Module)
+	dest := filepath.Join(tmp, "test2")
 	if _, err := os.Stat(dest); os.IsNotExist(err) {
 		t.Errorf("Downloaded file does not exist: %v", err)
 	}
