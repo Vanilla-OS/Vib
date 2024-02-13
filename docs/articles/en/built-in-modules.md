@@ -17,7 +17,7 @@ To keep this article concise, we'll cover only the fields that are specific to e
 
 ## Summary
 
-- [Apt](#apt)
+- [Package manager](#package-manager)
 - [CMake](#cmake)
 - [Dpkg-buildpackage](#dpkg-buildpackage)
 - [Dpkg](#dpkg)
@@ -26,7 +26,7 @@ To keep this article concise, we'll cover only the fields that are specific to e
 - [Meson](#meson)
 - [Shell](#shell)
 
-## Apt, Dnf
+## Package manager
 
 This module allow to install packages using the package manager using the repositories configured in the image. You can change the package manager by changing the value of the `type` field. The following are currently supported:
 
