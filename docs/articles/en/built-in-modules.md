@@ -45,18 +45,18 @@ The following specific fields are available:
       - git
 ```
 
-In the context of this module, this directive also supports the `packages` and `paths` fields. The `packages` field is a list of package names to install, while the `paths` field is a list of paths to files containing package names each on a new line:
+In the context of this module, this directive also supports the `packages` and `paths` fields. The `packages` field is a list of package names to install, while the `paths` field is a list of paths to `.inst` files containing package names each on a new line:
 
 ```yaml
 - name: install-utils
   type: apt
   source:
     paths:
-      - "./utils"
-      - "./more-utils"
+      - "./utils.inst"
+      - "./more-utils.inst"
 ```
 
-where `utils` and `more-utils` follow the format:
+where `utils.inst` and `more-utils.inst` follow the format:
 
 ```plaintext
 curl
