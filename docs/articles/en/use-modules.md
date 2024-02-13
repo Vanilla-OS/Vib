@@ -52,7 +52,7 @@ You will find that some modules has a common `source` field, this instructs Vib 
 
 In the above example we define a `shell` module that downloads a tarball from a GitHub release and then copies the binaries to `/usr/bin`. A source can be of two types:
 
-- `tar`: a tarball archive.
+- `tar`: a tarball archive. It can also define a `Checksum` field to verify the integrity of the downloaded file using a `sha256` hash.
 - `git`: a Git repository.
 
 In the latter case, you can specify the branch, tag or commit to checkout like this:
