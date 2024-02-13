@@ -30,7 +30,7 @@ func validateCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf(
-		"Recipe %s lookgs valid.\nNote that this is not a full validation (yet).\n)",
+		"Recipe %s looks valid.\nNote that this is not a full validation (yet).\n)",
 		recipe.Name,
 	)
 	return nil
