@@ -24,7 +24,7 @@ As you can see, a recipe has three main entities:
 
 We think of this structure as a set of layers, the base is the bottom layer, the recipe is the middle layer since we build it on top of the base, and the modules are the top layer, since we use them to build the recipe.
 
-To get more information about the structure of a recipe and its fields, please refer to the [recipe structure](/docs/articles/en/recipe-structure) article.
+To get more information about the structure of a recipe and its fields, please refer to the [recipe structure](/vib/en/recipe-structure) article.
 
 ## Architecture of a Module
 
@@ -88,8 +88,8 @@ Supported fields for a git source are:
 
 ## Built-in Modules
 
-Vib comes with a set of predefined modules that you can use in your recipes. You can find the list of available modules in the [list of modules](/docs/articles/en/built-in-modules) article.
+Vib comes with a set of predefined modules that you can use in your recipes. You can find the list of available modules in the [list of modules](/vib/en/built-in-modules) article.
 
 ## Custom Modules via Plugins
 
-You can also extend Vib with custom modules by writing a plugin. Please refer to [making a plugin](/docs/articles/en/make-plugin) for more information.
+You can also extend Vib with custom modules by writing a plugin. Please refer to [making a plugin](/vib/en/make-plugin) for more information.

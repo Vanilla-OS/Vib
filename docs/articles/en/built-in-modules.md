@@ -13,7 +13,7 @@ Tags:
 
 Vib supports a variety of built-in modules that you can use to build your recipes. These modules are designed to automate common tasks, such as installing packages, building software, and running custom scripts.
 
-Before proceeding, make sure to familiarize yourself with [how modules work](/articles/en/use-modules) since this article assumes you have a basic understanding of the module structure and how to use them in your recipes.
+Before proceeding, make sure to familiarize yourself with [how modules work](/vib/en/use-modules) since this article assumes you have a basic understanding of the module structure and how to use them in your recipes.
 
 To keep this article concise, we'll cover only the fields that are specific to each module type, so `name`, `type` and `source` will be omitted if they don't have any specific fields.
 

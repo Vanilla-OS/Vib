@@ -81,6 +81,6 @@ The modules block contains a list of modules to use in the recipe. Each module i
   # specific fields for the module type
 ```
 
-Refer to the [Use Modules](/docs/articles/en/use-modules) article for more information on how to use modules in a recipe and [Built-in Modules](/docs/articles/en/built-in-modules) for a list of the built-in modules and their specific fields.
+Refer to the [Use Modules](/vib/en/use-modules) article for more information on how to use modules in a recipe and [Built-in Modules](/vib/en/built-in-modules) for a list of the built-in modules and their specific fields.
 
-You can also write your own modules by making a Vib plugin, see the [Making a Plugin](/docs/articles/en/making-plugin) article for more information.
+You can also write your own modules by making a Vib plugin, see the [Making a Plugin](/vib/en/making-plugin) article for more information.
