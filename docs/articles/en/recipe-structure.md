@@ -54,6 +54,11 @@ The metadata block contains the following mandatory fields:
 The following fields are optional:
 
 - `id`: the ID of the image, can be used by platforms like [Atlas](https://images.vanillaos.org/#/) to identify the image.
+
+## Configuration
+
+The configuration block contains the following optional fields:
+
 - `singlelayer`: a boolean value that indicates if the image should be built as a single layer. This is useful in some cases to reduce the size of the image (e.g. when building an image using a rootfs, an example [here](https://github.com/Vanilla-OS/pico-image/blob/5b0e064677f78f6e89d619dcb4df4e585bef378f/recipe.yml)).
 - `labels`: a map of labels to apply to the image, useful to add metadata to the image that can be read by the container runtime.
 - `adds`: a list of files or directories to add to the image, useful to include files in the image that are not part of the source code (the preferred way to include files in the image is to use the `includes.container/` directory, see [Project Structure](/docs/articles/en/project-structure)).
