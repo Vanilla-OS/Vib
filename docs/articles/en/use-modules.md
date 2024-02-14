@@ -22,6 +22,8 @@ As you can see, a recipe has three main entities:
 
 We think of this structure as a set of layers, the base is the bottom layer, the recipe is the middle layer since we build it on top of the base, and the modules are the top layer, since we use them to build the recipe.
 
+To get more information about the structure of a recipe and its fields, please refer to the [recipe structure](/docs/articles/en/recipe-structure) article.
+
 ## Architecture of a Module
 
 A module is a YAML snippet that defines a set of instructions, the common structure is:
