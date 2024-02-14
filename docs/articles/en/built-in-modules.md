@@ -4,6 +4,8 @@ Description: Learn about the built-in modules that come with Vib and how to use 
 PublicationDate: 2024-02-13
 Authors:
   - mirkobrombin
+Tags:
+  - modules
 ---
 
 > **Note**

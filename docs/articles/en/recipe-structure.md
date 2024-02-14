@@ -4,6 +4,9 @@ Description: Learn about the structure of a Vib recipe.
 PublicationDate: 2024-02-13
 Authors:
   - mirkobrombin
+Tags:
+  - modules
+  - recipe
 ---
 
 A Vib recipe is a YAML file that contains the instructions to build a container image. It's composed of three blocks:

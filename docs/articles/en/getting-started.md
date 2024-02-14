@@ -4,6 +4,8 @@ Description: How to start using Vib to build your Container images.
 PublicationDate: 2024-02-11
 Authors:
   - mirkobrombin
+Tags:
+  - getting-started
 ---
 
 Vib is a powerful tool that allows you to create container images using a YAML recipe that defines the necessary steps to build the image through the use of predefined or custom modules.

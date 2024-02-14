@@ -4,6 +4,8 @@ Description: How to structure your Vib project.
 PublicationDate: 2024-02-13
 Authors:
   - mirkobrombin
+Tags:
+  - project
 ---
 
 Vib only requires a `vib.yaml` file to build in the root of your project. However, to take full advantage of Vib, you can follow a specific project structure.

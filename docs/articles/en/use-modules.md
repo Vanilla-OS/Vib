@@ -4,6 +4,8 @@ Description: How to use predefined and custom modules in your Vib recipes.
 PublicationDate: 2024-02-13
 Authors:
   - mirkobrombin
+Tags:
+  - modules
 ---
 
 Modules are a fundamental part of Vib, likely the thing you will interact with the most. We can see them as the building blocks of your container image, each one performing a specific task.
