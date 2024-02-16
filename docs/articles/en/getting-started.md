@@ -109,6 +109,6 @@ The generated `Containerfile` is compatible with both Docker and Podman.
 
 ## Next Steps
 
-Now that you've learned how to create a container image with Vib, you can start experimenting with predefined and custom modules to create more complex container images. Check out the [documentation](/vib) for more information on all of Vib's features.
+Now that you've learned how to create a container image with Vib, you can start experimenting with predefined and custom modules to create more complex container images. Check out the [documentation](/collections/vib) for more information on all of Vib's features.
 
 We recommend starting with the documentation on the [recommended structure of a Vib project](/vib/en/project-structure) to understand how to best leverage Vib in your projects.
