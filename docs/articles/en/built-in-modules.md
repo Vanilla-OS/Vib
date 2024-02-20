@@ -68,6 +68,32 @@ curl
 git
 ```
 
+### Apt
+
+The `apt` module, since Vib v.0.5.0, has some additional fields under the `options` key:
+
+- noRecommends: If set to `true`, the recommended packages will not be installed.
+- installSuggestions: If set to `true`, the suggested packages will be installed.
+- fixMissing: If set to `true`, the package manager will attempt to fix broken dependencies.
+- fixBroken: If set to `true`, the package manager will attempt to fix broken packages.
+
+```yaml
+- name: install-utils
+  type: apt
+  source:
+    packages:
+      - curl
+      - git
+  options:
+    noRecommends: true
+    installSuggestions: true
+    fixMissing: true
+    fixBroken: true
+```
+
+> **Note**
+> The above options if set to `false`, might still be overridden by the package manager's configuration.
+
 ## CMake
 
 The CMake module builds a project using the CMake build system. It's suitable for projects that use CMake as their build configuration tool.
