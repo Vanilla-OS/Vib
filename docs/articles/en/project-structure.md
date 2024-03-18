@@ -78,3 +78,13 @@ As you can see in the above example, we are explicitly including each module in 
 As mentioned, the `includes.container` directory contains the files to be included in the image. This directory is useful to include files that are not part of the project, for example, configuration files, desktop files, or any other file you want to include in the image.
 
 This is useful expecially when you need to configure the Linux system with custom configuration files or new systemd services.
+
+### Use the `adds` Directive
+
+Optionally, you can use the `adds` directive to include more directories and files in the image:
+
+```yaml
+adds:
+  - extra-files/
+  - /etc/my-config-file
+```
