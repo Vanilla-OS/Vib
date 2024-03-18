@@ -1,7 +1,7 @@
 base: debian:sid-slim
 name: Vib Example
 id: vib-example
-singlelayer: true
+singlelayer: false
 labels:
   maintainer: Vanilla OS Contributors
 args:
@@ -32,6 +32,10 @@ modules:
     paths:
     - inst/00-test
 
-- name: packages-modules
-  type: gen-modules
-  path: modules
+- name: include-modules
+  type: includes
+  includes:
+    - modules/00-net.yml
+    - modules/10-editor.yml
+    - https://raw.githubusercontent.com/Vanilla-OS/core-image/main/modules/00-vanilla-abroot.yml
+    - gh:vanilla-os/core-image:main:modules/00-vanilla-apx.yml

@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
@@ -137,7 +139,28 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 			}
 
 			for _, include := range include.Includes {
-				includeModule, err := GenModule(filepath.Join(recipe.ParentPath, include+".yml"))
+				var modulePath string
+
+				// in case of a remote include, we need to download the
+				// recipe before including it
+				if include[:4] == "http" {
+					fmt.Printf("Downloading recipe from %s\n", include)
+					modulePath, err = downloadRecipe(include)
+					if err != nil {
+						return nil, err
+					}
+				} else if followsGhPattern(include) {
+					// if the include follows the github pattern, we need to
+					// download the recipe from the github repository
+					modulePath, err = downloadGhRecipe(include)
+					if err != nil {
+						return nil, err
+					}
+				} else {
+					modulePath = filepath.Join(recipe.ParentPath, include)
+				}
+
+				includeModule, err := GenModule(modulePath)
 				if err != nil {
 					return nil, err
 				}
@@ -154,6 +177,56 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 	recipe.Modules = newRecipeModules
 
 	return recipe, nil
+}
+
+// downloadRecipe downloads a recipe from a remote URL and stores it to
+// a temporary file
+func downloadRecipe(url string) (path string, err error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	tmpFile, err := os.CreateTemp("", "vib-recipe-")
+	if err != nil {
+		return "", err
+	}
+	defer tmpFile.Close()
+
+	_, err = io.Copy(tmpFile, resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	return tmpFile.Name(), nil
+}
+
+// followsGhPattern checks if a given path follows the pattern:
+// gh:org/repo:branch:path
+func followsGhPattern(s string) bool {
+	parts := strings.Split(s, ":")
+	if len(parts) != 4 {
+		return false
+	}
+
+	if parts[0] != "gh" {
+		return false
+	}
+
+	return true
+}
+
+// downloadGhRecipe downloads a recipe from a github repository and stores it to
+// a temporary file
+func downloadGhRecipe(gh string) (path string, err error) {
+	parts := strings.Split(gh, ":")
+	repo := parts[1]
+	branch := parts[2]
+	file := parts[3]
+
+	url := fmt.Sprintf("https://raw.githubusercontent.com/%s/%s/%s", repo, branch, file)
+	return downloadRecipe(url)
 }
 
 // GenModule generate a Module struct from a module path
