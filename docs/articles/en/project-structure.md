@@ -71,6 +71,18 @@ You can define your modules directly in the recipe file but the above structure 
     - modules/myproject.yaml
 ```
 
+#### Remote Modules
+
+Vib has support for remote modules, you can include them in the recipe file using the module URL or the `gh` pattern:
+
+```yaml
+- name: deps-modules
+  type: includes
+  includes:
+    - https://my-repo.com/modules/node.yaml
+    - gh:my-org/my-repo/modules/python.yaml
+```
+
 As you can see in the above example, we are explicitly including each module in the recipe file and not pointing to the whole modules directory. This is because the `include` module ensure each module gets included in the exact order you specify, ensuring the build process is predictable.
 
 ### Usecase of the includes.container Directory
