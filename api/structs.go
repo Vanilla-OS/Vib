@@ -17,6 +17,7 @@ type Recipe struct {
 	Id            string
 	SingleLayer   bool              `json:"singlelayer"`
 	Labels        map[string]string `json:"labels"`
+	Env           map[string]string `json:"env"`
 	Adds          map[string]string `json:"adds"`
 	Args          map[string]string `json:"args"`
 	Runs          []string          `json:"runs"`

@@ -67,6 +67,16 @@ func BuildContainerfile(recipe *api.Recipe, cmds []ModuleCommand) error {
 		}
 	}
 
+	// ENV
+	for key, value := range recipe.Env {
+		_, err = containerfile.WriteString(
+			fmt.Sprintf("ENV %s=%s\n", key, value),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
 	// ARGS
 	for key, value := range recipe.Args {
 		_, err = containerfile.WriteString(
