@@ -20,7 +20,7 @@ type Recipe struct {
 	Adds          map[string]string `json:"adds"`
 	Args          map[string]string `json:"args"`
 	Runs          []string          `json:"runs"`
-	Expose        int               `json:"expose"`
+	Expose        map[string]string `json:"expose"`
 	Cmd           string            `json:"cmd"`
 	Modules       []interface{}     `json:"modules"`
 	Path          string

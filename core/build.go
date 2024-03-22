@@ -90,9 +90,9 @@ func BuildContainerfile(recipe *api.Recipe, cmds []ModuleCommand) error {
 	}
 
 	// EXPOSE
-	if recipe.Expose != 0 {
+	for key, value := range recipe.Expose {
 		_, err = containerfile.WriteString(
-			fmt.Sprintf("EXPOSE %d\n", recipe.Expose),
+			fmt.Sprintf("EXPOSE %s/%s\n", key, value),
 		)
 		if err != nil {
 			return err
