@@ -12,6 +12,9 @@ Modules are a fundamental part of Vib, likely the thing you will interact with t
 
 ## Familiarize with Vib Recipes
 
+> **Note**
+> Stages were introduced in Vib v0.6.0, if you are using an older version, please keep in mind all the stage's fields are at the top level of the recipe, so no multiple stages are supported.
+
 Before diving into the modules, it's important to understand the structure of a Vib recipe.
 
 ![Vib Recipe Structure](https://vib.vanillaos.org/uploads/vib-recipe-structure.png)

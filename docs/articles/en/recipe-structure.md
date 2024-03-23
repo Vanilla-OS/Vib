@@ -9,6 +9,9 @@ Tags:
   - recipe
 ---
 
+> **Note**
+> Stages were introduced in Vib v0.6.0, if you are using an older version, please keep in mind all the stage's fields are at the top level of the recipe, so no multiple stages are supported.
+
 A Vib recipe is a YAML file that contains the instructions to build a container image. It's composed of two blocks:
 
 - metadata
