@@ -110,3 +110,25 @@ The modules block contains a list of modules to use in the recipe. Each module i
 Refer to the [Use Modules](/vib/en/use-modules) article for more information on how to use modules in a recipe and [Built-in Modules](/vib/en/built-in-modules) for a list of the built-in modules and their specific fields.
 
 You can also write your own modules by making a Vib plugin, see the [Making a Plugin](/vib/en/making-plugin) article for more information.
+
+### Copying files between stages
+
+You can copy files between stages using the `copy` field. This consist in a list of files or directories to copy from another stage. Each item in the list is a YAML snippet that defines the source and destination of the copy operation. The common structure is:
+
+```yaml
+- from: stage-id-to-copy-from
+  paths:
+    - src: /path/to/source
+      dst: /path/to/destination
+```
+
+For example, to copy the `/path/to/output` directory from the `build` stage to the `/app` directory in the `dist` stage, you can use the following snippet:
+
+```yaml
+- from: build
+  paths:
+    - src: /path/to/output
+      dst: /app
+```
+
+so it becomes available in the `dist` stage.
