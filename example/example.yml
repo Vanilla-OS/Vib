@@ -1,41 +1,70 @@
-base: debian:sid-slim
 name: Vib Example
 id: vib-example
-singlelayer: false
-labels:
-  maintainer: Vanilla OS Contributors
-args:
-  DEBIAN_FRONTEND: noninteractive
-runs:
-- echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
+stages:
+  - id: build
+    base: debian:sid-slim
+    singlelayer: false
+    labels:
+      maintainer: Vanilla OS Contributors
+    args:
+      DEBIAN_FRONTEND: noninteractive
+    runs:
+    - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
 
-modules:
-- name: abroot-git
-  type: go
-  buildvars:
-    GO_OUTPUT_BIN: "/usr/local/bin/abroot"
-  source:
-    url: https://github.com/vanilla-os/abroot.git
-    type: git
-    branch: main
-    commit: efb997f0eeb67deaa5940f7c31a19fe2101d3d49
-  modules:
-  - name: libbtrfs-dev
-    type: apt
-    source:
-      packages:
-      - libbtrfs-dev
+    modules:
+    - name: update-repo
+      type: shell
+      commands:
+      - apt-get update
       
-- name: packages
-  type: apt
-  source:
-    paths:
-    - inst/00-test
+    - name: abroot-git
+      type: go
+      buildvars:
+        GO_OUTPUT_BIN: "/usr/local/bin/abroot"
+      source:
+        url: https://github.com/vanilla-os/abroot.git
+        type: git
+        branch: main
+        commit: efb997f0eeb67deaa5940f7c31a19fe2101d3d49
+      modules:
+      - name: abroot-deps
+        type: apt
+        source:
+          packages:
+          - libbtrfs-dev
+          - golang-go
+          
+    - name: packages
+      type: apt
+      source:
+        paths:
+        - inst/00-test
 
-- name: include-modules
-  type: includes
-  includes:
-    - modules/00-net.yml
-    - modules/10-editor.yml
-    - https://raw.githubusercontent.com/Vanilla-OS/core-image/main/modules/00-vanilla-abroot.yml
-    - gh:vanilla-os/core-image:main:modules/00-vanilla-apx.yml
+    - name: include-modules
+      type: includes
+      includes:
+        - modules/00-net.yml
+        - modules/10-editor.yml
+        - https://raw.githubusercontent.com/Vanilla-OS/core-image/main/modules/00-vanilla-abroot.yml
+        - gh:vanilla-os/core-image:main:modules/00-vanilla-apx.yml
+
+  - id: test
+    base: debian:sid-slim
+    singlelayer: false
+    labels:
+      maintainer: Vanilla OS Contributors
+    args:
+      DEBIAN_FRONTEND: noninteractive
+    runs:
+    - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
+    copy:
+      - from: build
+        paths:
+          - src: /usr/local/bin/abroot
+            dst: /usr/local/bin/abroot
+
+    modules:
+    - name: test
+      type: shell
+      commands:
+      - ls -l /usr/local/bin/abroot

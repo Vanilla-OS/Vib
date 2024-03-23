@@ -16,13 +16,12 @@ Before diving into the modules, it's important to understand the structure of a 
 
 ![Vib Recipe Structure](https://vib.vanillaos.org/uploads/vib-recipe-structure.png)
 
-As you can see, a recipe has three main entities:
+As you can see, a recipe has two main entities:
 
-- **Base**: the base image to start from, can be any Docker image from any registry or even `scratch`.
 - **Recipe**: your recipe, the YAML file that contains the instructions to build the image.
-- **Modules**: the modules used in the recipe.
+- **Stages**: one or more stages that define a set of operations to perform. Each stage can have a set of modules that will be executed in order.
 
-We think of this structure as a set of layers, the base is the bottom layer, the recipe is the middle layer since we build it on top of the base, and the modules are the top layer, since we use them to build the recipe.
+Think of a recipe as a floor plan for a house, and the stages as the rooms. Each room has a set of tasks to complete, and each task is a module but all the rooms together make the house, your container image.
 
 To get more information about the structure of a recipe and its fields, please refer to the [recipe structure](/vib/en/recipe-structure) article.
 

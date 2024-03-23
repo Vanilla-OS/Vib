@@ -57,36 +57,40 @@ Here's an example `vib.yaml` file:
 
 ```yaml
 base: debian:sid-slim
-labels:
-  maintainer: My Awesome Team
-args:
-  DEBIAN_FRONTEND: noninteractive
-runs:
-  - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
-modules:
-  - name: update
-    type: shell
-    commands:
-      - apt update
-  - name: vib
-    type: go
-    source:
-      type: git
-      url: https://github.com/vanilla-os/vib
-      branch: main
-      commit: latest
-    buildVars:
-      GO_OUTPUT_BIN: /usr/bin/vib
+name: My Image
+stages:
+  - id: build
+    singlelayer: false
+    labels:
+      maintainer: My Awesome Team
+    args:
+      DEBIAN_FRONTEND: noninteractive
+    runs:
+      - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
     modules:
-      - name: golang
-        type: apt
+      - name: update
+        type: shell
+        commands:
+          - apt update
+      - name: vib
+        type: go
         source:
-          packages:
-            - golang
-            - ca-certificates
+          type: git
+          url: https://github.com/vanilla-os/vib
+          branch: main
+          commit: latest
+        buildVars:
+          GO_OUTPUT_BIN: /usr/bin/vib
+        modules:
+          - name: golang
+            type: apt
+            source:
+              packages:
+                - golang
+                - ca-certificates
 ```
 
-In this example, we're creating a container image based on `debian:sid-slim` with some custom labels and environment variables. We're also installing a custom module that uses the default `go` module to clone a Git repository and install dependencies of the `golang` module via `apt`.
+In this example, we're creating a container image with one stage based on `debian:sid-slim` with some custom labels and environment variables. We're also installing a custom module that uses the default `go` module to clone a Git repository and install dependencies of the `golang` module via `apt`.
 
 Once you've created the `vib.yaml` file, you can run the command:
 

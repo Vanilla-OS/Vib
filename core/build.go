@@ -19,29 +19,27 @@ func BuildRecipe(recipePath string) (api.Recipe, error) {
 
 	fmt.Printf("Building recipe %s\n", recipe.Name)
 
-	// build the modules*
-	// * actually just build the commands that will be used
-	//   in the Containerfile to build the modules
-	cmds, err := BuildModules(recipe, recipe.Modules)
+	// build the Containerfile
+	err = BuildContainerfile(recipe)
 	if err != nil {
 		return api.Recipe{}, err
 	}
 
-	// build the Containerfile
-	err = BuildContainerfile(recipe, cmds)
-	if err != nil {
-		return api.Recipe{}, err
+	modules := 0
+	for _, stage := range recipe.Stages {
+		modules += len(stage.Modules)
 	}
 
 	fmt.Printf("Recipe %s built successfully\n", recipe.Name)
-	fmt.Printf("Processed %d modules\n", len(recipe.Modules))
+	fmt.Printf("Processed %d stages\n", len(recipe.Stages))
+	fmt.Printf("Processed %d modules\n", modules)
 
 	return *recipe, nil
 }
 
 // BuildContainerfile builds a Containerfile from a recipe
 // and a list of modules commands
-func BuildContainerfile(recipe *api.Recipe, cmds []ModuleCommand) error {
+func BuildContainerfile(recipe *api.Recipe) error {
 	containerfile, err := os.Create(recipe.Containerfile)
 	if err != nil {
 		return err
@@ -49,147 +47,190 @@ func BuildContainerfile(recipe *api.Recipe, cmds []ModuleCommand) error {
 
 	defer containerfile.Close()
 
-	// FROM
-	_, err = containerfile.WriteString(
-		fmt.Sprintf("FROM %s\n", recipe.Base),
-	)
-	if err != nil {
-		return err
-	}
-
-	// LABELS
-	for key, value := range recipe.Labels {
-		_, err = containerfile.WriteString(
-			fmt.Sprintf("LABEL %s='%s'\n", key, value),
-		)
+	for _, stage := range recipe.Stages {
+		// build the modules*
+		// * actually just build the commands that will be used
+		//   in the Containerfile to build the modules
+		cmds, err := BuildModules(recipe, stage.Modules)
 		if err != nil {
 			return err
 		}
-	}
 
-	// ENV
-	for key, value := range recipe.Env {
-		_, err = containerfile.WriteString(
-			fmt.Sprintf("ENV %s=%s\n", key, value),
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	// ARGS
-	for key, value := range recipe.Args {
-		_, err = containerfile.WriteString(
-			fmt.Sprintf("ARG %s=%s\n", key, value),
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	// RUN(S)
-	if !recipe.SingleLayer {
-		for _, cmd := range recipe.Runs {
+		// FROM
+		if stage.Id != "" {
 			_, err = containerfile.WriteString(
-				fmt.Sprintf("RUN %s\n", cmd),
+				fmt.Sprintf("# Stage: %s\n", stage.Id),
+			)
+			if err != nil {
+				return err
+			}
+			_, err = containerfile.WriteString(
+				fmt.Sprintf("FROM %s AS %s\n", stage.Base, stage.Id),
+			)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err = containerfile.WriteString(
+				fmt.Sprintf("FROM %s\n", stage.Base),
 			)
 			if err != nil {
 				return err
 			}
 		}
-	}
 
-	// EXPOSE
-	for key, value := range recipe.Expose {
-		_, err = containerfile.WriteString(
-			fmt.Sprintf("EXPOSE %s/%s\n", key, value),
-		)
-		if err != nil {
-			return err
+		// COPY
+		if len(stage.Copy) > 0 {
+			for _, copy := range stage.Copy {
+				for _, path := range copy.Paths {
+					_, err = containerfile.WriteString(
+						fmt.Sprintf("COPY --from=%s %s %s\n", copy.From, path.Src, path.Dst),
+					)
+					if err != nil {
+						return err
+					}
+				}
+			}
 		}
-	}
 
-	// ADDS
-	for key, value := range recipe.Adds {
-		_, err = containerfile.WriteString(
-			fmt.Sprintf("ADD %s %s\n", key, value),
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	// INCLUDES.CONTAINER
-	_, err = containerfile.WriteString("ADD includes.container /\n")
-	if err != nil {
-		return err
-	}
-
-	// SOURCES
-	_, err = containerfile.WriteString("ADD sources /sources\n")
-	if err != nil {
-		return err
-	}
-
-	// MODULES RUN(S)
-	if !recipe.SingleLayer {
-		for _, cmd := range cmds {
+		// LABELS
+		for key, value := range stage.Labels {
 			_, err = containerfile.WriteString(
-				fmt.Sprintf("RUN %s\n", cmd.Command),
+				fmt.Sprintf("LABEL %s='%s'\n", key, value),
 			)
 			if err != nil {
 				return err
 			}
 		}
-	}
 
-	// SINGLE LAYER
-	if recipe.SingleLayer {
-		unifiedCmd := "RUN "
-
-		for i, cmd := range recipe.Runs {
-			unifiedCmd += cmd
-			if i != len(recipe.Runs)-1 {
-				unifiedCmd += " && "
-			}
-		}
-
-		if len(cmds) > 0 {
-			unifiedCmd += " && "
-		}
-
-		for i, cmd := range cmds {
-			unifiedCmd += cmd.Command
-			if i != len(cmds)-1 {
-				unifiedCmd += " && "
-			}
-		}
-
-		if len(unifiedCmd) > 4 {
-			_, err = containerfile.WriteString(fmt.Sprintf("%s\n", unifiedCmd))
+		// ENV
+		for key, value := range stage.Env {
+			_, err = containerfile.WriteString(
+				fmt.Sprintf("ENV %s=%s\n", key, value),
+			)
 			if err != nil {
 				return err
 			}
 		}
-	}
 
-	// CMD
-	if recipe.Cmd != "" {
-		_, err = containerfile.WriteString(
-			fmt.Sprintf("CMD %s\n", recipe.Cmd),
-		)
+		// ARGS
+		for key, value := range stage.Args {
+			_, err = containerfile.WriteString(
+				fmt.Sprintf("ARG %s=%s\n", key, value),
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		// RUN(S)
+		if !stage.SingleLayer {
+			for _, cmd := range stage.Runs {
+				_, err = containerfile.WriteString(
+					fmt.Sprintf("RUN %s\n", cmd),
+				)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		// EXPOSE
+		for key, value := range stage.Expose {
+			_, err = containerfile.WriteString(
+				fmt.Sprintf("EXPOSE %s/%s\n", key, value),
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		// ADDS
+		for key, value := range stage.Adds {
+			_, err = containerfile.WriteString(
+				fmt.Sprintf("ADD %s %s\n", key, value),
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		// INCLUDES.CONTAINER
+		_, err = containerfile.WriteString("ADD includes.container /\n")
 		if err != nil {
 			return err
 		}
-	}
 
-	// ENTRYPOINT
-	if len(recipe.Entrypoint) > 0 {
-		_, err = containerfile.WriteString(
-			fmt.Sprintf("ENTRYPOINT %s\n", strings.Join(recipe.Entrypoint, " ")),
-		)
+		// SOURCES
+		_, err = containerfile.WriteString("ADD sources /sources\n")
 		if err != nil {
 			return err
+		}
+
+		// MODULES RUN(S)
+		if !stage.SingleLayer {
+			for _, cmd := range cmds {
+				if cmd.Command == "" {
+					continue
+				}
+
+				_, err = containerfile.WriteString(
+					fmt.Sprintf("RUN %s\n", cmd.Command),
+				)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		// SINGLE LAYER
+		if stage.SingleLayer {
+			unifiedCmd := "RUN "
+
+			for i, cmd := range stage.Runs {
+				unifiedCmd += cmd
+				if i != len(stage.Runs)-1 {
+					unifiedCmd += " && "
+				}
+			}
+
+			if len(cmds) > 0 {
+				unifiedCmd += " && "
+			}
+
+			for i, cmd := range cmds {
+				unifiedCmd += cmd.Command
+				if i != len(cmds)-1 {
+					unifiedCmd += " && "
+				}
+			}
+
+			if len(unifiedCmd) > 4 {
+				_, err = containerfile.WriteString(fmt.Sprintf("%s\n", unifiedCmd))
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		// CMD
+		if stage.Cmd != "" {
+			_, err = containerfile.WriteString(
+				fmt.Sprintf("CMD %s\n", stage.Cmd),
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		// ENTRYPOINT
+		if len(stage.Entrypoint) > 0 {
+			_, err = containerfile.WriteString(
+				fmt.Sprintf("ENTRYPOINT %s\n", strings.Join(stage.Entrypoint, " ")),
+			)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -229,6 +270,9 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 	if err != nil {
 		return "", err
 	}
+
+	fmt.Printf("Building module [%s] of type [%s]\n", module.Name, module.Type)
+
 	var commands string
 	if len(module.Modules) > 0 {
 		for _, nestedModule := range module.Modules {
@@ -267,5 +311,12 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 		commands = commands + " && " + command
 	}
 
-	return strings.TrimPrefix(commands, " && "), err
+	fmt.Printf("Module [%s] built successfully\n", module.Name)
+	result := strings.TrimPrefix(commands, " && ")
+
+	if result == "&&" {
+		return "", nil
+	}
+
+	return result, nil
 }

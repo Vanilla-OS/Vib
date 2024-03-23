@@ -9,7 +9,7 @@ Tags:
 ---
 
 > **Note**
-> At the time of writing, Vib is in active development and the list of built-in modules may change. We are expanding support for the modules we offer and many more are planned for Vib v0.5.0.
+> At the time of writing, Vib is in active development and the list of built-in modules may grow over time. This article covers the modules available in Vib v0.5.0.
 
 Vib supports a variety of built-in modules that you can use to build your recipes. These modules are designed to automate common tasks, such as installing packages, building software, and running custom scripts.
 
@@ -70,7 +70,10 @@ git
 
 ### Apt
 
-The `apt` module, since Vib v.0.5.0, has some additional fields under the `options` key:
+> **Note**
+> The following options requires Vib v.0.5.0 or later.
+
+The `apt` module, has some additional fields under the `options` key:
 
 - noRecommends: If set to `true`, the recommended packages will not be installed.
 - installSuggestions: If set to `true`, the suggested packages will be installed.

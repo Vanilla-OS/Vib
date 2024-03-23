@@ -9,11 +9,10 @@ Tags:
   - recipe
 ---
 
-A Vib recipe is a YAML file that contains the instructions to build a container image. It's composed of three blocks:
+A Vib recipe is a YAML file that contains the instructions to build a container image. It's composed of two blocks:
 
 - metadata
-- configuration
-- modules
+- stages
 
 The following is a complete example of a Vib recipe:
 
@@ -23,28 +22,52 @@ base: debian:sid-slim
 name: My Image
 id: my-image-id
 
-# configuration
-singlelayer: false
-labels:
-  maintainer: My Awesome Team
-adds:
-  - /path/to/add
-args:
-  - arg1: value1
-  - arg2: value2
-runs:
-  - echo "Hello, World!"
-expose: 8080
-cmd: /bin/bash
-entrypoint:
-  - /bin/bash
+# stages
+stages:
+  - id: build
+    singlelayer: false
+    labels:
+      maintainer: My Awesome Team
+    adds:
+      - /extra/path/to/add
+    args:
+      - arg1: value1
+      - arg2: value2
+    runs:
+      - some-random-command --that-must-run --on-top-of-all modules
+    modules:
+      - name: build
+        type: go
+        buildvars:
+          GO_OUTPUT_BIN: "/path/to/output"
+        source:
+          url: https://github.com/my-awesome-team/my-awesome-repo
+          type: git
+          branch: main
+          commit: sdb997f0eeb67deaa5940f7c31a19fe1101d3d49
+        modules:
+        - name: build-deps
+          type: apt
+          source:
+            packages:
+            - golang-go
 
-# modules
-modules:
-  - name: update
-    type: shell
-    commands:
-      - apt update
+  - id: dist
+    singlelayer: false
+    labels:
+      maintainer: My Awesome Team
+    expose: 8080
+    entrypoint: ["/app"]
+    copy:
+      - from: build
+        src: /path/to/output
+        dest: /app
+    cmd: ["/app"]
+    modules:
+      - name: run
+        type: shell
+        commands:
+          - ls -la /app
 ```
 
 ## Metadata
@@ -53,14 +76,15 @@ The metadata block contains the following mandatory fields:
 
 - `base`: the base image to start from, can be any Docker image from any registry or even `scratch`.
 - `name`: the name of the image.
-
-The following fields are optional:
-
 - `id`: the ID of the image, can be used by platforms like [Atlas](https://images.vanillaos.org/#/) to identify the image.
+- `stages`: a list of stages to build the image, useful to split the build process into multiple stages (e.g. to build the application in one stage and copy the artifacts into another one).
 
-## Configuration
 
-The configuration block contains the following optional fields:
+## Stages
+
+Stages are a list of instructions to build an image, useful to split the build process into multiple stages (e.g. to build the application in one stage and copy the artifacts into another one). Each stage is a YAML snippet that defines a set of instructions. 
+
+Each stage has the following fields:
 
 - `singlelayer`: a boolean value that indicates if the image should be built as a single layer. This is useful in some cases to reduce the size of the image (e.g. when building an image using a rootfs, an example [here](https://github.com/Vanilla-OS/pico-image/blob/5b0e064677f78f6e89d619dcb4df4e585bef378f/recipe.yml)).
 - `labels`: a map of labels to apply to the image, useful to add metadata to the image that can be read by the container runtime.
@@ -70,8 +94,10 @@ The configuration block contains the following optional fields:
 - `expose`: a list of ports to expose in the image.
 - `cmd`: the command to run when the container starts.
 - `entrypoint`: the entry point for the container, it's similar to `cmd` but it's not overridden by the command passed to the container at runtime, useful to handle the container as an executable.
+- `copy`: a list of files or directories to copy from another stage, useful to copy files from one stage to another.
+- `modules`: a list of modules to use in the stage.
 
-## Modules
+### Modules
 
 The modules block contains a list of modules to use in the recipe. Each module is a YAML snippet that defines a set of instructions. The common structure is:
 

@@ -12,23 +12,39 @@ type Source struct {
 }
 
 type Recipe struct {
-	Base          string `json:"base"`
 	Name          string
 	Id            string
-	SingleLayer   bool              `json:"singlelayer"`
-	Labels        map[string]string `json:"labels"`
-	Env           map[string]string `json:"env"`
-	Adds          map[string]string `json:"adds"`
-	Args          map[string]string `json:"args"`
-	Runs          []string          `json:"runs"`
-	Expose        map[string]string `json:"expose"`
-	Cmd           string            `json:"cmd"`
-	Modules       []interface{}     `json:"modules"`
+	Stages        []Stage
 	Path          string
 	ParentPath    string
 	DownloadsPath string
 	SourcesPath   string
 	PluginPath    string
 	Containerfile string
-	Entrypoint    []string
+}
+
+type Stage struct {
+	Id          string            `json:"id"`
+	Base        string            `json:"base"`
+	SingleLayer bool              `json:"singlelayer"`
+	Copy        []Copy            `json:"copy"`
+	Labels      map[string]string `json:"labels"`
+	Env         map[string]string `json:"env"`
+	Adds        map[string]string `json:"adds"`
+	Args        map[string]string `json:"args"`
+	Runs        []string          `json:"runs"`
+	Expose      map[string]string `json:"expose"`
+	Cmd         string            `json:"cmd"`
+	Modules     []interface{}     `json:"modules"`
+	Entrypoint  []string
+}
+
+type Copy struct {
+	From  string
+	Paths []Path
+}
+
+type Path struct {
+	Src string
+	Dst string
 }

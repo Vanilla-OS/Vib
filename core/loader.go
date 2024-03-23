@@ -107,74 +107,76 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 		}
 	}
 
-	// here we check if the extra Adds path exists
-	for src := range recipe.Adds {
-		fullPath := filepath.Join(filepath.Dir(recipePath), src)
-		_, err = os.Stat(fullPath)
-		if os.IsNotExist(err) {
-			return nil, err
-		}
-	}
-
-	// here we expand modules of type "includes"
-	var newRecipeModules []interface{}
-
-	for _, moduleInterface := range recipe.Modules {
-
-		var module Module
-		err := mapstructure.Decode(moduleInterface, &module)
-		if err != nil {
-			return nil, err
+	for _, stage := range recipe.Stages {
+		// here we check if the extra Adds path exists
+		for src := range stage.Adds {
+			fullPath := filepath.Join(filepath.Dir(recipePath), src)
+			_, err = os.Stat(fullPath)
+			if os.IsNotExist(err) {
+				return nil, err
+			}
 		}
 
-		if module.Type == "includes" {
-			var include IncludesModule
-			err := mapstructure.Decode(moduleInterface, &include)
+		// here we expand modules of type "includes"
+		var newRecipeModules []interface{}
+
+		for _, moduleInterface := range stage.Modules {
+
+			var module Module
+			err := mapstructure.Decode(moduleInterface, &module)
 			if err != nil {
 				return nil, err
 			}
 
-			if len(include.Includes) == 0 {
-				return nil, errors.New("includes module must have at least one module to include")
-			}
-
-			for _, include := range include.Includes {
-				var modulePath string
-
-				// in case of a remote include, we need to download the
-				// recipe before including it
-				if include[:4] == "http" {
-					fmt.Printf("Downloading recipe from %s\n", include)
-					modulePath, err = downloadRecipe(include)
-					if err != nil {
-						return nil, err
-					}
-				} else if followsGhPattern(include) {
-					// if the include follows the github pattern, we need to
-					// download the recipe from the github repository
-					modulePath, err = downloadGhRecipe(include)
-					if err != nil {
-						return nil, err
-					}
-				} else {
-					modulePath = filepath.Join(recipe.ParentPath, include)
-				}
-
-				includeModule, err := GenModule(modulePath)
+			if module.Type == "includes" {
+				var include IncludesModule
+				err := mapstructure.Decode(moduleInterface, &include)
 				if err != nil {
 					return nil, err
 				}
 
-				newRecipeModules = append(newRecipeModules, includeModule)
+				if len(include.Includes) == 0 {
+					return nil, errors.New("includes module must have at least one module to include")
+				}
+
+				for _, include := range include.Includes {
+					var modulePath string
+
+					// in case of a remote include, we need to download the
+					// recipe before including it
+					if include[:4] == "http" {
+						fmt.Printf("Downloading recipe from %s\n", include)
+						modulePath, err = downloadRecipe(include)
+						if err != nil {
+							return nil, err
+						}
+					} else if followsGhPattern(include) {
+						// if the include follows the github pattern, we need to
+						// download the recipe from the github repository
+						modulePath, err = downloadGhRecipe(include)
+						if err != nil {
+							return nil, err
+						}
+					} else {
+						modulePath = filepath.Join(recipe.ParentPath, include)
+					}
+
+					includeModule, err := GenModule(modulePath)
+					if err != nil {
+						return nil, err
+					}
+
+					newRecipeModules = append(newRecipeModules, includeModule)
+				}
+
+				continue
 			}
 
-			continue
+			newRecipeModules = append(newRecipeModules, moduleInterface)
 		}
 
-		newRecipeModules = append(newRecipeModules, moduleInterface)
+		stage.Modules = newRecipeModules
 	}
-
-	recipe.Modules = newRecipeModules
 
 	return recipe, nil
 }
@@ -260,7 +262,13 @@ func TestRecipe(path string) (*api.Recipe, error) {
 		return nil, err
 	}
 
+	modules := 0
+	for _, stage := range recipe.Stages {
+		modules += len(stage.Modules)
+	}
+
 	fmt.Printf("Recipe %s validated successfully\n", recipe.Id)
-	fmt.Printf("Found %d modules\n", len(recipe.Modules))
+	fmt.Printf("Found %d stages\n", len(recipe.Stages))
+	fmt.Printf("Found %d modules\n", modules)
 	return recipe, nil
 }
