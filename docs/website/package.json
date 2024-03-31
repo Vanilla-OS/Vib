@@ -1,0 +1,16 @@
+{
+    "name": "vib-website",
+    "version": "1.0.0",
+    "scripts": {
+        "build": "node build.js",
+        "serve": "nodemon --watch src --watch build.js --ext hbs,css --exec 'npm run build' & nodemon server.js"
+    },
+    "devDependencies": {
+        "express": "^4.19.2",
+        "live-server": "^1.2.1",
+        "nodemon": "^2.0.15"
+    },
+    "dependencies": {
+        "handlebars": "^4.7.8"
+    }
+}

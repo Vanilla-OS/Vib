@@ -2,3 +2,5 @@ example/downloads/*
 example/sources/*
 test/*
 vib
+docs/website/dist/*
+docs/website/node_modules/*
