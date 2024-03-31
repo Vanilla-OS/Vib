@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Vib - Vanilla Image Builder</title>
+  <meta property="og:title" content="Vib - Vanilla Image Builder">
+  <meta name="twitter:title" content="Vib - Vanilla Image Builder">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+      content="Remove the complexity of Dockerfiles and build your container images with simple, yet powerful YAML recipes.">
+  <meta name="keywords" content="Vib, Container, Docker, Podman, YAML, Image Builder, Cloud Native, Development">
+  <meta name="author" content="Vanilla OS">
+  <meta property="og:description" content="Build container images easily with Vib's YAML recipes.">
+  <meta property="og:image" content="brand/cover/png/cover-1200x630.png">
+  <meta property="og:url" content="https://vib.vanillaos.org">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@VanillaOSLinux">
+  <meta name="twitter:creator" content="@VanillaOSLinux">
+  <meta name="twitter:description" content="Build container images easily with Vib's YAML recipes.">
+  <meta name="twitter:image" content="brand/cover/png/cover-1600x900.png">
+  <link rel="icon" type="image/png" href="brand/logo/png/icon-mono-dark.png">
+  <link href="/assets/style.css" rel="stylesheet">
+  <script type="application/ld+json">
+      {
+          "@context": "http://schema.org",
+          "@type": "SoftwareApplication",
+          "name": "Vib - Vanilla Image Builder",
+          "description": "Remove the complexity of Dockerfiles and build your container images with simple, yet powerful YAML recipes.",
+          "url": "https://vib.vanillaos.org",
+          "image": "brand/cover/png/cover-1200x630.png",
+          "author": {
+              "@type": "Organization",
+              "name": "Vanilla OS"
+          },
+          "applicationCategory": "DeveloperTools",
+          "operatingSystem": "Linux",
+          "downloadUrl": "https://github.com/Vanilla-OS/Vib/releases"
+      }
+      </script></head>
+
+<body class="bg-gray-900 text-gray-100">
+  <nav class="border-b border-gray-800">
+    <div class="container mx-auto flex items-center justify-between py-4 px-6 flex-wrap">
+      <a href="/" class="font-bold text-2xl">
+        <img src="/assets/logo.svg" alt="Vib" class="h-8">
+      </a>
+      <button id="menu-button"
+        class="text-gray-300 inline-flex p-3 hover:bg-gray-700 rounded lg:hidden ml-auto hover:text-white outline-none">
+        <span class="material-symbols-outlined">menu</span>
+      </button>
+      <div id="menu" class="w-full lg:inline-flex lg:flex-grow lg:w-auto hidden">
+        <div
+          class="lg:inline-flex lg:flex-row lg:ml-auto lg:w-auto w-full lg:items-center items-start flex flex-col lg:h-auto">
+          <a href="/examples" class="text-gray-300 hover:text-white px-3 py-2 rounded">Examples</a>
+          <a href="https://docs.vanillaos.org/collections/vib"
+            class="text-gray-300 hover:text-white px-3 py-2 rounded">Documentation</a>
+          <a href="https://vanillaos.org/community" class="text-gray-300 hover:text-white px-3 py-2 rounded">Support</a>
+          <a href="https://fabricators.ltd/en/contact.html"
+            class="text-gray-300 hover:text-white px-3 py-2 rounded">Enterprise</a>
+          <a href="https://github.com/vanilla-os/vib" class="text-gray-300 hover:text-white px-3 py-2 rounded">Source
+            Code</a>
+          <a href="https://docs.vanillaos.org/vib/en/getting-started"
+            class="bg-blue-900 hover:bg-blue-700 text-white px-3 py-2 ml-3 rounded transition duration-300">Get
+            Started</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <header class="text-center py-40">
+    <h1 class="text-3xl md:text-5xl font-bold mb-4">The Easiest Way to Build Container Images</h1>
+    <p class="mb-10 text-xl">Remove the complexity of Dockerfiles and build your container images with simple, yet
+      powerful YAML recipes.</p>
+    <a href="/examples"
+      class="bg-white hover:bg-gray-200 text-gray-900 font-bold text-xl rounded-full py-4 px-8 shadow-lg tracking-wider transition duration-300">Learn
+      by Examples</a>
+  </header>
+
+  <section class="container mx-auto my-16 px-6 space-y-8">
+    <h2 class="text-4xl font-bold text-center mb-6">Why Choose Vib?</h2>
+    <p class="text-center text-xl text-gray-300">Well, there are many reasons to choose Vib, but here are a few of them.
+    </p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div class="bg-gray-800 p-6 rounded-lg shadow-md glass-effect">
+        <h3 class="font-bold text-xl mb-2 text-blue-400">Modular Recipe Format</h3>
+        <p>Define your container image with simple YAML recipes, separating concerns into modules for clean,
+          readable definitions.</p>
+      </div>
+      <div class="bg-gray-800 p-6 rounded-lg shadow-md glass-effect">
+        <h3 class="font-bold text-xl mb-2 text-blue-400">Easy to Use</h3>
+        <p>Build your container images with a simple command, integrating smoothly into your development
+          workflow.</p>
+      </div>
+      <div class="bg-gray-800 p-6 rounded-lg shadow-md glass-effect">
+        <h3 class="font-bold text-xl mb-2 text-blue-400">Extensible with Plugins</h3>
+        <p>Extend the functionality of Vib with plugins, allowing you to integrate with your existing tools and
+          services.</p>
+      </div>
+      <div class="bg-gray-800 p-6 rounded-lg shadow-md glass-effect">
+        <h3 class="font-bold text-xl mb-2 text-red-300">Built for Developers ❤️</h3>
+        <p>Designed by cloud-native developers, Vib is built to make your life easier, allowing you to focus on
+          your code.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="bg-gradient-to-r from-blue-800 to-blue-500 py-16 text-white">
+    <div class="container mx-auto px-6 text-center">
+      <h2 class="text-4xl font-bold mb-6">How Vib Works</h2>
+      <p class="text-xl mb-12">The process is simple as counting 1, 2, 3.</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-gray-800 rounded-lg shadow-lg glass-effect p-6">
+          <h3 class="text-2xl font-bold mb-4">1. Write a Recipe</h3>
+          <p class="text-xl">Write a simple YAML recipe that describes how to build your container image.</p>
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg glass-effect p-6">
+          <h3 class="text-2xl font-bold mb-4">2. Run Vib</h3>
+          <p class="text-xl">Run Vib with your recipe, and watch it build your container image in seconds.</p>
+        </div>
+        <div class="bg-gray-800 rounded-lg shadow-lg glass-effect p-6">
+          <h3 class="text-2xl font-bold mb-4">3. Use Your Image</h3>
+          <p class="text-xl">Use your container image with Docker, Podman, or any other container runtime.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container mx-auto my-16 flex flex-col items-center">
+    <h2 class="text-4xl font-bold mb-6 text-center">Familiarize With Recipes</h2>
+    <p class="text-xl mb-12 text-center">We chose YAML as the format for recipes, because it's easy to read and write,
+      and it's familiar to most developers.</p>
+    <div class="bg-gray-800 px-6 rounded-lg shadow-lg glass-effect overflow-x-auto w-full max-w-5xl">
+      <pre class="text-xl text-gray-300"><code class="language-yaml">name: my-recipe
+stages:
+  - id: build
+    base: debian:sid-slim
+    labels:
+      maintainer: My Awesome Team
+    args:
+      DEBIAN_FRONTEND: noninteractive
+    runs:
+      - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
+    modules:
+      - name: update
+        type: shell
+        commands:
+          - apt update
+          
+      - name: vib
+        type: go
+        source:
+          type: git
+          url: https://github.com/vanilla-os/vib
+          branch: main
+          commit: latest
+        buildVars:
+          GO_OUTPUT_BIN: /usr/bin/vib
+        modules:
+          - name: golang
+            type: apt
+            source:
+              packages:
+              - golang
+              - ca-certificates
+      </code></pre>
+    </div>
+  </section>
+
+
+  <section class="bg-gradient-to-r from-blue-800 to-blue-500 py-16 text-white">
+    <div class="container mx-auto px-6 text-center">
+      <h2 class="text-3xl font-bold mb-4">Get Started with Vib</h2>
+      <p class="mb-10">Vib is easy to install and use, just download the binary, place it anywhere in your PATH, and
+        you're ready to go.</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 justify-center items-center max-w-2xl mx-auto px-8">
+        <a href="https://github.com/Vanilla-OS/Vib/releases"
+          class="bg-gray-800 hover:bg-gray-700 text-white font-bold text-xl rounded-full py-4 px-8 shadow-lg tracking-wider transition duration-300">
+          Download Vib</a>
+        <a href="https://docs.vanillaos.org/vib/en/getting-started"
+          class="bg-white hover:bg-gray-200 text-black font-bold text-xl rounded-full py-4 px-8 shadow-lg tracking-wider transition duration-300">
+          Get Started</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="bg-gray-800 py-12">
+    <div class="container mx-auto text-center">
+      <ul class="flex flex-col md:flex-row md:justify-center md:space-x-8 space-y-4 md:space-y-0">
+        <li>
+          <a href="/examples" class="hover:text-gray-300">Examples</a>
+        </li>
+        <li>
+          <a href="https://docs.vanillaos.org/collections/vib" class="hover:text-gray-300">Documentation</a>
+        </li>
+        <li>
+          <a href="https://vanillaos.org/community" class="hover:text-gray-300">Support</a>
+        </li>
+        <li>
+          <a href="https://github.com/vanilla-os/vib" class="hover:text-gray-300">Source Code</a>
+        </li>
+        <li>
+          <a href="https://fabricators.ltd/en/contact.html" class="hover:text-gray-300">Enterprise</a>
+        </li>
+      </ul>
+      <div class="mt-8">
+        <p>&copy; 2024 <a href="https://vanillaos.org/" class="hover:text-gray-300">Vanilla OS</a>. All rights reserved.
+          Sponsored by <a href="https://fabricators.ltd" class="hover:text-gray-300">fabricators.ltd</a></p>
+      </div>
+    </div>
+  </footer>  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/a11y-dark.min.css">
+  <script>
+      hljs.highlightAll();
+      document.getElementById('menu-button').addEventListener('click', function () {
+          var menu = document.getElementById('menu');
+          if (menu.classList.contains('hidden')) {
+              menu.classList.remove('hidden');
+          } else {
+              menu.classList.add('hidden');
+          }
+      });
+  </script></body>
+
+</html>
