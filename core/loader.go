@@ -107,7 +107,7 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 		}
 	}
 
-	for _, stage := range recipe.Stages {
+	for i, stage := range recipe.Stages {
 		// here we check if the extra Adds path exists
 		for src := range stage.Adds {
 			fullPath := filepath.Join(filepath.Dir(recipePath), src)
@@ -153,6 +153,7 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 					} else if followsGhPattern(include) {
 						// if the include follows the github pattern, we need to
 						// download the recipe from the github repository
+						fmt.Printf("Downloading recipe from %s\n", include)
 						modulePath, err = downloadGhRecipe(include)
 						if err != nil {
 							return nil, err
@@ -176,6 +177,7 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 		}
 
 		stage.Modules = newRecipeModules
+		recipe.Stages[i] = stage
 	}
 
 	return recipe, nil
