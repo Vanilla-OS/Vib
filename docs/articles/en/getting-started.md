@@ -56,10 +56,11 @@ touch vib.yaml
 Here's an example `vib.yaml` file:
 
 ```yaml
-base: debian:sid-slim
 name: My Image
+id: my-image
 stages:
   - id: build
+    base: debian:sid-slim
     singlelayer: false
     labels:
       maintainer: My Awesome Team

@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: vanilla-os/vib-gh-action@v0.3.3-1
+      - uses: vanilla-os/vib-gh-action@v0.6.2
         with:
           recipe: "vib.yaml"
 
@@ -55,7 +55,7 @@ If you are using custom Vib plugins in your recipe, you can include them in the 
 
 ```yaml
 # other steps
-- uses: vanilla-os/vib-gh-action@v0.3.3-1
+- uses: vanilla-os/vib-gh-action@v0.6.2
   with:
     recipe: "vib.yaml"
     plugins: "your_org/my-plugin:v0.0.1"
@@ -72,7 +72,7 @@ To use more than one plugin, simply separate them with a comma:
 
 ```yaml
 # other steps
-- uses: vanilla-os/vib-gh-action@v0.3.3-1
+- uses: vanilla-os/vib-gh-action@v0.6.2
   with:
     recipe: "vib.yaml"
     plugins: "your_org/my-plugin:v0.0.1,another_org/another-plugin:v1.2.3"
@@ -102,7 +102,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: vanilla-os/vib-gh-action@v0.3.3-1
+      - uses: vanilla-os/vib-gh-action@v0.6.2
         with:
           recipe: "vib.yaml"
 

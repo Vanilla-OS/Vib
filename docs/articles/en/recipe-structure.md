@@ -21,13 +21,13 @@ The following is a complete example of a Vib recipe:
 
 ```yaml
 # metadata
-base: debian:sid-slim
 name: My Image
 id: my-image-id
 
 # stages
 stages:
   - id: build
+    base: debian:sid-slim
     singlelayer: false
     labels:
       maintainer: My Awesome Team
@@ -56,6 +56,7 @@ stages:
             - golang-go
 
   - id: dist
+    base: debian:sid-slim
     singlelayer: false
     labels:
       maintainer: My Awesome Team
@@ -82,10 +83,9 @@ The metadata block contains the following mandatory fields:
 - `id`: the ID of the image, can be used by platforms like [Atlas](https://images.vanillaos.org/#/) to identify the image.
 - `stages`: a list of stages to build the image, useful to split the build process into multiple stages (e.g. to build the application in one stage and copy the artifacts into another one).
 
-
 ## Stages
 
-Stages are a list of instructions to build an image, useful to split the build process into multiple stages (e.g. to build the application in one stage and copy the artifacts into another one). Each stage is a YAML snippet that defines a set of instructions. 
+Stages are a list of instructions to build an image, useful to split the build process into multiple stages (e.g. to build the application in one stage and copy the artifacts into another one). Each stage is a YAML snippet that defines a set of instructions.
 
 Each stage has the following fields:
 

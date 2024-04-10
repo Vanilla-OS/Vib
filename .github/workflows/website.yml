@@ -41,4 +41,5 @@ jobs:
 
     - name: Deploy
       id: deployment
+      if: github.repository == 'Vanilla-OS/Vib'
       uses: actions/deploy-pages@v4

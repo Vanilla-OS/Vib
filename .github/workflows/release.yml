@@ -6,7 +6,6 @@ on:
       - 'v*'
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
 
@@ -24,6 +23,7 @@ jobs:
         go build -o vib -trimpath
 
     - name: Upload a Release Asset
-      uses: softprops/action-gh-release@v1
+      if: github.repository == 'Vanilla-OS/Vib'
+      uses: softprops/action-gh-release@v2
       with:
         files: vib
