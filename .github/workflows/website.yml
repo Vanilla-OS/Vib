@@ -2,6 +2,7 @@ name: Build and Deploy Website
 
 on:
   push:
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -40,5 +41,5 @@ jobs:
 
     - name: Deploy
       id: deployment
-      if: github.repository == 'Vanilla-OS/Vib' && github.ref == 'refs/heads/main'
+      if: github.repository == 'Vanilla-OS/Vib'
       uses: actions/deploy-pages@v4
