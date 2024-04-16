@@ -17,7 +17,7 @@ Modules are a fundamental part of Vib, likely the thing you will interact with t
 
 Before diving into the modules, it's important to understand the structure of a Vib recipe.
 
-![Vib Recipe Structure](https://vib.vanillaos.org/uploads/vib-recipe-structure.png)
+![Vib Recipe Structure](https://raw.githubusercontent.com/Vanilla-OS/Vib/main/docs/uploads/vib-recipe-structure.png)
 
 As you can see, a recipe has two main entities:
 
