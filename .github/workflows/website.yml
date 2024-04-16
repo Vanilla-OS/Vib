@@ -2,7 +2,6 @@ name: Build and Deploy Website
 
 on:
   push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -27,12 +26,12 @@ jobs:
       uses: actions/setup-node@v4
 
     - name: Install Dependencies
-      run: npm install
       working-directory: docs/website
+      run: npm ci
     
     - name: Build
-      run: npm run build
       working-directory: docs/website
+      run: npm run build
     
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
@@ -41,5 +40,5 @@ jobs:
 
     - name: Deploy
       id: deployment
-      if: github.repository == 'Vanilla-OS/Vib'
+      if: github.repository == 'Vanilla-OS/Vib' && github.ref == 'refs/heads/main'
       uses: actions/deploy-pages@v4
