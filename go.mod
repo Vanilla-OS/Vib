@@ -2,14 +2,14 @@ module github.com/vanilla-os/vib
 
 go 1.21
 
-require github.com/spf13/cobra v1.7.0
-
-require github.com/mitchellh/mapstructure v1.5.0
+require github.com/spf13/cobra v1.8.0
 
 require (
-	github.com/ebitengine/purego v0.7.1 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	github.com/ebitengine/purego v0.7.1
+	github.com/mitchellh/mapstructure v1.5.0
 )
+
+require golang.org/x/sys v0.7.0 // indirect
 
 require (
 	github.com/google/uuid v1.3.0
