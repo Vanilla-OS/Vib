@@ -1,10 +1,6 @@
 package core
 
-import (
-	"plugin"
-
-	"github.com/vanilla-os/vib/api"
-)
+import "C"
 
 type Module struct {
 	Name    string `json:"name"`
@@ -26,6 +22,6 @@ type ModuleCommand struct {
 
 type Plugin struct {
 	Name         string
-	BuildFunc    func(interface{}, *api.Recipe) (string, error)
-	LoadedPlugin *plugin.Plugin
+	BuildFunc    func(*C.char, *C.char) string
+	LoadedPlugin uintptr
 }
