@@ -34,7 +34,7 @@ type Stage struct {
 	Args        map[string]string `json:"args"`
 	Runs        []string          `json:"runs"`
 	Expose      map[string]string `json:"expose"`
-	Cmd         string            `json:"cmd"`
+	Cmd         []string          `json:"cmd"`
 	Modules     []interface{}     `json:"modules"`
 	Entrypoint  []string
 }

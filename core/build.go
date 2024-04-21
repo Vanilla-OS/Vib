@@ -214,9 +214,9 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// CMD
-		if stage.Cmd != "" {
+		if len(stage.Cmd) > 0 {
 			_, err = containerfile.WriteString(
-				fmt.Sprintf("CMD %s\n", stage.Cmd),
+				fmt.Sprintf("CMD [\"%s\"]\n", strings.Join(stage.Cmd, "\",\"")),
 			)
 			if err != nil {
 				return err
