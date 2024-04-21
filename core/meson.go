@@ -5,8 +5,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
-
-	"github.com/google/uuid"
 )
 
 type MesonModule struct {
@@ -17,7 +15,6 @@ type MesonModule struct {
 
 // BuildMesonModule builds a module that builds a Meson project
 func BuildMesonModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
-	tmpDir := "/tmp/" + uuid.New().String()
 	var module MesonModule
 	err := mapstructure.Decode(moduleInterface, &module)
 	if err != nil {
@@ -32,6 +29,9 @@ func BuildMesonModule(moduleInterface interface{}, recipe *api.Recipe) (string, 
 		return "", err
 	}
 
+	// Since the downloaded source goes through checksum verification already
+	// it is safe to simply use the specified checksum from the module definition
+	tmpDir := fmt.Sprintf("/tmp/%s-%s", module.Source.Checksum, module.Name)
 	cmd := fmt.Sprintf(
 		"cd /sources/%s && meson %s && ninja -C %s && ninja -C %s install",
 		module.Name,
