@@ -226,7 +226,7 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		// ENTRYPOINT
 		if len(stage.Entrypoint) > 0 {
 			_, err = containerfile.WriteString(
-				fmt.Sprintf("ENTRYPOINT %s\n", strings.Join(stage.Entrypoint, " ")),
+				fmt.Sprintf("ENTRYPOINT [\"%s\"]\n", strings.Join(stage.Entrypoint, "\",\"")),
 			)
 			if err != nil {
 				return err
