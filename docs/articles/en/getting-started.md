@@ -4,6 +4,7 @@ Description: How to start using Vib to build your Container images.
 PublicationDate: 2024-02-11
 Authors:
   - mirkobrombin
+  - kbdharun
 Tags:
   - getting-started
 ---
@@ -14,7 +15,7 @@ Vib is a powerful tool that allows you to create container images using a YAML r
 
 To use Vib, there are no specific requirements; you just need a Linux\* operating system (Mac OS and Windows will be supported in the future). Optionally, you can install a container engine to test and publish the images created to a registry.
 
-\* Currently, Vib requires a Linux distribution with glibc.
+\* Currently, Vib requires a Linux distribution with `glibc`.
 
 ### Supported Container Engines
 
@@ -45,17 +46,17 @@ mv vib ~/.local/bin
 
 ## Usage
 
-To start using Vib, create a `vib.yaml` file in a new directory. This file will contain the recipe for your container image.
+To start using Vib, create a `vib.yml` file in a new directory. This file will contain the recipe for your container image.
 
 ```bash
 mkdir my-vib-project
 cd my-vib-project
-touch vib.yaml
+touch vib.yml
 ```
 
-Here's an example `vib.yaml` file:
+Here's an example `vib.yml` file:
 
-```yaml
+```yml
 name: My Image
 id: my-image
 stages:
@@ -102,13 +103,13 @@ vib build vib.yaml
 to turn your recipe into a Containerfile. Use that file to build the container image with your container engine. To streamline the process, you can use the `compile` command to build the container image directly:
 
 ```bash
-vib compile vib.yaml --runtime docker
+vib compile vib.yml --runtime docker
 ```
 
 changing `docker` with the container engine you have installed. Both `docker` and `podman` are supported. If you leave out the `--runtime` flag, Vib will use the default container engine giving priority to Docker.
 
 > **Note:**
-> For versions of Vib prior to 0.5.0, the syntax of the `compile` command was different. The `--runtime` flag was not available, and the command was `vib compile vib.yaml docker`.
+> For versions of Vib before 0.5.0, the syntax of the `compile` command was different. The `--runtime` flag was not available, and the command was `vib compile vib.yml docker`.
 
 The generated `Containerfile` is compatible with both Docker and Podman.
 

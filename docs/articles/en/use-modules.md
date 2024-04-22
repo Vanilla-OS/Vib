@@ -4,6 +4,7 @@ Description: How to use predefined and custom modules in your Vib recipes.
 PublicationDate: 2024-02-13
 Authors:
   - mirkobrombin
+  - kbdharun
 Tags:
   - modules
 ---
@@ -13,7 +14,7 @@ Modules are a fundamental part of Vib, likely the thing you will interact with t
 ## Familiarize with Vib Recipes
 
 > **Note**
-> Stages were introduced in Vib v0.6.0, if you are using an older version, please keep in mind all the stage's fields are at the top level of the recipe, so no multiple stages are supported.
+> Stages were introduced in Vib v0.6.0, if you are using an older version, please keep in mind all the stage fields are at the top level of the recipe, so no multiple stages are supported.
 
 Before diving into the modules, it's important to understand the structure of a Vib recipe.
 
@@ -32,7 +33,7 @@ To get more information about the structure of a recipe and its fields, please r
 
 A module is a YAML snippet that defines a set of instructions, the common structure is:
 
-```yaml
+```yml
 name: name-of-the-module
 type: type-of-the-module
 # specific fields for the module type
@@ -40,9 +41,9 @@ type: type-of-the-module
 
 While the `name` and `type` fields are mandatory, the specific fields depend on the module type. For example, a `shell` module has a `commands` field that contains the shell commands to execute to complete the task.
 
-You will find that some modules has a common `source` field, this instructs Vib to download a resource required for the module to work:
+You will find that some modules have a common `source` field, this instructs Vib to download a resource required for the module to work:
 
-```yaml
+```yml
 - name: vanilla-tools
   type: shell
   source:

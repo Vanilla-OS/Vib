@@ -4,6 +4,7 @@ Description: Learn how to work with Vib recipes in Visual Studio Code using our 
 PublicationDate: 2024-02-14
 Authors:
   - mirkobrombin
+  - kbdharun
 Tags:
   - development
   - vscode
@@ -11,7 +12,7 @@ Tags:
 
 Visual Studio Code is a popular code editor that provides a wide range of features to help you write, debug, and deploy your code, other than being highly customizable, it also offers a wide range of extensions to enhance your development experience, for example for working with YAML files.
 
-Vib recipes are written in YAML, and usually a standard text editor or the YAML support provided by Visual Studio Code is enough to work with them. However, we have developed a dedicated extension for Visual Studio Code to make working with Vib recipes even easier and more efficient.
+Vib recipes are written in YAML, and usually, a standard text editor or the YAML support provided by Visual Studio Code is enough to work with them. However, we have developed a dedicated extension for Visual Studio Code to make working with Vib recipes even easier and more efficient.
 
 ## Features
 
@@ -35,10 +36,10 @@ To install the Vib extension, follow these steps:
 
 ## Usage
 
-Once the extension is installed, you can start using it to work with Vib recipes. For it to work, you need to put the following header at the beginning of your recipe:
+Once the extension gets installed, you can start using it to work with Vib recipes. For it to work, you need to put the following header at the beginning of your recipe:
 
-```yaml
+```yml
 # vib
 ```
 
-This header is used to identify the file as a Vib recipe and to enable the extension features. In the future, we plan to have support for our own file extension, but for now, this is the way to go.
+This header is used to identify the file as a Vib recipe and to enable the extension features. In the future, we plan to have support for our dedicated file extension, but for now, this is the way to go.
