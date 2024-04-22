@@ -4,13 +4,14 @@ Description: Learn about the structure of a Vib recipe.
 PublicationDate: 2024-02-13
 Authors:
   - mirkobrombin
+  - kbdharun
 Tags:
   - modules
   - recipe
 ---
 
 > **Note**
-> Stages were introduced in Vib v0.6.0, if you are using an older version, please keep in mind all the stage's fields are at the top level of the recipe, so no multiple stages are supported.
+> Stages were introduced in Vib v0.6.0, if you are using an older version, please keep in mind all the stage fields are at the top level of the recipe, so no multiple stages are supported.
 
 A Vib recipe is a YAML file that contains the instructions to build a container image. It's composed of two blocks:
 
@@ -19,7 +20,7 @@ A Vib recipe is a YAML file that contains the instructions to build a container 
 
 The following is a complete example of a Vib recipe:
 
-```yaml
+```yml
 # metadata
 name: My Image
 id: my-image-id
@@ -60,7 +61,9 @@ stages:
     singlelayer: false
     labels:
       maintainer: My Awesome Team
-    expose: 8080
+    expose: 
+      "8080": "tcp"
+      "8081": ""
     entrypoint: ["/app"]
     copy:
       - from: build
@@ -80,7 +83,7 @@ The metadata block contains the following mandatory fields:
 
 - `base`: the base image to start from, can be any Docker image from any registry or even `scratch`.
 - `name`: the name of the image.
-- `id`: the ID of the image, can be used by platforms like [Atlas](https://images.vanillaos.org/#/) to identify the image.
+- `id`: the ID of the image is used to specify an image's unique identifier, it is used by platforms like [Atlas](https://images.vanillaos.org/#/) to identify the image.
 - `stages`: a list of stages to build the image, useful to split the build process into multiple stages (e.g. to build the application in one stage and copy the artifacts into another one).
 
 ## Stages
@@ -93,7 +96,7 @@ Each stage has the following fields:
 - `labels`: a map of labels to apply to the image, useful to add metadata to the image that can be read by the container runtime.
 - `adds`: a list of files or directories to add to the image, useful to include files in the image that are not part of the source code (the preferred way to include files in the image is to use the `includes.container/` directory, see [Project Structure](/docs/articles/en/project-structure)).
 - `args`: a list of environment variables to set in the image.
-- `runs`: a list of commands to run in the image (as an alternative to the `shell` module, useful for dividing the commands of your recipe from those needed to configure the image, for example to disable the recommended packages in apt).
+- `runs`: a list of commands to run in the image (as an alternative to the `shell` module, useful for dividing the commands of your recipe from those needed to configure the image, for example, to disable the recommended packages in apt).
 - `expose`: a list of ports to expose in the image.
 - `cmd`: the command to run when the container starts.
 - `entrypoint`: the entry point for the container, it's similar to `cmd` but it's not overridden by the command passed to the container at runtime, useful to handle the container as an executable.
@@ -104,7 +107,7 @@ Each stage has the following fields:
 
 The modules block contains a list of modules to use in the recipe. Each module is a YAML snippet that defines a set of instructions. The common structure is:
 
-```yaml
+```yml
 - name: name-of-the-module
   type: type-of-the-module
   # specific fields for the module type
@@ -112,13 +115,13 @@ The modules block contains a list of modules to use in the recipe. Each module i
 
 Refer to the [Use Modules](/vib/en/use-modules) article for more information on how to use modules in a recipe and [Built-in Modules](/vib/en/built-in-modules) for a list of the built-in modules and their specific fields.
 
-You can also write your own modules by making a Vib plugin, see the [Making a Plugin](/vib/en/making-plugin) article for more information.
+You can also write your custom modules by making a Vib plugin, see the [Making a Plugin](/vib/en/making-plugin) article for more information.
 
 ### Copying files between stages
 
-You can copy files between stages using the `copy` field. This consist in a list of files or directories to copy from another stage. Each item in the list is a YAML snippet that defines the source and destination of the copy operation. The common structure is:
+You can copy files between stages using the `copy` field. This consists of a list of files or directories to copy from another stage. Each item in the list is a YAML snippet that defines the source and destination of the copy operation. The common structure is:
 
-```yaml
+```yml
 - from: stage-id-to-copy-from
   paths:
     - src: /path/to/source
@@ -127,7 +130,7 @@ You can copy files between stages using the `copy` field. This consist in a list
 
 For example, to copy the `/path/to/output` directory from the `build` stage to the `/app` directory in the `dist` stage, you can use the following snippet:
 
-```yaml
+```yml
 - from: build
   paths:
     - src: /path/to/output

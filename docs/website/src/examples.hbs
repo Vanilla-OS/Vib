@@ -33,7 +33,8 @@ stages:
       maintainer: My Awesome Team
     args:
       DEBIAN_FRONTEND: noninteractive
-    expose: 3000
+    expose: 
+      "3000": ""
     entrypoint: ["node", "/app/app.js"]
     runs:
 	- echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends

@@ -4,6 +4,7 @@ Description: How to build a Vib image using GitHub Actions.
 PublicationDate: 2024-02-14
 Authors:
   - mirkobrombin
+  - kbdharun
 Tags:
   - github
   - build
@@ -13,7 +14,7 @@ Many projects use GitHub to host their code, and GitHub Actions to automate thei
 
 ## Setup the Workflow
 
-To use the Vib GitHub Action, you need to create a workflow file in the repository where your Vib recipe is located. Create a new file in the `.github/workflows` directory, for example `vib-build.yml`, and add the following content:
+To use the Vib GitHub Action, you need to create a workflow file in the repository where your Vib recipe is located. Create a new file in the `.github/workflows` directory, for example, `vib-build.yml`, and add the following content:
 
 ```yaml
 name: Vib Build
@@ -30,9 +31,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: vanilla-os/vib-gh-action@v0.6.2
+      - uses: vanilla-os/vib-gh-action@v0.7.0
         with:
-          recipe: "vib.yaml"
+          recipe: "vib.yml"
+          plugins: "org/repo:tag, org/repo:tag"
 
       - name: Build the Docker image
         run: docker image build -f Containerfile --tag ghcr.io/your_org/your_image:main .
@@ -46,8 +48,8 @@ Let's break down the workflow file:
 - `runs-on`: The type of machine to run the job on. In this case, the job runs on the latest version of Ubuntu; check [here](https://github.com/actions/runner-images?tab=readme-ov-file#available-images) for the available machine types.
 - `steps`: The sequence of tasks to run in the job.
   - `actions/checkout@v4`: A standard action to check out the repository.
-  - `vanilla-os/vib-gh-action@v0.3.3-1`: The Vib GitHub Action to build the image. The `with` section specifies the recipe file to use.
-  - `run`: A standard command to build the Docker image. The `--tag` option specifies the name and tag of the image, in this case `ghcr.io/your_org/your_image:main`, you can change it according to your needs.
+  - `vanilla-os/vib-gh-action@v0.7.0`: The Vib GitHub Action to build the image. The `with` section specifies the recipe file and additional plugins to use.
+  - `run`: Contains a standard command to build the Docker image. The `--tag` option specifies the name and tag of the image, in this case, the tag is `ghcr.io/your_org/your_image:main`, you can change it according to your needs.
 
 ### Using Custom Plugins
 
@@ -55,9 +57,9 @@ If you are using custom Vib plugins in your recipe, you can include them in the 
 
 ```yaml
 # other steps
-- uses: vanilla-os/vib-gh-action@v0.6.2
+- uses: vanilla-os/vib-gh-action@v0.7.0
   with:
-    recipe: "vib.yaml"
+    recipe: "vib.yml"
     plugins: "your_org/my-plugin:v0.0.1"
 # the rest of the workflow
 ```
@@ -72,10 +74,10 @@ To use more than one plugin, simply separate them with a comma:
 
 ```yaml
 # other steps
-- uses: vanilla-os/vib-gh-action@v0.6.2
+- uses: vanilla-os/vib-gh-action@v0.7.0
   with:
-    recipe: "vib.yaml"
-    plugins: "your_org/my-plugin:v0.0.1,another_org/another-plugin:v1.2.3"
+    recipe: "vib.yml"
+    plugins: "your_org/my-plugin:v0.0.1, another_org/another-plugin:v1.2.3"
 # the rest of the workflow
 ```
 
@@ -102,16 +104,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: vanilla-os/vib-gh-action@v0.6.2
+      - uses: vanilla-os/vib-gh-action@v0.7.0
         with:
-          recipe: "vib.yaml"
+          recipe: "vib.yml"
 
       - name: Build the Docker image
-        run: docker image build -f Containerfile --tag ghcr.io/your_org/your_image .
+        run: docker image build -f Containerfile --tag ghcr.io/your_org/your_image:main .
 
       # Push the image to GHCR (Image Registry)
       - name: Push To GHCR
-        if: github.repository == 'your_org/your_image'
+        if: github.repository == 'your_org/your_repo'
         run: |
           docker login ghcr.io -u ${{ env.REGISTRY_USER }} -p ${{ env.REGISTRY_PASSWORD }}
           docker image push "ghcr.io/your_org/your_image:main"
