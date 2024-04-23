@@ -11,6 +11,23 @@ import (
 	"strings"
 )
 
+// retrieves the Source directory of a given Source
+func GetSourcePath(source Source, moduleName string) string {
+	if source.Type == "git" {
+		var dest string
+		if source.Destination != "" {
+			repoName := strings.Split(source.URL, "/")
+			dest = filepath.Join(moduleName, strings.ReplaceAll(repoName[len(repoName)-1], ".git", ""))
+		} else {
+			dest = filepath.Join(moduleName, source.Destination)
+		}
+		return dest
+	} else if source.Type == "tar" {
+		return filepath.Join(moduleName, source.Destination)
+	}
+	return ""
+}
+
 // DownloadSource downloads a source to the downloads directory
 // according to its type (git, tar, ...)
 func DownloadSource(downloadPath string, source Source, moduleName string) error {
@@ -23,7 +40,7 @@ func DownloadSource(downloadPath string, source Source, moduleName string) error
 		if err != nil {
 			return err
 		}
-		return checksumValidation(source, filepath.Join(downloadPath, moduleName))
+		return checksumValidation(source, filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"))
 	} else {
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
@@ -32,16 +49,17 @@ func DownloadSource(downloadPath string, source Source, moduleName string) error
 // DownloadGitSource downloads a git source to the downloads directory
 // and checks out the commit or tag
 func DownloadGitSource(downloadPath string, source Source, moduleName string) error {
-	fmt.Printf("Source is git: %s\n", source.URL)
-
-	dest := filepath.Join(downloadPath, moduleName)
+	fmt.Printf("Downloading git source: %s\n", source.URL)
 
 	if source.Commit == "" && source.Tag == "" && source.Branch == "" {
 		return fmt.Errorf("missing source commit, tag or branch")
 	}
 
+	dest := filepath.Join(downloadPath, GetSourcePath(source, moduleName))
+	os.MkdirAll(dest, 0777)
+
 	if source.Tag != "" {
-		fmt.Printf("Using a tag: %s\n", source.Tag)
+		fmt.Printf("Using tag %s\n", source.Tag)
 
 		cmd := exec.Command(
 			"git",
@@ -55,10 +73,10 @@ func DownloadGitSource(downloadPath string, source Source, moduleName string) er
 			return err
 		}
 	} else {
-		fmt.Printf("Using a commit: %s\n", source.Commit)
+		fmt.Printf("Using commit %s\n", source.Commit)
 
 		if source.Branch == "" {
-			return fmt.Errorf("missing source branch, needed to checkout commit")
+			return fmt.Errorf("missing source branch")
 		}
 
 		fmt.Printf("Cloning repository: %s\n", source.URL)
@@ -119,7 +137,8 @@ func DownloadGitSource(downloadPath string, source Source, moduleName string) er
 func DownloadTarSource(downloadPath string, source Source, moduleName string) error {
 	fmt.Printf("Source is tar: %s\n", source.URL)
 	//Create the destination path
-	dest := filepath.Join(downloadPath, moduleName)
+	dest := filepath.Join(downloadPath, GetSourcePath(source, moduleName))
+	os.MkdirAll(dest, 0777)
 	//Download the resource
 	res, err := http.Get(source.URL)
 	if err != nil {
@@ -128,7 +147,7 @@ func DownloadTarSource(downloadPath string, source Source, moduleName string) er
 
 	defer res.Body.Close()
 	//Create the destination tar file
-	file, err := os.Create(dest)
+	file, err := os.Create(filepath.Join(dest, moduleName+".tar"))
 	if err != nil {
 		return err
 	}
@@ -165,22 +184,24 @@ func MoveSource(downloadPath string, sourcesPath string, source Source, moduleNa
 	fmt.Printf("Moving source: %s\n", moduleName)
 
 	if source.Type == "git" {
+		dest := GetSourcePath(source, moduleName)
 		return os.Rename(
-			filepath.Join(downloadPath, moduleName),
-			filepath.Join(sourcesPath, moduleName),
+			filepath.Join(downloadPath, dest),
+			filepath.Join(sourcesPath, dest),
 		)
 	} else if source.Type == "tar" {
+		os.MkdirAll(filepath.Join(sourcesPath, GetSourcePath(source, moduleName)), 0777)
 		cmd := exec.Command(
 			"tar",
-			"-xf", filepath.Join(downloadPath, moduleName),
-			"-C", sourcesPath,
+			"-xf", filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"),
+			"-C", filepath.Join(sourcesPath, GetSourcePath(source, moduleName)),
 		)
 		err := cmd.Run()
 		if err != nil {
 			return err
 		}
 
-		return os.Remove(filepath.Join(downloadPath, moduleName))
+		return os.Remove(filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"))
 	} else {
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}

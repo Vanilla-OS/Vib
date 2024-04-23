@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/mitchellh/mapstructure"
 
@@ -43,7 +44,7 @@ func BuildCMakeModule(moduleInterface interface{}, recipe *api.Recipe) (string, 
 
 	cmd := fmt.Sprintf(
 		"cd /sources/%s && mkdir -p build && cd build && cmake ..%s && make",
-		module.Name,
+		filepath.Join(recipe.SourcesPath, api.GetSourcePath(module.Source, module.Name)),
 		buildFlags,
 	)
 

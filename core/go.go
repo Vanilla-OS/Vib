@@ -50,7 +50,7 @@ func BuildGoModule(moduleInterface interface{}, recipe *api.Recipe) (string, err
 
 	cmd := fmt.Sprintf(
 		"cd /sources/%s && go build%s -o %s",
-		module.Name,
+		api.GetSourcePath(module.Source, module.Name),
 		buildFlags,
 		buildVars["GO_OUTPUT_BIN"],
 	)
