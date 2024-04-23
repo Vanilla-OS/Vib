@@ -30,7 +30,7 @@ func BuildDpkgModule(moduleInterface interface{}, recipe *api.Recipe) (string, e
 	}
 	cmd := ""
 	for _, path := range module.Source.Paths {
-		cmd += fmt.Sprintf(" dpkg -i /sources/%s && apt install -f && ", path)
+		cmd += fmt.Sprintf(" dpkg -i /sources/%s/%s && apt install -f && ", module.Name, path)
 	}
 
 	cmd += " && apt clean"

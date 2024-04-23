@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"path/filepath"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
@@ -33,7 +34,7 @@ func BuildDpkgBuildPkgModule(moduleInterface interface{}, recipe *api.Recipe) (s
 
 	cmd := fmt.Sprintf(
 		"cd /sources/%s && dpkg-buildpackage -d -us -uc -b",
-		module.Name,
+		filepath.Join(api.GetSourcePath(module.Source, module.Name)),
 	)
 
 	for _, path := range module.Source.Paths {

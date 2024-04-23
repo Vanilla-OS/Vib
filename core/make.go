@@ -27,5 +27,5 @@ func BuildMakeModule(moduleInterface interface{}, recipe *api.Recipe) (string, e
 		return "", err
 	}
 
-	return "cd /sources/" + module.Name + " && make && make install", nil
+	return "cd /sources/" + api.GetSourcePath(module.Source, module.Name) + " && make && make install", nil
 }

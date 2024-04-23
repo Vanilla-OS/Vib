@@ -92,3 +92,4 @@ func BuildAptModule(moduleInterface interface{}, recipe *api.Recipe) (string, er
 
 	return "", errors.New("no packages or paths specified")
 }
+

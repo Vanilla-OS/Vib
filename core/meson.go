@@ -34,7 +34,7 @@ func BuildMesonModule(moduleInterface interface{}, recipe *api.Recipe) (string, 
 	tmpDir := fmt.Sprintf("/tmp/%s-%s", module.Source.Checksum, module.Name)
 	cmd := fmt.Sprintf(
 		"cd /sources/%s && meson %s && ninja -C %s && ninja -C %s install",
-		module.Name,
+		api.GetSourcePath(module.Source, module.Name),
 		tmpDir,
 		tmpDir,
 		tmpDir,
