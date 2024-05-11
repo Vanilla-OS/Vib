@@ -81,7 +81,7 @@ Vib has support for remote modules, you can include them in the recipe file usin
   type: includes
   includes:
     - https://my-repo.com/modules/node.yml
-    - gh:my-org/my-repo/modules/python.yml
+    - gh:my-org/my-repo:branch:modules/python.yml
 ```
 
 As you can see in the above example, we are explicitly including each module in the recipe file and not pointing to the whole `modules` directory. This is because the `include` module ensures each module gets included in the exact order you specify, ensuring the build process is predictable.
