@@ -9,6 +9,7 @@ import (
 	"github.com/ebitengine/purego"
 	"github.com/vanilla-os/vib/api"
 )
+import "os"
 
 var openedPlugins map[string]Plugin
 
@@ -23,10 +24,25 @@ func LoadPlugin(name string, module interface{}, recipe *api.Recipe) (string, er
 		fmt.Println("Loading new plugin")
 		buildModule = Plugin{Name: name}
 
-		loadedPlugin, err := purego.Dlopen(fmt.Sprintf("%s/%s.so", recipe.PluginPath, name), purego.RTLD_NOW|purego.RTLD_GLOBAL)
-		if err != nil {
-			panic(err)
+		localPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
+
+		globalPluginPath := fmt.Sprintf("$INSTALLPREFIX$/share/vib/plugins/%s.so", name)
+
+		// Prefer local plugins before global ones
+		var loadedPlugin uintptr
+		_, err := os.Stat(localPluginPath)
+		if os.IsNotExist(err) {
+			loadedPlugin, err = purego.Dlopen(globalPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+			if err != nil {
+				panic(err) // yayyy panics <3
+			}
+		} else {
+			loadedPlugin, err = purego.Dlopen(localPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+			if err != nil {
+				panic(err)
+			}
 		}
+
 		var buildFunction func(*C.char, *C.char) string
 		purego.RegisterLibFunc(&buildFunction, loadedPlugin, "BuildModule")
 		buildModule.BuildFunc = buildFunction

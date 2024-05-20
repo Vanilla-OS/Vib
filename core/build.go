@@ -285,16 +285,8 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 	}
 
 	moduleBuilders := map[string]func(interface{}, *api.Recipe) (string, error){
-		"apt":               BuildAptModule,
-		"dnf":               BuildDnfModule,
-		"cmake":             BuildCMakeModule,
-		"dpkg":              BuildDpkgModule,
-		"dpkg-buildpackage": BuildDpkgBuildPkgModule,
-		"go":                BuildGoModule,
-		"make":              BuildMakeModule,
-		"meson":             BuildMesonModule,
 		"shell":             BuildShellModule,
-		"includes":          func(interface{}, *api.Recipe) (string, error) { return "", nil },
+		"includes": func(interface{}, *api.Recipe) (string, error) { return "", nil },
 	}
 
 	if moduleBuilder, ok := moduleBuilders[module.Type]; ok {
