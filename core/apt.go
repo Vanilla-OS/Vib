@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/mitchellh/mapstructure"
+
 	"github.com/vanilla-os/vib/api"
 )
 
@@ -54,7 +55,7 @@ func BuildAptModule(moduleInterface interface{}, recipe *api.Recipe) (string, er
 			packages += pkg + " "
 		}
 
-		return fmt.Sprintf("apt install -y %s %s && apt clean", args, packages), nil
+		return fmt.Sprintf("apt-get install -y %s %s && apt-get clean", args, packages), nil
 	}
 
 	if len(module.Source.Paths) > 0 {
@@ -92,4 +93,3 @@ func BuildAptModule(moduleInterface interface{}, recipe *api.Recipe) (string, er
 
 	return "", errors.New("no packages or paths specified")
 }
-
