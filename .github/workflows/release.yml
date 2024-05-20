@@ -19,11 +19,19 @@ jobs:
 
     - name: Build
       run: |
+        Go get ./...
+        make build
+
+    - name: Build plugins
+      run: |
         go get ./...
-        go build -o vib -trimpath
+        make build-plugins
+        tar cvf plugins.tar.xz build/plugins
 
     - name: Upload a Release Asset
       if: github.repository == 'Vanilla-OS/Vib'
       uses: softprops/action-gh-release@v2
       with:
-        files: vib
+        files: |
+          build/vib
+          plugins.tar.xz

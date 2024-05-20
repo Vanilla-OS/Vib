@@ -1,7 +1,8 @@
 example/downloads/*
 example/sources/*
 test/*
-vib
+build
 docs/website/dist/*
 docs/website/node_modules/*
 go.work
+*~

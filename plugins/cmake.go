@@ -1,10 +1,10 @@
-package core
+package main
 
 import (
+	"C"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
-
-	"github.com/mitchellh/mapstructure"
 
 	"github.com/vanilla-os/vib/api"
 )
@@ -18,19 +18,29 @@ type CMakeModule struct {
 }
 
 // BuildCMakeModule builds a module that builds a CMake project
-func BuildCMakeModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
-	var module CMakeModule
-	err := mapstructure.Decode(moduleInterface, &module)
+//
+//export BuildModule
+func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
+	var module *CMakeModule
+	var recipe *api.Recipe
+
+	err := json.Unmarshal([]byte(C.GoString(moduleInterface)), &module)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
+
+	err = json.Unmarshal([]byte(C.GoString(recipeInterface)), &recipe)
+	if err != nil {
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+
 	err = api.DownloadSource(recipe.DownloadsPath, module.Source, module.Name)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 	err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, module.Source, module.Name)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 	buildVars := map[string]string{}
 	for k, v := range module.BuildVars {
@@ -48,5 +58,7 @@ func BuildCMakeModule(moduleInterface interface{}, recipe *api.Recipe) (string, 
 		buildFlags,
 	)
 
-	return cmd, nil
+	return C.CString(cmd)
 }
+
+func main() { fmt.Println("This plugin is not meant to run standalone!") }

@@ -1,16 +1,15 @@
-package core
+package main
 
 import (
+	"C"
 	"bufio"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/vanilla-os/vib/api"
 )
+import "encoding/json"
 
 type AptModule struct {
 	Name    string     `json:"name"`
@@ -28,11 +27,20 @@ type AptOptions struct {
 
 // BuildAptModule builds a module that installs packages
 // using the apt package manager
-func BuildAptModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
-	var module AptModule
-	err := mapstructure.Decode(moduleInterface, &module)
+//
+//export BuildModule
+func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
+	var module *AptModule
+	var recipe *api.Recipe
+
+	err := json.Unmarshal([]byte(C.GoString(moduleInterface)), &module)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+
+	err = json.Unmarshal([]byte(C.GoString(recipeInterface)), &recipe)
+	if err != nil {
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 
 	args := ""
@@ -55,7 +63,7 @@ func BuildAptModule(moduleInterface interface{}, recipe *api.Recipe) (string, er
 			packages += pkg + " "
 		}
 
-		return fmt.Sprintf("apt-get install -y %s %s && apt-get clean", args, packages), nil
+		return C.CString(fmt.Sprintf("apt install -y %s %s && apt clean", args, packages))
 	}
 
 	if len(module.Source.Paths) > 0 {
@@ -66,7 +74,7 @@ func BuildAptModule(moduleInterface interface{}, recipe *api.Recipe) (string, er
 			packages := ""
 			file, err := os.Open(instPath)
 			if err != nil {
-				return "", err
+				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 			}
 			defer file.Close()
 
@@ -76,20 +84,23 @@ func BuildAptModule(moduleInterface interface{}, recipe *api.Recipe) (string, er
 			}
 
 			if err := scanner.Err(); err != nil {
-				return "", err
+				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 			}
 
-			cmd += fmt.Sprintf("apt install -y %s %s", args, packages)
+			cmd += fmt.Sprintf("apt-get install -y %s %s", args, packages)
 
 			if i != len(module.Source.Paths)-1 {
 				cmd += "&& "
 			} else {
-				cmd += "&& apt clean"
+				cmd += "&& apt-get clean"
 			}
 		}
 
-		return cmd, nil
+		return C.CString(cmd)
 	}
 
-	return "", errors.New("no packages or paths specified")
+	return C.CString("ERROR: no packages or paths specified")
 }
+
+func main() {}
+

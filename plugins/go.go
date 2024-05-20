@@ -1,11 +1,12 @@
-package core
+package main
 
 import (
+	"C"
 	"fmt"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
 )
+import "encoding/json"
 
 type GoModule struct {
 	Name       string `json:"name"`
@@ -18,19 +19,29 @@ type GoModule struct {
 // BuildGoModule builds a module that builds a Go project
 // buildVars are used to customize the build command
 // like setting the output binary name and location
-func BuildGoModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
-	var module GoModule
-	err := mapstructure.Decode(moduleInterface, &module)
+//
+//export BuildModule
+func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
+	var module *GoModule
+	var recipe *api.Recipe
+
+	err := json.Unmarshal([]byte(C.GoString(moduleInterface)), &module)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
+
+	err = json.Unmarshal([]byte(C.GoString(recipeInterface)), &recipe)
+	if err != nil {
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+
 	err = api.DownloadSource(recipe.DownloadsPath, module.Source, module.Name)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 	err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, module.Source, module.Name)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 
 	buildVars := map[string]string{}
@@ -55,5 +66,7 @@ func BuildGoModule(moduleInterface interface{}, recipe *api.Recipe) (string, err
 		buildVars["GO_OUTPUT_BIN"],
 	)
 
-	return cmd, nil
+	return C.CString(cmd)
 }
+
+func main() { fmt.Println("This plugin is not meant to run standalone!") }

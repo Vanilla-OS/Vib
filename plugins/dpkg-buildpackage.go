@@ -1,10 +1,11 @@
-package core
+package main
 
 import (
+	"C"
 	"fmt"
 	"path/filepath"
+	"encoding/json"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
 )
 
@@ -16,20 +17,29 @@ type DpkgBuildModule struct {
 
 // BuildDpkgModule builds a module that builds a dpkg project
 // and installs the resulting .deb package
-func BuildDpkgBuildPkgModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
-	var module DpkgBuildModule
-	err := mapstructure.Decode(moduleInterface, &module)
+//export BuildModule
+func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
+	var module *DpkgBuildModule
+	var recipe *api.Recipe
+
+	
+	err := json.Unmarshal([]byte(C.GoString(moduleInterface)), &module)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+
+	err = json.Unmarshal([]byte(C.GoString(recipeInterface)), &recipe)
+	if err != nil {
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 
 	err = api.DownloadSource(recipe.DownloadsPath, module.Source, module.Name)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 	err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, module.Source, module.Name)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 
 	cmd := fmt.Sprintf(
@@ -42,5 +52,9 @@ func BuildDpkgBuildPkgModule(moduleInterface interface{}, recipe *api.Recipe) (s
 	}
 
 	cmd += " && apt clean"
-	return cmd, nil
+	return C.CString(cmd)
 }
+
+
+
+func main() { fmt.Println("This plugin is not meant to run standalone!"); }

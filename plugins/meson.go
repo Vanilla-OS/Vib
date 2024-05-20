@@ -1,9 +1,10 @@
-package core
+package main
 
 import (
+	"C"
+	"encoding/json"
 	"fmt"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
 )
 
@@ -14,19 +15,29 @@ type MesonModule struct {
 }
 
 // BuildMesonModule builds a module that builds a Meson project
-func BuildMesonModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
-	var module MesonModule
-	err := mapstructure.Decode(moduleInterface, &module)
+//
+//export BuildModule
+func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
+	var module *MesonModule
+	var recipe *api.Recipe
+
+	err := json.Unmarshal([]byte(C.GoString(moduleInterface)), &module)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
+
+	err = json.Unmarshal([]byte(C.GoString(recipeInterface)), &recipe)
+	if err != nil {
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+
 	err = api.DownloadSource(recipe.DownloadsPath, module.Source, module.Name)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 	err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, module.Source, module.Name)
 	if err != nil {
-		return "", err
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 
 	// Since the downloaded source goes through checksum verification already
@@ -40,5 +51,7 @@ func BuildMesonModule(moduleInterface interface{}, recipe *api.Recipe) (string, 
 		tmpDir,
 	)
 
-	return cmd, nil
+	return C.CString(cmd)
 }
+
+func main() { fmt.Println("This plugin is not meant to run standalone!") }

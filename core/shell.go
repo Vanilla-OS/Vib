@@ -1,8 +1,9 @@
-package core
+package main
 
 import (
 	"errors"
 	"strings"
+	"fmt"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
