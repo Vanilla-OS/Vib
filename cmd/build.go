@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/vanilla-os/vib/core"
@@ -43,13 +46,37 @@ func buildCommand(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		recipePath = args[0]
+
+		/*
+			Check whether the provided file has either yml or yaml extension,
+			if not, then return an error
+
+			Operations on recipePath:
+			1. Get the recipePath extension, then
+			2. Trim the left dot(.) and
+			3. Convert the extension to lower case.
+
+			Covers the following:
+			1. filename.txt - Invalid extension
+			2. filename. - No extension
+			3. filename - No extension
+			4. filename.YAML or filename.YML - uppercase extension
+		*/
+		extension := strings.ToLower(strings.TrimLeft(filepath.Ext(recipePath), "."))
+		if len(extension) == 0 || (extension != "yml" && extension != "yaml") {
+			return fmt.Errorf("%s is an invalid recipe file", recipePath)
+		}
+
+		// Check whether the provided file exists, if not, then return an error
+		if _, err := os.Stat(recipePath); errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("%s does not exist", recipePath)
+		}
 	}
 
 	if recipePath == "" {
 		return fmt.Errorf("missing recipe path")
 	}
 
-	recipePath = args[0]
 	_, err := core.BuildRecipe(recipePath)
 	if err != nil {
 		return err
