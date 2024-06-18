@@ -1,15 +1,16 @@
 package main
 
 import (
-	"C"
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"C"
+
 	"github.com/vanilla-os/vib/api"
 )
-import "encoding/json"
 
 type AptModule struct {
 	Name    string     `json:"name"`
@@ -63,7 +64,7 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 			packages += pkg + " "
 		}
 
-		return C.CString(fmt.Sprintf("apt install -y %s %s && apt clean", args, packages))
+		return C.CString(fmt.Sprintf("apt-get install -y %s %s && apt-get clean", args, packages))
 	}
 
 	if len(module.Source.Paths) > 0 {
@@ -103,4 +104,3 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 }
 
 func main() {}
-
