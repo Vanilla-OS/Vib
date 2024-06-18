@@ -26,5 +26,5 @@ jobs:
 
     - name: Build plugins
       run: |
-      	go get ./...
+        go get ./...
         make build-plugins

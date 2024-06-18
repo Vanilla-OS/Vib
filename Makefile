@@ -11,7 +11,7 @@ build:
 	sed 's|$$INSTALLPREFIX$$|${PREFIX}|g' core/plugins.in > core/plugins.go
 	go build -a -o build/${BINARY_NAME}
 
-plugins: FORCE
+build-plugins: FORCE
 	mkdir -p build/plugins
 	$(MAKE) -C plugins/
 
