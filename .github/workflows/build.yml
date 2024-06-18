@@ -28,3 +28,11 @@ jobs:
       run: |
         go get ./...
         make build-plugins
+        tar cvf plugins.tar.xz build/plugins
+
+    - uses: actions/upload-artifact@v4
+      with:
+         name: Vib
+         path: |
+            build/vib
+            plugins.tar.xz

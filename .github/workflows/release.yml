@@ -23,7 +23,7 @@ jobs:
 
     - name: Build
       run: |
-        Go get ./...
+        go get ./...
         make build
 
     - name: Build plugins
