@@ -37,7 +37,7 @@ type Stage struct {
 	Expose      map[string]string `json:"expose"`
 	Cmd         []string          `json:"cmd"`
 	Modules     []interface{}     `json:"modules"`
-	Entrypoint  []string
+	Entrypoint  Entrypoint
 }
 
 type Copy struct {
@@ -48,4 +48,14 @@ type Copy struct {
 type Path struct {
 	Src string
 	Dst string
+}
+
+type Workdir struct {
+	Path    string
+	Restore bool
+}
+
+type Entrypoint struct {
+	Exec []string
+	Cwd  Workdir
 }
