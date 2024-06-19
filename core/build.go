@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
+
 	"github.com/vanilla-os/vib/api"
 )
 
@@ -224,9 +225,25 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// ENTRYPOINT
-		if len(stage.Entrypoint) > 0 {
+		if stage.Entrypoint.Cwd.Path != "" {
 			_, err = containerfile.WriteString(
-				fmt.Sprintf("ENTRYPOINT [\"%s\"]\n", strings.Join(stage.Entrypoint, "\",\"")),
+				fmt.Sprintf("WORKDIR %s\n", stage.Entrypoint.Cwd.Path),
+			)
+			if err != nil {
+				return err
+			}
+		}
+		if len(stage.Entrypoint.Exec) > 0 {
+			_, err = containerfile.WriteString(
+				fmt.Sprintf("ENTRYPOINT [\"%s\"]\n", strings.Join(stage.Entrypoint.Exec, "\",\"")),
+			)
+			if err != nil {
+				return err
+			}
+		}
+		if stage.Entrypoint.Cwd.Restore {
+			_, err = containerfile.WriteString(
+				fmt.Sprintf("WORKDIR %s\n", "/"),
 			)
 			if err != nil {
 				return err
@@ -285,7 +302,7 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 	}
 
 	moduleBuilders := map[string]func(interface{}, *api.Recipe) (string, error){
-		"shell":             BuildShellModule,
+		"shell":    BuildShellModule,
 		"includes": func(interface{}, *api.Recipe) (string, error) { return "", nil },
 	}
 
