@@ -15,6 +15,7 @@ type Source struct {
 type Recipe struct {
 	Name          string
 	Id            string
+	Cwd           string
 	Stages        []Stage
 	Path          string
 	ParentPath    string
@@ -50,12 +51,7 @@ type Path struct {
 	Dst string
 }
 
-type Workdir struct {
-	Path    string
-	Restore bool
-}
-
 type Entrypoint struct {
-	Exec []string
-	Cwd  Workdir
+	Exec    []string
+	Workdir string
 }

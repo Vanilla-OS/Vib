@@ -225,10 +225,11 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// ENTRYPOINT
-		if stage.Entrypoint.Cwd.Path != "" {
+		if stage.Entrypoint.Workdir != "" && stage.Entrypoint.Workdir != recipe.Cwd {
 			_, err = containerfile.WriteString(
-				fmt.Sprintf("WORKDIR %s\n", stage.Entrypoint.Cwd.Path),
+				fmt.Sprintf("WORKDIR %s\n", stage.Entrypoint.Workdir),
 			)
+			recipe.Cwd = stage.Entrypoint.Workdir
 			if err != nil {
 				return err
 			}
@@ -236,14 +237,6 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		if len(stage.Entrypoint.Exec) > 0 {
 			_, err = containerfile.WriteString(
 				fmt.Sprintf("ENTRYPOINT [\"%s\"]\n", strings.Join(stage.Entrypoint.Exec, "\",\"")),
-			)
-			if err != nil {
-				return err
-			}
-		}
-		if stage.Entrypoint.Cwd.Restore {
-			_, err = containerfile.WriteString(
-				fmt.Sprintf("WORKDIR %s\n", "/"),
 			)
 			if err != nil {
 				return err
