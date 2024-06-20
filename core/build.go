@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -146,12 +147,23 @@ func BuildContainerfile(recipe *api.Recipe) error {
 
 		// RUN(S)
 		if !stage.SingleLayer {
-			for _, cmd := range stage.Runs {
-				_, err = containerfile.WriteString(
-					fmt.Sprintf("RUN %s\n", cmd),
-				)
-				if err != nil {
-					return err
+			if len(stage.Runs.Shell) > 0 {
+				if stage.Runs.Workdir != "" && stage.Runs.Workdir != recipe.Cwd {
+					_, err = containerfile.WriteString(
+						fmt.Sprintf("WORKDIR %s\n", stage.Runs.Workdir),
+					)
+					recipe.Cwd = stage.Runs.Workdir
+					if err != nil {
+						return err
+					}
+				}
+				for _, cmd := range stage.Runs.Shell {
+					_, err = containerfile.WriteString(
+						fmt.Sprintf("RUN %s\n", cmd),
+					)
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -216,30 +228,45 @@ func BuildContainerfile(recipe *api.Recipe) error {
 
 		// SINGLE LAYER
 		if stage.SingleLayer {
-			unifiedCmd := "RUN "
+			if len(stage.Runs.Shell) > 0 {
+				if stage.Runs.Workdir != "" && stage.Runs.Workdir != recipe.Cwd {
+					_, err = containerfile.WriteString(
+						fmt.Sprintf("WORKDIR %s\n", stage.Runs.Workdir),
+					)
+					recipe.Cwd = stage.Runs.Workdir
+					if err != nil {
+						return err
+					}
+				}
 
-			for i, cmd := range stage.Runs {
-				unifiedCmd += cmd
-				if i != len(stage.Runs)-1 {
+				unifiedCmd := "RUN "
+
+				for i, cmd := range stage.Runs.Shell {
+					unifiedCmd += cmd
+					if i != len(stage.Runs.Shell)-1 {
+						unifiedCmd += " && "
+					}
+				}
+
+				if len(cmds) > 0 {
 					unifiedCmd += " && "
 				}
-			}
 
-			if len(cmds) > 0 {
-				unifiedCmd += " && "
-			}
-
-			for i, cmd := range cmds {
-				unifiedCmd += cmd.Command
-				if i != len(cmds)-1 {
-					unifiedCmd += " && "
+				for i, cmd := range cmds {
+					if cmd.Workdir != stage.Runs.Workdir {
+						return errors.New("Workdir mismatch")
+					}
+					unifiedCmd += cmd.Command
+					if i != len(cmds)-1 {
+						unifiedCmd += " && "
+					}
 				}
-			}
 
-			if len(unifiedCmd) > 4 {
-				_, err = containerfile.WriteString(fmt.Sprintf("%s\n", unifiedCmd))
-				if err != nil {
-					return err
+				if len(unifiedCmd) > 4 {
+					_, err = containerfile.WriteString(fmt.Sprintf("%s\n", unifiedCmd))
+					if err != nil {
+						return err
+					}
 				}
 			}
 		}
