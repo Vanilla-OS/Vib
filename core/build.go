@@ -175,6 +175,16 @@ func BuildContainerfile(recipe *api.Recipe) error {
 					continue
 				}
 
+				if cmd.Workdir != "" && cmd.Workdir != recipe.Cwd {
+					_, err = containerfile.WriteString(
+						fmt.Sprintf("WORKDIR %s\n", cmd.Workdir),
+					)
+					recipe.Cwd = cmd.Workdir
+					if err != nil {
+						return err
+					}
+				}
+
 				_, err = containerfile.WriteString(
 					fmt.Sprintf("RUN %s\n", cmd.Command),
 				)
@@ -265,6 +275,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, e
 		cmds = append(cmds, ModuleCommand{
 			Name:    module.Name,
 			Command: cmd,
+			Workdir: module.Workdir,
 		})
 	}
 
