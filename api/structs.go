@@ -34,7 +34,7 @@ type Stage struct {
 	Env         map[string]string `json:"env"`
 	Adds        map[string]string `json:"adds"`
 	Args        map[string]string `json:"args"`
-	Runs        []string          `json:"runs"`
+	Runs        Run               `json:"runs"`
 	Expose      map[string]string `json:"expose"`
 	Cmd         []string          `json:"cmd"`
 	Modules     []interface{}     `json:"modules"`
@@ -54,5 +54,10 @@ type Path struct {
 
 type Entrypoint struct {
 	Exec    []string
+	Workdir string
+}
+
+type Run struct {
+	Shell   []string
 	Workdir string
 }
