@@ -83,29 +83,31 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		// COPY
 		if len(stage.Copy) > 0 {
 			for _, copy := range stage.Copy {
-				if copy.Workdir != "" && copy.Workdir != recipe.Cwd {
-					_, err = containerfile.WriteString(
-						fmt.Sprintf("WORKDIR %s\n", copy.Workdir),
-					)
-					recipe.Cwd = copy.Workdir
-					if err != nil {
-						return err
-					}
-				}
-				for _, path := range copy.Paths {
-					if copy.From != "" {
+				if len(copy.Paths) > 0 {
+					if copy.Workdir != "" && copy.Workdir != recipe.Cwd {
 						_, err = containerfile.WriteString(
-							fmt.Sprintf("COPY --from=%s %s %s\n", copy.From, path.Src, path.Dst),
+							fmt.Sprintf("WORKDIR %s\n", copy.Workdir),
 						)
+						recipe.Cwd = copy.Workdir
 						if err != nil {
 							return err
 						}
-					} else {
-						_, err = containerfile.WriteString(
-							fmt.Sprintf("COPY %s %s\n", path.Src, path.Dst),
-						)
-						if err != nil {
-							return err
+					}
+					for _, path := range copy.Paths {
+						if copy.From != "" {
+							_, err = containerfile.WriteString(
+								fmt.Sprintf("COPY --from=%s %s %s\n", copy.From, path.Src, path.Dst),
+							)
+							if err != nil {
+								return err
+							}
+						} else {
+							_, err = containerfile.WriteString(
+								fmt.Sprintf("COPY %s %s\n", path.Src, path.Dst),
+							)
+							if err != nil {
+								return err
+							}
 						}
 					}
 				}
