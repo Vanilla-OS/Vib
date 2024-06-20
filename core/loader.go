@@ -10,16 +10,16 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/vanilla-os/vib/api"
-
 	"gopkg.in/yaml.v3"
+
+	"github.com/vanilla-os/vib/api"
 )
 
 // LoadRecipe loads a recipe from a file and returns a Recipe
 // Does not validate the recipe but it will catch some errors
 // a proper validation will be done in the future
 func LoadRecipe(path string) (*api.Recipe, error) {
-	recipe := &api.Recipe{}
+	recipe := &api.Recipe{Cwd: "/"}
 
 	// we use the absolute path to the recipe file as the
 	// root path for the recipe and all its files
