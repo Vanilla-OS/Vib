@@ -83,10 +83,11 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		// COPY
 		if len(stage.Copy) > 0 {
 			for _, copy := range stage.Copy {
-				for _, path := range copy.Paths {
+				if copy.Workdir != "" && copy.Workdir != recipe.Cwd {
 					_, err = containerfile.WriteString(
-						fmt.Sprintf("COPY --from=%s %s %s\n", copy.From, path.Src, path.Dst),
+						fmt.Sprintf("WORKDIR %s\n", copy.Workdir),
 					)
+					recipe.Cwd = copy.Workdir
 					if err != nil {
 						return err
 					}
