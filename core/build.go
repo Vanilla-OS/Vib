@@ -92,6 +92,23 @@ func BuildContainerfile(recipe *api.Recipe) error {
 						return err
 					}
 				}
+				for _, path := range copy.Paths {
+					if copy.From != "" {
+						_, err = containerfile.WriteString(
+							fmt.Sprintf("COPY --from=%s %s %s\n", copy.From, path.Src, path.Dst),
+						)
+						if err != nil {
+							return err
+						}
+					} else {
+						_, err = containerfile.WriteString(
+							fmt.Sprintf("COPY %s %s\n", path.Src, path.Dst),
+						)
+						if err != nil {
+							return err
+						}
+					}
+				}
 			}
 		}
 
