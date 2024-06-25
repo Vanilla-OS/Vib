@@ -109,11 +109,13 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 
 	for i, stage := range recipe.Stages {
 		// here we check if the extra Adds path exists
-		for src := range stage.Adds.SrcDst {
-			fullPath := filepath.Join(filepath.Dir(recipePath), src)
-			_, err = os.Stat(fullPath)
-			if os.IsNotExist(err) {
-				return nil, err
+		for _, add := range stage.Adds {
+			for src := range add.SrcDst {
+				fullPath := filepath.Join(filepath.Dir(recipePath), src)
+				_, err = os.Stat(fullPath)
+				if os.IsNotExist(err) {
+					return nil, err
+				}
 			}
 		}
 

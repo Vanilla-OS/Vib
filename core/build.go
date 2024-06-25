@@ -179,21 +179,27 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// ADDS
-		if stage.Adds.Workdir != "" && stage.Adds.Workdir != recipe.Cwd {
-			_, err = containerfile.WriteString(
-				fmt.Sprintf("WORKDIR %s\n", stage.Adds.Workdir),
-			)
-			recipe.Cwd = stage.Adds.Workdir
-			if err != nil {
-				return err
-			}
-		}
-		for key, value := range stage.Adds.SrcDst {
-			_, err = containerfile.WriteString(
-				fmt.Sprintf("ADD %s %s\n", key, value),
-			)
-			if err != nil {
-				return err
+		if len(stage.Adds) > 0 {
+			for _, add := range stage.Adds {
+				if len(add.SrcDst) > 0 {
+					if add.Workdir != "" && add.Workdir != recipe.Cwd {
+						_, err = containerfile.WriteString(
+							fmt.Sprintf("WORKDIR %s\n", add.Workdir),
+						)
+						recipe.Cwd = add.Workdir
+						if err != nil {
+							return err
+						}
+					}
+					for key, value := range add.SrcDst {
+						_, err = containerfile.WriteString(
+							fmt.Sprintf("ADD %s %s\n", key, value),
+						)
+						if err != nil {
+							return err
+						}
+					}
+				}
 			}
 		}
 
