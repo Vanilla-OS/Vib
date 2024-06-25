@@ -272,9 +272,18 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// CMD
-		if len(stage.Cmd) > 0 {
+		if stage.Cmd.Workdir != "" && stage.Cmd.Workdir != recipe.Cwd {
 			_, err = containerfile.WriteString(
-				fmt.Sprintf("CMD [\"%s\"]\n", strings.Join(stage.Cmd, "\",\"")),
+				fmt.Sprintf("WORKDIR %s\n", stage.Cmd.Workdir),
+			)
+			recipe.Cwd = stage.Cmd.Workdir
+			if err != nil {
+				return err
+			}
+		}
+		if len(stage.Cmd.Exec) > 0 {
+			_, err = containerfile.WriteString(
+				fmt.Sprintf("CMD [\"%s\"]\n", strings.Join(stage.Cmd.Exec, "\",\"")),
 			)
 			if err != nil {
 				return err
