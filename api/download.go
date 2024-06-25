@@ -13,7 +13,8 @@ import (
 
 // retrieves the Source directory of a given Source
 func GetSourcePath(source Source, moduleName string) string {
-	if source.Type == "git" {
+	switch source.Type {
+	case "git":
 		var dest string
 		if source.Destination != "" {
 			repoName := strings.Split(source.URL, "/")
@@ -22,7 +23,7 @@ func GetSourcePath(source Source, moduleName string) string {
 			dest = filepath.Join(moduleName, source.Destination)
 		}
 		return dest
-	} else if source.Type == "tar" {
+	case "tar":
 		return filepath.Join(moduleName, source.Destination)
 	}
 	return ""
@@ -33,17 +34,48 @@ func GetSourcePath(source Source, moduleName string) string {
 func DownloadSource(downloadPath string, source Source, moduleName string) error {
 	fmt.Printf("Downloading source: %s\n", source.URL)
 
-	if source.Type == "git" {
+	switch source.Type {
+	case "git":
 		return DownloadGitSource(downloadPath, source, moduleName)
-	} else if source.Type == "tar" {
+	case "tar":
 		err := DownloadTarSource(downloadPath, source, moduleName)
 		if err != nil {
 			return err
 		}
 		return checksumValidation(source, filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"))
-	} else {
+	default:
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
+}
+
+func gitCloneTag(url, tag, dest string) error {
+	cmd := exec.Command(
+		"git",
+		"clone", url,
+		"--depth", "1",
+		"--branch", tag,
+		dest,
+	)
+	return cmd.Run()
+}
+
+func gitGetLatestCommit(branch, dest string) (string, error) {
+	cmd := exec.Command("git", "--no-pager", "log", "-n", "1", "--pretty=format:\"%H\"", branch)
+	cmd.Dir = dest
+	latest_tag, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Trim(string(latest_tag), "\""), nil
+}
+
+func gitCheckout(value, dest string) error {
+	cmd := exec.Command("git", "checkout", value)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Dir = dest
+	return cmd.Run()
 }
 
 // DownloadGitSource downloads a git source to the downloads directory
@@ -51,109 +83,68 @@ func DownloadSource(downloadPath string, source Source, moduleName string) error
 func DownloadGitSource(downloadPath string, source Source, moduleName string) error {
 	fmt.Printf("Downloading git source: %s\n", source.URL)
 
+	if source.URL == "" {
+		return fmt.Errorf("missing git remote URL")
+	}
 	if source.Commit == "" && source.Tag == "" && source.Branch == "" {
 		return fmt.Errorf("missing source commit, tag or branch")
 	}
 
 	dest := filepath.Join(downloadPath, GetSourcePath(source, moduleName))
-	os.MkdirAll(dest, 0777)
+	os.MkdirAll(dest, 0o777)
 
 	if source.Tag != "" {
 		fmt.Printf("Using tag %s\n", source.Tag)
+		return gitCloneTag(source.URL, source.Tag, dest)
+	}
 
-		cmd := exec.Command(
-			"git",
-			"clone", source.URL,
-			"--depth", "1",
-			"--branch", source.Tag,
-			dest,
-		)
-		err := cmd.Run()
-		if err != nil {
-			return err
-		}
-	} else {
-		fmt.Printf("Using commit %s\n", source.Commit)
+	fmt.Printf("Cloning repository: %s\n", source.URL)
+	cmd := exec.Command("git", "clone", source.URL, dest)
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
 
-		if source.Branch == "" {
-			return fmt.Errorf("missing source branch")
-		}
-
-		fmt.Printf("Cloning repository: %s\n", source.URL)
-		cmd := exec.Command(
-			"git",
-			"clone", source.URL,
-			dest,
-		)
-		err := cmd.Run()
-		if err != nil {
-			return err
-		}
-
-		if source.Commit == "latest" {
-			cmd := exec.Command(
-				"git", "--no-pager", "log", "-n", "1", "--pretty=format:\"%H\"", source.Branch,
-			)
-			cmd.Dir = dest
-			latest_tag, err := cmd.Output()
-			if err != nil {
-				return err
-			}
-			source.Commit = strings.Trim(string(latest_tag), "\"")
-		}
-
+	if source.Commit != "" {
 		fmt.Printf("Checking out branch: %s\n", source.Branch)
-		cmd = exec.Command(
-			"git",
-			"checkout",
-			"-B", source.Branch,
-		)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = dest
-		err = cmd.Run()
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("Resetting to commit: %s\n", source.Commit)
-		cmd = exec.Command(
-			"git",
-			"reset", "--hard", source.Commit,
-		)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Dir = dest
-		err = cmd.Run()
+		err := gitCheckout(source.Branch, dest)
 		if err != nil {
 			return err
 		}
 	}
 
-	return nil
+	// Default to latest commit
+	if source.Commit == "" || source.Commit == "latest" {
+		source.Commit, err = gitGetLatestCommit(source.Branch, dest)
+		if err != nil {
+			return fmt.Errorf("could not get latest commit: %s", err.Error())
+		}
+	}
+	fmt.Printf("Resetting to commit: %s\n", source.Commit)
+	return gitCheckout(source.Commit, dest)
 }
 
 // DownloadTarSource downloads a tar archive to the downloads directory
 func DownloadTarSource(downloadPath string, source Source, moduleName string) error {
 	fmt.Printf("Source is tar: %s\n", source.URL)
-	//Create the destination path
+	// Create the destination path
 	dest := filepath.Join(downloadPath, GetSourcePath(source, moduleName))
-	os.MkdirAll(dest, 0777)
-	//Download the resource
+	os.MkdirAll(dest, 0o777)
+	// Download the resource
 	res, err := http.Get(source.URL)
 	if err != nil {
 		return err
 	}
 
 	defer res.Body.Close()
-	//Create the destination tar file
+	// Create the destination tar file
 	file, err := os.Create(filepath.Join(dest, moduleName+".tar"))
 	if err != nil {
 		return err
 	}
-	//Close the file when the function ends
+	// Close the file when the function ends
 	defer file.Close()
-	//Copy the response body to the destination file
+	// Copy the response body to the destination file
 	_, err = io.Copy(file, res.Body)
 	if err != nil {
 		return err
@@ -183,14 +174,15 @@ func MoveSources(downloadPath string, sourcesPath string, sources []Source, modu
 func MoveSource(downloadPath string, sourcesPath string, source Source, moduleName string) error {
 	fmt.Printf("Moving source: %s\n", moduleName)
 
-	if source.Type == "git" {
+	switch source.Type {
+	case "git":
 		dest := GetSourcePath(source, moduleName)
 		return os.Rename(
 			filepath.Join(downloadPath, dest),
 			filepath.Join(sourcesPath, dest),
 		)
-	} else if source.Type == "tar" {
-		os.MkdirAll(filepath.Join(sourcesPath, GetSourcePath(source, moduleName)), 0777)
+	case "tar":
+		os.MkdirAll(filepath.Join(sourcesPath, GetSourcePath(source, moduleName)), 0o777)
 		cmd := exec.Command(
 			"tar",
 			"-xf", filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"),
@@ -202,34 +194,33 @@ func MoveSource(downloadPath string, sourcesPath string, source Source, moduleNa
 		}
 
 		return os.Remove(filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"))
-	} else {
+	default:
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
 }
 
 // checksumValidation validates the checksum of a file
 func checksumValidation(source Source, path string) error {
-	//No checksum provided
+	// No checksum provided
 	if len(strings.TrimSpace(source.Checksum)) == 0 {
 		return nil
 	}
-	//Open the file
+	// Open the file
 	file, err := os.Open(path)
 	if err != nil {
 		return err
 	}
-	//Close the file when the function ends
+	// Close the file when the function ends
 	defer file.Close()
-	//Calculate the checksum
+	// Calculate the checksum
 	checksum := sha256.New()
 	_, err = io.Copy(checksum, file)
 	if err != nil {
 		return fmt.Errorf("could not calculate tar file checksum")
 	}
 
-	//Validate the checksum
+	// Validate the checksum
 	if fmt.Sprintf("%x", checksum.Sum(nil)) != source.Checksum {
-
 		return fmt.Errorf("tar file checksum doesn't match")
 	}
 
