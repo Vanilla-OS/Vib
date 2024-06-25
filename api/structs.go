@@ -32,7 +32,7 @@ type Stage struct {
 	Copy        []Copy            `json:"copy"`
 	Labels      map[string]string `json:"labels"`
 	Env         map[string]string `json:"env"`
-	Adds        map[string]string `json:"adds"`
+	Adds        Add               `json:"adds"`
 	Args        map[string]string `json:"args"`
 	Runs        Run               `json:"runs"`
 	Expose      map[string]string `json:"expose"`
@@ -50,6 +50,11 @@ type Copy struct {
 type Path struct {
 	Src string
 	Dst string
+}
+
+type Add struct {
+	SrcDst  map[string]string
+	Workdir string
 }
 
 type Entrypoint struct {
