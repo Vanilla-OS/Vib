@@ -32,7 +32,7 @@ type Stage struct {
 	Copy        []Copy            `json:"copy"`
 	Labels      map[string]string `json:"labels"`
 	Env         map[string]string `json:"env"`
-	Adds        Add               `json:"adds"`
+	Adds        []Add             `json:"adds"`
 	Args        map[string]string `json:"args"`
 	Runs        Run               `json:"runs"`
 	Expose      map[string]string `json:"expose"`
