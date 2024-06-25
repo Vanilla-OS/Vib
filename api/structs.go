@@ -58,6 +58,6 @@ type Entrypoint struct {
 }
 
 type Run struct {
-	Shell   []string
-	Workdir string
+	Commands []string
+	Workdir  string
 }

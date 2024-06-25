@@ -147,7 +147,7 @@ func BuildContainerfile(recipe *api.Recipe) error {
 
 		// RUN(S)
 		if !stage.SingleLayer {
-			if len(stage.Runs.Shell) > 0 {
+			if len(stage.Runs.Commands) > 0 {
 				if stage.Runs.Workdir != "" && stage.Runs.Workdir != recipe.Cwd {
 					_, err = containerfile.WriteString(
 						fmt.Sprintf("WORKDIR %s\n", stage.Runs.Workdir),
@@ -157,7 +157,7 @@ func BuildContainerfile(recipe *api.Recipe) error {
 						return err
 					}
 				}
-				for _, cmd := range stage.Runs.Shell {
+				for _, cmd := range stage.Runs.Commands {
 					_, err = containerfile.WriteString(
 						fmt.Sprintf("RUN %s\n", cmd),
 					)
@@ -228,7 +228,7 @@ func BuildContainerfile(recipe *api.Recipe) error {
 
 		// SINGLE LAYER
 		if stage.SingleLayer {
-			if len(stage.Runs.Shell) > 0 {
+			if len(stage.Runs.Commands) > 0 {
 				if stage.Runs.Workdir != "" && stage.Runs.Workdir != recipe.Cwd {
 					_, err = containerfile.WriteString(
 						fmt.Sprintf("WORKDIR %s\n", stage.Runs.Workdir),
@@ -241,9 +241,9 @@ func BuildContainerfile(recipe *api.Recipe) error {
 
 				unifiedCmd := "RUN "
 
-				for i, cmd := range stage.Runs.Shell {
+				for i, cmd := range stage.Runs.Commands {
 					unifiedCmd += cmd
-					if i != len(stage.Runs.Shell)-1 {
+					if i != len(stage.Runs.Commands)-1 {
 						unifiedCmd += " && "
 					}
 				}
