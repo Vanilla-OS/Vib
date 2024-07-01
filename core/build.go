@@ -85,11 +85,10 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		if len(stage.Copy) > 0 {
 			for _, copy := range stage.Copy {
 				if len(copy.Paths) > 0 {
-					if copy.Workdir != "" && copy.Workdir != recipe.Cwd {
+					if copy.Workdir != "" {
 						_, err = containerfile.WriteString(
 							fmt.Sprintf("WORKDIR %s\n", copy.Workdir),
 						)
-						recipe.Cwd = copy.Workdir
 						if err != nil {
 							return err
 						}
@@ -148,11 +147,10 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		// RUN(S)
 		if !stage.SingleLayer {
 			if len(stage.Runs.Commands) > 0 {
-				if stage.Runs.Workdir != "" && stage.Runs.Workdir != recipe.Cwd {
+				if stage.Runs.Workdir != "" {
 					_, err = containerfile.WriteString(
 						fmt.Sprintf("WORKDIR %s\n", stage.Runs.Workdir),
 					)
-					recipe.Cwd = stage.Runs.Workdir
 					if err != nil {
 						return err
 					}
@@ -182,11 +180,10 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		if len(stage.Adds) > 0 {
 			for _, add := range stage.Adds {
 				if len(add.SrcDst) > 0 {
-					if add.Workdir != "" && add.Workdir != recipe.Cwd {
+					if add.Workdir != "" {
 						_, err = containerfile.WriteString(
 							fmt.Sprintf("WORKDIR %s\n", add.Workdir),
 						)
-						recipe.Cwd = add.Workdir
 						if err != nil {
 							return err
 						}
@@ -222,11 +219,10 @@ func BuildContainerfile(recipe *api.Recipe) error {
 					continue
 				}
 
-				if cmd.Workdir != "" && cmd.Workdir != recipe.Cwd {
+				if cmd.Workdir != "" {
 					_, err = containerfile.WriteString(
 						fmt.Sprintf("WORKDIR %s\n", cmd.Workdir),
 					)
-					recipe.Cwd = cmd.Workdir
 					if err != nil {
 						return err
 					}
@@ -244,11 +240,10 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		// SINGLE LAYER
 		if stage.SingleLayer {
 			if len(stage.Runs.Commands) > 0 {
-				if stage.Runs.Workdir != "" && stage.Runs.Workdir != recipe.Cwd {
+				if stage.Runs.Workdir != "" {
 					_, err = containerfile.WriteString(
 						fmt.Sprintf("WORKDIR %s\n", stage.Runs.Workdir),
 					)
-					recipe.Cwd = stage.Runs.Workdir
 					if err != nil {
 						return err
 					}
@@ -287,11 +282,10 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// CMD
-		if stage.Cmd.Workdir != "" && stage.Cmd.Workdir != recipe.Cwd {
+		if stage.Cmd.Workdir != "" {
 			_, err = containerfile.WriteString(
 				fmt.Sprintf("WORKDIR %s\n", stage.Cmd.Workdir),
 			)
-			recipe.Cwd = stage.Cmd.Workdir
 			if err != nil {
 				return err
 			}
@@ -306,11 +300,10 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// ENTRYPOINT
-		if stage.Entrypoint.Workdir != "" && stage.Entrypoint.Workdir != recipe.Cwd {
+		if stage.Entrypoint.Workdir != "" {
 			_, err = containerfile.WriteString(
 				fmt.Sprintf("WORKDIR %s\n", stage.Entrypoint.Workdir),
 			)
-			recipe.Cwd = stage.Entrypoint.Workdir
 			if err != nil {
 				return err
 			}

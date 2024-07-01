@@ -15,7 +15,6 @@ type Source struct {
 type Recipe struct {
 	Name          string
 	Id            string
-	Cwd           string
 	Stages        []Stage
 	Path          string
 	ParentPath    string

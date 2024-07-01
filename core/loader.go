@@ -19,7 +19,7 @@ import (
 // Does not validate the recipe but it will catch some errors
 // a proper validation will be done in the future
 func LoadRecipe(path string) (*api.Recipe, error) {
-	recipe := &api.Recipe{Cwd: "/"}
+	recipe := &api.Recipe{}
 
 	// we use the absolute path to the recipe file as the
 	// root path for the recipe and all its files
@@ -94,7 +94,7 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 	// the includes directory is the place where we store all the
 	// files to be included in the container, this is useful for
 	// example to include configuration files. Each file must follow
-	// the File Hierachy Standard (FHS) and be placed in the correct
+	// the File Hierarchy Standard (FHS) and be placed in the correct
 	// directory. For example, if you want to include a file in
 	// /etc/nginx/nginx.conf you must place it in includes/etc/nginx/nginx.conf
 	// so it will be copied to the correct location in the container
