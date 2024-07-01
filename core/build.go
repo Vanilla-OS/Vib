@@ -11,6 +11,31 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 
+func ChangeWorkingDirectory(workdir string, containerfile *os.File) error {
+	if workdir != "" {
+		_, err := containerfile.WriteString(
+			fmt.Sprintf("WORKDIR %s\n", workdir),
+		)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func RestoreWorkingDirectory(workdir string, containerfile *os.File) error {
+	if workdir != "" {
+		_, err := containerfile.WriteString(
+			fmt.Sprintf("WORKDIR %s\n", "/"),
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // BuildRecipe builds a Containerfile from a recipe path
 func BuildRecipe(recipePath string) (api.Recipe, error) {
 	// load the recipe
@@ -85,14 +110,11 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		if len(stage.Copy) > 0 {
 			for _, copy := range stage.Copy {
 				if len(copy.Paths) > 0 {
-					if copy.Workdir != "" {
-						_, err = containerfile.WriteString(
-							fmt.Sprintf("WORKDIR %s\n", copy.Workdir),
-						)
-						if err != nil {
-							return err
-						}
+					err = ChangeWorkingDirectory(copy.Workdir, containerfile)
+					if err != nil {
+						return err
 					}
+
 					for _, path := range copy.Paths {
 						if copy.From != "" {
 							_, err = containerfile.WriteString(
@@ -109,6 +131,11 @@ func BuildContainerfile(recipe *api.Recipe) error {
 								return err
 							}
 						}
+					}
+
+					err = RestoreWorkingDirectory(copy.Workdir, containerfile)
+					if err != nil {
+						return err
 					}
 				}
 			}
@@ -147,14 +174,11 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		// RUN(S)
 		if !stage.SingleLayer {
 			if len(stage.Runs.Commands) > 0 {
-				if stage.Runs.Workdir != "" {
-					_, err = containerfile.WriteString(
-						fmt.Sprintf("WORKDIR %s\n", stage.Runs.Workdir),
-					)
-					if err != nil {
-						return err
-					}
+				err = ChangeWorkingDirectory(stage.Runs.Workdir, containerfile)
+				if err != nil {
+					return err
 				}
+
 				for _, cmd := range stage.Runs.Commands {
 					_, err = containerfile.WriteString(
 						fmt.Sprintf("RUN %s\n", cmd),
@@ -162,6 +186,11 @@ func BuildContainerfile(recipe *api.Recipe) error {
 					if err != nil {
 						return err
 					}
+				}
+
+				err = RestoreWorkingDirectory(stage.Runs.Workdir, containerfile)
+				if err != nil {
+					return err
 				}
 			}
 		}
@@ -180,14 +209,11 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		if len(stage.Adds) > 0 {
 			for _, add := range stage.Adds {
 				if len(add.SrcDst) > 0 {
-					if add.Workdir != "" {
-						_, err = containerfile.WriteString(
-							fmt.Sprintf("WORKDIR %s\n", add.Workdir),
-						)
-						if err != nil {
-							return err
-						}
+					err = ChangeWorkingDirectory(add.Workdir, containerfile)
+					if err != nil {
+						return err
 					}
+
 					for key, value := range add.SrcDst {
 						_, err = containerfile.WriteString(
 							fmt.Sprintf("ADD %s %s\n", key, value),
@@ -196,6 +222,11 @@ func BuildContainerfile(recipe *api.Recipe) error {
 							return err
 						}
 					}
+				}
+
+				err = RestoreWorkingDirectory(add.Workdir, containerfile)
+				if err != nil {
+					return err
 				}
 			}
 		}
@@ -219,18 +250,19 @@ func BuildContainerfile(recipe *api.Recipe) error {
 					continue
 				}
 
-				if cmd.Workdir != "" {
-					_, err = containerfile.WriteString(
-						fmt.Sprintf("WORKDIR %s\n", cmd.Workdir),
-					)
-					if err != nil {
-						return err
-					}
+				err = ChangeWorkingDirectory(cmd.Workdir, containerfile)
+				if err != nil {
+					return err
 				}
 
 				_, err = containerfile.WriteString(
 					fmt.Sprintf("RUN %s\n", cmd.Command),
 				)
+				if err != nil {
+					return err
+				}
+
+				err = RestoreWorkingDirectory(cmd.Workdir, containerfile)
 				if err != nil {
 					return err
 				}
@@ -240,13 +272,9 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		// SINGLE LAYER
 		if stage.SingleLayer {
 			if len(stage.Runs.Commands) > 0 {
-				if stage.Runs.Workdir != "" {
-					_, err = containerfile.WriteString(
-						fmt.Sprintf("WORKDIR %s\n", stage.Runs.Workdir),
-					)
-					if err != nil {
-						return err
-					}
+				err = ChangeWorkingDirectory(stage.Runs.Workdir, containerfile)
+				if err != nil {
+					return err
 				}
 
 				unifiedCmd := "RUN "
@@ -278,18 +306,20 @@ func BuildContainerfile(recipe *api.Recipe) error {
 						return err
 					}
 				}
+
+				err = RestoreWorkingDirectory(stage.Runs.Workdir, containerfile)
+				if err != nil {
+					return err
+				}
 			}
 		}
 
 		// CMD
-		if stage.Cmd.Workdir != "" {
-			_, err = containerfile.WriteString(
-				fmt.Sprintf("WORKDIR %s\n", stage.Cmd.Workdir),
-			)
-			if err != nil {
-				return err
-			}
+		err = ChangeWorkingDirectory(stage.Cmd.Workdir, containerfile)
+		if err != nil {
+			return err
 		}
+
 		if len(stage.Cmd.Exec) > 0 {
 			_, err = containerfile.WriteString(
 				fmt.Sprintf("CMD [\"%s\"]\n", strings.Join(stage.Cmd.Exec, "\",\"")),
@@ -297,21 +327,28 @@ func BuildContainerfile(recipe *api.Recipe) error {
 			if err != nil {
 				return err
 			}
-		}
 
-		// ENTRYPOINT
-		if stage.Entrypoint.Workdir != "" {
-			_, err = containerfile.WriteString(
-				fmt.Sprintf("WORKDIR %s\n", stage.Entrypoint.Workdir),
-			)
+			err = RestoreWorkingDirectory(stage.Cmd.Workdir, containerfile)
 			if err != nil {
 				return err
 			}
 		}
+
+		// ENTRYPOINT
+		err = ChangeWorkingDirectory(stage.Entrypoint.Workdir, containerfile)
+		if err != nil {
+			return err
+		}
+
 		if len(stage.Entrypoint.Exec) > 0 {
 			_, err = containerfile.WriteString(
 				fmt.Sprintf("ENTRYPOINT [\"%s\"]\n", strings.Join(stage.Entrypoint.Exec, "\",\"")),
 			)
+			if err != nil {
+				return err
+			}
+
+			err = RestoreWorkingDirectory(stage.Entrypoint.Workdir, containerfile)
 			if err != nil {
 				return err
 			}
