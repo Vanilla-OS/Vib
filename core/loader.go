@@ -10,9 +10,8 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-	"gopkg.in/yaml.v3"
-
 	"github.com/vanilla-os/vib/api"
+	"gopkg.in/yaml.v3"
 )
 
 // LoadRecipe loads a recipe from a file and returns a Recipe
