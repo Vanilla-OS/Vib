@@ -5,6 +5,7 @@ PublicationDate: 2024-02-13
 Authors:
   - mirkobrombin
   - kbdharun
+  - lambdaclan
 Tags:
   - modules
   - recipe
@@ -33,12 +34,56 @@ stages:
     labels:
       maintainer: My Awesome Team
     adds:
-      - /extra/path/to/add
+      - srcdst:
+          /extra/path/to/add/1: /path/to/destination/1
+    # multiple additions
+    # adds:
+    #  - srcdst:
+    #      /extra/path/to/add/1: /path/to/destination/1
+    #      /extra/path/to/add/2: /path/to/destination/2
+    # specify working directory for destination
+    # adds:
+    #  - workdir: /tmp
+    #    srcdst:
+    #      /extra/path/to/add/1: .
+    #      /extra/path/to/add/2: .
     args:
       - arg1: value1
       - arg2: value2
     runs:
-      - some-random-command --that-must-run --on-top-of-all modules
+      commands:
+        - some-random-command --that-must-run --on-top-of-all modules
+        - another-command --help
+    # specify working directory for commands
+    # runs:
+    #  workdir: /app
+    #  commands:
+    #    - cp /tmp/start.sh .
+    #    - start.sh
+    # copy from host
+    copy:
+      - paths:
+          - src: /app/awesome.txt
+            dst: .
+    # copy multiple
+    # copy:
+    #   - paths:
+    #     - src: /app/awesome.txt
+    #       dst: .
+    #     - src: /tmp/test.txt
+    #       dst: .
+    # specify working directory for destination
+    # copy:
+    #   - workdir: /tmp
+    #     paths:
+    #       - src: /app/awesome.txt
+    #         dst: .
+    #       - src: /app/test.txt
+    #         dst: .
+    #   - workdir: /etc
+    #     paths:
+    #       - src: /app/hello.txt
+    #         dst: .
     modules:
       - name: build
         type: go
@@ -50,31 +95,73 @@ stages:
           branch: main
           commit: sdb997f0eeb67deaa5940f7c31a19fe1101d3d49
         modules:
-        - name: build-deps
-          type: apt
-          source:
-            packages:
-            - golang-go
+          - name: build-deps
+            type: apt
+            source:
+              packages:
+                - golang-go
 
   - id: dist
     base: debian:sid-slim
     singlelayer: false
     labels:
       maintainer: My Awesome Team
-    expose: 
+    expose:
       "8080": "tcp"
       "8081": ""
-    entrypoint: ["/app"]
+    entrypoint:
+      exec:
+        - /app
+    # entrypoint command with params
+    # entrypoint:
+    #  exec:
+    #    - npm
+    #    - run
+    # specify working directory for entrypoint command
+    # entrypoint:
+    #  workdir: /app
+    #  exec:
+    #    - npm
+    #    - run
+    # copy from previous stage
     copy:
       - from: build
-        src: /path/to/output
-        dest: /app
-    cmd: ["/app"]
+        paths:
+          - src: /path/to/output
+            dst: /app
+    # copy from previous stage with custom working directory for destination
+    # copy:
+    #   - workdir: /app
+    #     from: build
+    #     paths:
+    #       - src: /path/to/output
+    #         dst: .
+    cmd:
+      exec:
+        - /app
+    # command with params
+    # cmd:
+    #   exec:
+    #     - npm
+    #     - run
+    # specify working directory for command
+    # cmd:
+    #   workdir: /app
+    #   exec:
+    #     - npm
+    #     - run
     modules:
       - name: run
         type: shell
         commands:
           - ls -la /app
+    # specify working directory for all module commands
+    # modules:
+    #   - name: run
+    #     type: shell
+    #     workdir: /app
+    #     commands:
+    #       - ls -la
 ```
 
 ## Metadata
@@ -100,7 +187,7 @@ Each stage has the following fields:
 - `expose`: a list of ports to expose in the image.
 - `cmd`: the command to run when the container starts.
 - `entrypoint`: the entry point for the container, it's similar to `cmd` but it's not overridden by the command passed to the container at runtime, useful to handle the container as an executable.
-- `copy`: a list of files or directories to copy from another stage, useful to copy files from one stage to another.
+- `copy`: a list of files or directories to copy from another stage (or copy from host), useful to copy files from one stage to another.
 - `modules`: a list of modules to use in the stage.
 
 ### Modules
@@ -138,3 +225,20 @@ For example, to copy the `/path/to/output` directory from the `build` stage to t
 ```
 
 so it becomes available in the `dist` stage.
+
+### Using a custom working directory (`workdir`)
+
+The following commads are supported:
+
+- adds
+  - workdir sets destination path
+- copy
+  - workdir sets destination path
+- runs
+  - workdir changes directory (cd) before executing command
+- cmd
+  - workdir changes directory (cd) before executing command
+- entrypoint
+  - workdir changes directory (cd) before executing command
+- modules
+  - workdir changes directory (cd) before executing command list
