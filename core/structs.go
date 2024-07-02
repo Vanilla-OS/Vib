@@ -7,7 +7,7 @@ type Module struct {
 	Workdir string
 	Type    string `json:"type"`
 	Modules []map[string]interface{}
-	Content []byte
+	Content []byte // The entire module unparsed as a []byte, used by plugins
 }
 
 type IncludesModule struct {

@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
-
 	"github.com/vanilla-os/vib/api"
 )
 
