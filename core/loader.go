@@ -11,7 +11,6 @@ import (
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
-
 	"gopkg.in/yaml.v3"
 )
 
@@ -94,7 +93,7 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 	// the includes directory is the place where we store all the
 	// files to be included in the container, this is useful for
 	// example to include configuration files. Each file must follow
-	// the File Hierachy Standard (FHS) and be placed in the correct
+	// the File Hierarchy Standard (FHS) and be placed in the correct
 	// directory. For example, if you want to include a file in
 	// /etc/nginx/nginx.conf you must place it in includes/etc/nginx/nginx.conf
 	// so it will be copied to the correct location in the container
@@ -109,11 +108,13 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 
 	for i, stage := range recipe.Stages {
 		// here we check if the extra Adds path exists
-		for src := range stage.Adds {
-			fullPath := filepath.Join(filepath.Dir(recipePath), src)
-			_, err = os.Stat(fullPath)
-			if os.IsNotExist(err) {
-				return nil, err
+		for _, add := range stage.Adds {
+			for src := range add.SrcDst {
+				fullPath := filepath.Join(filepath.Dir(recipePath), src)
+				_, err = os.Stat(fullPath)
+				if os.IsNotExist(err) {
+					return nil, err
+				}
 			}
 		}
 

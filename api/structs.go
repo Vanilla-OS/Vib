@@ -31,21 +31,42 @@ type Stage struct {
 	Copy        []Copy            `json:"copy"`
 	Labels      map[string]string `json:"labels"`
 	Env         map[string]string `json:"env"`
-	Adds        map[string]string `json:"adds"`
+	Adds        []Add             `json:"adds"`
 	Args        map[string]string `json:"args"`
-	Runs        []string          `json:"runs"`
+	Runs        Run               `json:"runs"`
 	Expose      map[string]string `json:"expose"`
-	Cmd         []string          `json:"cmd"`
+	Cmd         Cmd               `json:"cmd"`
 	Modules     []interface{}     `json:"modules"`
-	Entrypoint  []string
+	Entrypoint  Entrypoint
 }
 
 type Copy struct {
-	From  string
-	Paths []Path
+	From    string
+	Paths   []Path
+	Workdir string
 }
 
 type Path struct {
 	Src string
 	Dst string
+}
+
+type Add struct {
+	SrcDst  map[string]string
+	Workdir string
+}
+
+type Entrypoint struct {
+	Exec    []string
+	Workdir string
+}
+
+type Cmd struct {
+	Exec    []string
+	Workdir string
+}
+
+type Run struct {
+	Commands []string
+	Workdir  string
 }

@@ -4,6 +4,7 @@ import "C"
 
 type Module struct {
 	Name    string `json:"name"`
+	Workdir string
 	Type    string `json:"type"`
 	Modules []map[string]interface{}
 	Content []byte // The entire module unparsed as a []byte, used by plugins
@@ -18,6 +19,7 @@ type IncludesModule struct {
 type ModuleCommand struct {
 	Name    string
 	Command string
+	Workdir string
 }
 
 type Plugin struct {
