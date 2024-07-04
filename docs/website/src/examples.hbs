@@ -35,22 +35,26 @@ stages:
       DEBIAN_FRONTEND: noninteractive
     expose: 
       "3000": ""
-    entrypoint: ["node", "/app/app.js"]
+    entrypoint:
+      exec:
+        - node
+        - /app/app.js
     runs:
-	- echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
+      commands:
+	      - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
     modules:
-	- name: build-app
-	  type: shell
-	  source:
-	    type: git
-	    url: https://github.com/mirkobrombin/node-sample
-	    branch: main
-	    commit: latest
-	  commands:
-	    - mv /sources/build-app /app
-	    - cd /app
-	    - npm i
-	    - npm run build
+    - name: build-app
+      type: shell
+      source:
+        type: git
+        url: https://github.com/mirkobrombin/node-sample
+        branch: main
+        commit: latest
+      commands:
+        - mv /sources/build-app /app
+        - cd /app
+        - npm i
+        - npm run build
       </code></pre>
       </div>
       <p class="text-xl text-white mt-6">
@@ -83,11 +87,12 @@ stages:
     args:
       DEBIAN_FRONTEND: noninteractive
     runs:
-      - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
+      commands:
+        - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
     modules:
     - name: update
-        type: shell
-        commands:
+      type: shell
+      commands:
         - apt update
         
     - name: vib
