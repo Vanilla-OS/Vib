@@ -23,9 +23,10 @@ func GetSourcePath(source Source, moduleName string) string {
 			dest = filepath.Join(moduleName, source.Destination)
 		}
 		return dest
-	case "tar":
+	case "tar", "file":
 		return filepath.Join(moduleName, source.Destination)
 	}
+
 	return ""
 }
 
@@ -43,6 +44,17 @@ func DownloadSource(downloadPath string, source Source, moduleName string) error
 			return err
 		}
 		return checksumValidation(source, filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"))
+	case "file":
+		err := DownloadFileSource(downloadPath, source, moduleName)
+		if err != nil {
+			return err
+		}
+
+		extension := filepath.Ext(source.URL)
+		filename := fmt.Sprintf("%s%s", moduleName, extension)
+		destinationPath := filepath.Join(downloadPath, GetSourcePath(source, moduleName), filename)
+
+		return checksumValidation(source, destinationPath)
 	default:
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
@@ -175,7 +187,7 @@ func MoveSource(downloadPath string, sourcesPath string, source Source, moduleNa
 	fmt.Printf("Moving source: %s\n", moduleName)
 
 	switch source.Type {
-	case "git":
+	case "git", "file":
 		dest := GetSourcePath(source, moduleName)
 		return os.Rename(
 			filepath.Join(downloadPath, dest),
@@ -222,6 +234,38 @@ func checksumValidation(source Source, path string) error {
 	// Validate the checksum
 	if fmt.Sprintf("%x", checksum.Sum(nil)) != source.Checksum {
 		return fmt.Errorf("tar file checksum doesn't match")
+	}
+
+	return nil
+}
+
+func DownloadFileSource(downloadPath string, source Source, moduleName string) error {
+	fmt.Printf("Source is file: %s\n", source.URL)
+
+	destDir := filepath.Join(downloadPath, GetSourcePath(source, moduleName))
+	os.MkdirAll(destDir, 0o777)
+	// Download the resource
+	res, err := http.Get(source.URL)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+	// Create the destination file
+	extension := filepath.Ext(source.URL)
+	filename := fmt.Sprintf("%s%s", moduleName, extension)
+	dest := filepath.Join(destDir, filename)
+
+	file, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	// Close the file when the function ends
+	defer file.Close()
+	// Copy the response body to the destination file
+	_, err = io.Copy(file, res.Body)
+	if err != nil {
+		return err
 	}
 
 	return nil
