@@ -108,23 +108,23 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		// COPY
 		if len(stage.Copy) > 0 {
 			for _, copy := range stage.Copy {
-				if len(copy.Paths) > 0 {
+				if len(copy.SrcDst) > 0 {
 					err = ChangeWorkingDirectory(copy.Workdir, containerfile)
 					if err != nil {
 						return err
 					}
 
-					for _, path := range copy.Paths {
+					for src, dst := range copy.SrcDst {
 						if copy.From != "" {
 							_, err = containerfile.WriteString(
-								fmt.Sprintf("COPY --from=%s %s %s\n", copy.From, path.Src, path.Dst),
+								fmt.Sprintf("COPY --from=%s %s %s\n", copy.From, src, dst),
 							)
 							if err != nil {
 								return err
 							}
 						} else {
 							_, err = containerfile.WriteString(
-								fmt.Sprintf("COPY %s %s\n", path.Src, path.Dst),
+								fmt.Sprintf("COPY %s %s\n", src, dst),
 							)
 							if err != nil {
 								return err
