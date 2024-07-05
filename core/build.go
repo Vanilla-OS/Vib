@@ -213,9 +213,9 @@ func BuildContainerfile(recipe *api.Recipe) error {
 						return err
 					}
 
-					for key, value := range add.SrcDst {
+					for src, dst := range add.SrcDst {
 						_, err = containerfile.WriteString(
-							fmt.Sprintf("ADD %s %s\n", key, value),
+							fmt.Sprintf("ADD %s %s\n", src, dst),
 						)
 						if err != nil {
 							return err
