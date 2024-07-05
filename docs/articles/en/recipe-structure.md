@@ -62,28 +62,22 @@ stages:
     #    - start.sh
     # copy from host
     copy:
-      - paths:
-          - src: /app/awesome.txt
-            dst: .
+      - srcdst:
+          /app/awesome.txt: .
     # copy multiple
     # copy:
-    #   - paths:
-    #     - src: /app/awesome.txt
-    #       dst: .
-    #     - src: /tmp/test.txt
-    #       dst: .
+    #   - srcdst:
+    #       /app/awesome.txt: .
+    #       /tmp/test.txt: .
     # specify working directory for destination
     # copy:
     #   - workdir: /tmp
-    #     paths:
-    #       - src: /app/awesome.txt
-    #         dst: .
-    #       - src: /app/test.txt
-    #         dst: .
+    #     srcdst:
+    #       /app/awesome.txt: .
+    #       /app/test.txt: .
     #   - workdir: /etc
-    #     paths:
-    #       - src: /app/hello.txt
-    #         dst: .
+    #     srcdst:
+    #       /app/hello.txt: .
     modules:
       - name: build
         type: go
@@ -126,16 +120,14 @@ stages:
     # copy from previous stage
     copy:
       - from: build
-        paths:
-          - src: /path/to/output
-            dst: /app
+        srcdst:
+          /path/to/output: /app
     # copy from previous stage with custom working directory for destination
     # copy:
     #   - workdir: /app
     #     from: build
-    #     paths:
-    #       - src: /path/to/output
-    #         dst: .
+    #     srcdst:
+    #       /path/to/output: .
     cmd:
       exec:
         - /app
@@ -210,25 +202,23 @@ You can copy files between stages using the `copy` field. This consists of a lis
 
 ```yml
 - from: stage-id-to-copy-from
-  paths:
-    - src: /path/to/source
-      dst: /path/to/destination
+  srcdst:
+    /path/to/source: /path/to/destination
 ```
 
 For example, to copy the `/path/to/output` directory from the `build` stage to the `/app` directory in the `dist` stage, you can use the following snippet:
 
 ```yml
 - from: build
-  paths:
-    - src: /path/to/output
-      dst: /app
+  srcdst:
+    /path/to/output: /app
 ```
 
 so it becomes available in the `dist` stage.
 
 ### Using a custom working directory (`workdir`)
 
-The following commads are supported:
+The following commands are supported:
 
 - adds
   - workdir sets destination path
