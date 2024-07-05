@@ -42,13 +42,8 @@ type Stage struct {
 
 type Copy struct {
 	From    string
-	Paths   []Path
+	SrcDst  map[string]string
 	Workdir string
-}
-
-type Path struct {
-	Src string
-	Dst string
 }
 
 type Add struct {
