@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	Version = "0.6.2"
+	Version = cmd.Version
 )
 
 func main() {
