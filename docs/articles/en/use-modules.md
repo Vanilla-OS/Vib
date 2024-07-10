@@ -57,9 +57,10 @@ You will find that some modules have a common `source` field, this instructs Vib
     - chmod +x /usr/bin/cur-gpu
 ```
 
-In the above example we define a `shell` module that downloads a tarball from a GitHub release and then copies the binaries to `/usr/bin`. A source can be of two types:
+In the above example we define a `shell` module that downloads a tarball from a GitHub release and then copies the binaries to `/usr/bin`. A source can be of three types:
 
-- `tar`: a tarball archive. It can also define a `Checksum` field to verify the integrity of the downloaded file using a `sha256` hash.
+- `tar`: a tarball archive. You can also define a `checksum` field to verify the integrity of the downloaded archive using a `sha256` hash.
+- `file`: a single file. You can also define a `checksum` field to verify the integrity of the downloaded file using a `sha256` hash.
 - `git`: a Git repository.
 
 In the latter case, you can specify the branch, tag or commit to checkout like this:
@@ -85,6 +86,7 @@ modules:
 
 Supported fields for a git source are:
 
+- `url`: the address of the repository to clone
 - `tag`: the tag to checkout, collides with `branch` and `commit`.
 - `branch`: the branch to checkout, collides with `tag`.
 - `commit`: the commit to checkout, collides with `tag` and `branch`. It can be a commit hash or `latest` to checkout the latest commit.
