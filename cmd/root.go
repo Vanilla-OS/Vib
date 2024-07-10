@@ -4,7 +4,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Version = "0.7.3"
+var Version = "0.7.4"
 
 var rootCmd = &cobra.Command{
 	Use:     "vib",
