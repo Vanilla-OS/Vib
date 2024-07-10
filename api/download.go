@@ -217,23 +217,27 @@ func checksumValidation(source Source, path string) error {
 	if len(strings.TrimSpace(source.Checksum)) == 0 {
 		return nil
 	}
+
 	// Open the file
 	file, err := os.Open(path)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not open file: %v", err)
 	}
+
 	// Close the file when the function ends
 	defer file.Close()
+
 	// Calculate the checksum
 	checksum := sha256.New()
 	_, err = io.Copy(checksum, file)
 	if err != nil {
-		return fmt.Errorf("could not calculate tar file checksum")
+		return fmt.Errorf("could not calculate checksum: %v", err)
 	}
 
-	// Validate the checksum
-	if fmt.Sprintf("%x", checksum.Sum(nil)) != source.Checksum {
-		return fmt.Errorf("tar file checksum doesn't match")
+	// Validate the checksum based on source type
+	calculatedChecksum := fmt.Sprintf("%x", checksum.Sum(nil))
+	if (source.Type == "tar" || source.Type == "file") && calculatedChecksum != source.Checksum {
+		return fmt.Errorf("%s source module checksum doesn't match: expected %s, got %s", source.Type, source.Checksum, calculatedChecksum)
 	}
 
 	return nil
