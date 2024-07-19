@@ -20,7 +20,25 @@ for stg in stages {
 	}
 }
 
-id: #string
+_uniqueModuleNames: {for stg in stages {
+	if stg.modules != _|_ {
+		for i, mod in stg.modules {
+			"\(mod.name)": i
+		}
+	}
+}}
+
+_duplicateNames: [... #string]
+for stg in stages {
+	if stg.modules != _|_ {
+		_duplicateNames: [for mod in stg.modules if mod.name == name {mod.name}]
+	}
+}
+
+_uniqueRecipeName: true & len(_duplicateNames) == 0
+
+id:   #string
+name: #string
 stages: [...#Stage] & list.MinItems(1)
 
 #string: string & !="" & !=null
@@ -188,6 +206,6 @@ stages: [...#Stage] & list.MinItems(1)
 
 #Recipe: close({
 	id!:     id
-	name!:   #string
+	name!:   name
 	stages!: stages
 })
