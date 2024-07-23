@@ -46,12 +46,14 @@ stages: [...#Stage] & list.MinItems(1)
 #Add: close({
 	srcdst!: [#string]: #string
 	workdir?: #string
+	_atLeastOneAddPath: true & list.MinItems([for k in srcdst {k}], 1)
 })
 
 #Copy: close({
 	srcdst!: [#string]: #string
 	from?:    #string
 	workdir?: #string
+	_atLeastOneCopyPath: true & list.MinItems([for k in srcdst {k}], 1)
 })
 
 #Run: close({
