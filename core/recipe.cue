@@ -5,6 +5,7 @@ import "list"
 _uniqueStageIds: {for i, stg in stages {
 	"\(stg.id)": i
 }}
+_noCommonRecipeNameId: true & id != name
 
 _duplicateIds: [for stg in stages if stg.id == id {stg.id}]
 _uniqueRecipeId: true & len(_duplicateIds) == 0
