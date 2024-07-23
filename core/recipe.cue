@@ -58,17 +58,17 @@ stages: [...#Stage] & list.MinItems(1)
 })
 
 #Run: close({
-	commands!: [#string]
+	commands!: [...#string] & list.MinItems(1)
 	workdir?: #string
 })
 
 #Cmd: close({
-	exec!: [#string]
+	exec!: [...#string] & list.MinItems(1)
 	workdir?: #string
 })
 
 #Entrypoint: close({
-	exec!: [#string]
+	exec!: [...#string] & list.MinItems(1)
 	workdir?: #string
 })
 
@@ -119,7 +119,7 @@ stages: [...#Stage] & list.MinItems(1)
 			"packages"!: [...#string] & list.MinItems(1)
 		} |
 		{
-			"paths"!: [...#InstFile]
+			"paths"!: [...#InstFile] & list.MinItems(1)
 		}
 	options?: #AptModuleOpts
 
@@ -135,7 +135,7 @@ stages: [...#Stage] & list.MinItems(1)
 			"packages"!: [...#string] & list.MinItems(1)
 		} |
 		{
-			"paths"!: [...#InstFile]
+			"paths"!: [...#InstFile] & list.MinItems(1)
 		}
 })
 
@@ -151,7 +151,7 @@ stages: [...#Stage] & list.MinItems(1)
 #DpkgModule: close({
 	source!:
 	{
-		"paths"!: [...#DebFile]
+		"paths"!: [...#DebFile] & list.MinItems(1)
 	}
 })
 
@@ -171,7 +171,7 @@ stages: [...#Stage] & list.MinItems(1)
 })
 
 #ShellModule: close({
-	commands!: [... #string]
+	commands!: [...#string] & list.MinItems(1)
 	workdir?: #string
 })
 
