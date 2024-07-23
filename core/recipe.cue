@@ -2,41 +2,43 @@ package recipe
 
 import "list"
 
-_uniqueStageIds: {for i, stg in stages {
-	"\(stg.id)": i
-}}
 _noCommonRecipeNameId: true & id != name
 
-_duplicateIds: [for stg in stages if stg.id == id {stg.id}]
-_uniqueRecipeId: true & len(_duplicateIds) == 0
-
-for stg in stages {
+for i, stg in stages {
+	_uniqueStageIds: {"\(stg.id)": i}
+	_uniqueRecipeId: stg.id != id
 	if stg.copy != _|_ {
-		_ids: [for stg in stages {stg.id}]
+		_stageIds: [for stg in stages {stg.id}]
 		for cp in stg.copy {
 			if cp.from != _|_ {
-				_validFrom: true & list.Contains(_ids, cp.from)
+				_validFrom: true & list.Contains(_stageIds, cp.from)
 			}
 		}
 	}
-}
 
-_uniqueModuleNames: {for stg in stages {
 	if stg.modules != _|_ {
 		for i, mod in stg.modules {
-			"\(mod.name)": i
+			_uniqueModuleNames: {"\(mod.name)": i}
+			_uniqueRecipeName: true & mod.name != name
 		}
 	}
-}}
 
-_duplicateNames: [... #string]
-for stg in stages {
-	if stg.modules != _|_ {
-		_duplicateNames: [for mod in stg.modules if mod.name == name {mod.name}]
+	if stg.args != _|_ {
+		_noEmptyArgs: true & len([for arg in stg.args {arg}]) > 0
+	}
+
+	if stg.expose != _|_ {
+		_noEmptyExpose: true & len([for expose in stg.expose {expose}]) > 0
+	}
+
+	if stg.env != _|_ {
+		_noEmptyEnv: true & len([for env in stg.env {env}]) > 0
+	}
+
+	if stg.labels != _|_ {
+		_noEmptyLabels: true & len([for labels in stg.labels {labels}]) > 0
 	}
 }
-
-_uniqueRecipeName: true & len(_duplicateNames) == 0
 
 id:   #string
 name: #string
