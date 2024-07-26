@@ -17,8 +17,9 @@ for i, stg in stages {
 	}
 
 	if stg.modules != _|_ {
-		for i, mod in stg.modules {
-			_uniqueModuleNames: {"\(mod.name)": i}
+		for i2, mod in stg.modules {
+			_uniqueRecipeModuleNames: {"\(mod.name)": i}
+			_uniqueStageModuleNames: {"\(mod.name)": i2}
 			_uniqueRecipeName: true & mod.name != name
 		}
 	}
