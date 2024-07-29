@@ -2,6 +2,7 @@
 Title: Working with Vib in Visual Studio Code
 Description: Learn how to work with Vib recipes in Visual Studio Code using our extension.
 PublicationDate: 2024-02-14
+Listed: true
 Authors:
   - mirkobrombin
   - kbdharun

@@ -2,6 +2,7 @@
 Title: Getting Started
 Description: How to start using Vib to build your Container images.
 PublicationDate: 2024-02-11
+Listed: true
 Authors:
   - mirkobrombin
   - kbdharun

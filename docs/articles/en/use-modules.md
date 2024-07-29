@@ -2,6 +2,7 @@
 Title: How to use Vib modules
 Description: How to use predefined and custom modules in your Vib recipes.
 PublicationDate: 2024-02-13
+Listed: true
 Authors:
   - mirkobrombin
   - kbdharun

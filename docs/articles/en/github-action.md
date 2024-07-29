@@ -2,6 +2,7 @@
 Title: Build using GitHub Actions
 Description: How to build a Vib image using GitHub Actions.
 PublicationDate: 2024-02-14
+Listed: true
 Authors:
   - mirkobrombin
   - kbdharun

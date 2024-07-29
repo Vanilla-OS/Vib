@@ -2,6 +2,7 @@
 Title: Structure of a Vib recipe
 Description: Learn about the structure of a Vib recipe.
 PublicationDate: 2024-02-13
+Listed: true
 Authors:
   - mirkobrombin
   - kbdharun

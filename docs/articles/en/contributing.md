@@ -2,6 +2,7 @@
 Title: Contributing
 Description: We welcome contributions from the community. Learn how to contribute to the Vib project.
 PublicationDate: 2024-02-14
+Listed: true
 Authors:
   - mirkobrombin
 Tags:

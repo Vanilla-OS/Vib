@@ -2,6 +2,7 @@
 Title: Built-in modules
 Description: Learn about the built-in modules that come with Vib and how to use them in your recipes.
 PublicationDate: 2024-02-13
+Listed: true
 Authors:
   - mirkobrombin
 Tags:
