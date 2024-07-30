@@ -202,6 +202,7 @@ stages: [...#Stage] & list.MinItems(1)
 		if type == "shell" {#ShellModule}
 		if type == "includes" {#IncludesModule}
 	}
+	source?: #Source
 })
 
 #Stage: close({
