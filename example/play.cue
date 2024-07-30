@@ -11,7 +11,10 @@ for i, stg in stages {
 		_stageIds: [for stg in stages {stg.id}]
 		for cp in stg.copy {
 			if cp.from != _|_ {
-				_validFrom: true & list.Contains(_stageIds, cp.from)
+				_noFromOnInitialStage: true & i != 0
+				_noFromSameStage:      true & stg.id != cp.from
+				_noFromNextStage:      true & _uniqueStageIds[cp.from] < i
+				_validFrom:            true & list.Contains(_stageIds, cp.from)
 			}
 		}
 	}
