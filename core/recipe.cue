@@ -84,7 +84,8 @@ stages: [...#Stage] & list.MinItems(1)
 	"go" |
 	"make" |
 	"meson" |
-	"shell"
+	"shell" |
+	"includes"
 
 #Source: {
 	type!: "tar" | "file" | "git"
@@ -108,6 +109,7 @@ stages: [...#Stage] & list.MinItems(1)
 
 #InstFile: #string & =~".+.inst"
 #DebFile:  #string & =~".+.deb"
+#ModFile:  #string & =~"^modules\/.+.yml"
 
 #AptModuleOpts: close({
 	"noRecommends"?:       bool
@@ -178,6 +180,10 @@ stages: [...#Stage] & list.MinItems(1)
 	workdir?: #string
 })
 
+#IncludesModule: close({
+	includes!: [... #ModFile] & list.MinItems(1)
+})
+
 #Module: close({
 	name!: #string
 	type!: #ModuleTypes
@@ -191,6 +197,7 @@ stages: [...#Stage] & list.MinItems(1)
 		if type == "make" {#MakeModule}
 		if type == "meson" {#MesonModule}
 		if type == "shell" {#ShellModule}
+		if type == "includes" {#IncludesModule}
 	}
 })
 
