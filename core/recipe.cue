@@ -78,17 +78,18 @@ stages: [...#Stage] & list.MinItems(1)
 	workdir?: #string
 })
 
-#ModuleTypes:
-	"apt" |
-	"dnf" |
-	"cmake" |
-	"dpkg-buildpackage" |
-	"dpkg" |
-	"go" |
-	"make" |
-	"meson" |
-	"shell" |
-	"includes"
+#ModuleTypes: {
+	"apt":               #AptModule
+	"dnf":               #DnfModule
+	"cmake":             #CmakeModule
+	"dpkg-buildpackage": #DpkgBuildPackageModule
+	"dpkg":              #DpkgModule
+	"go":                #GoModule
+	"make":              #MakeModule
+	"meson":             #MesonModule
+	"shell":             #ShellModule
+	"includes":          #IncludesModule
+}
 
 #Source: {
 	type!: "tar" | "file" | "git"
@@ -189,18 +190,12 @@ stages: [...#Stage] & list.MinItems(1)
 
 #Module: close({
 	name!: #string
-	type!: #ModuleTypes
+	type!: #string
 	if type != _|_ {
-		if type == "apt" {#AptModule}
-		if type == "dnf" {#DnfModule}
-		if type == "cmake" {#CmakeModule}
-		if type == "dpkg-buildpackage" {#DpkgBuildPackageModule}
-		if type == "dpkg" {#DpkgModule}
-		if type == "go" {#GoModule}
-		if type == "make" {#MakeModule}
-		if type == "meson" {#MesonModule}
-		if type == "shell" {#ShellModule}
-		if type == "includes" {#IncludesModule}
+		_validModuleType: true & list.Contains([for k, _ in #ModuleTypes {k}], type)
+		if _validModuleType {
+			#ModuleTypes[type]
+		}
 	}
 	source?: #Source
 })
