@@ -26,6 +26,16 @@ type AptOptions struct {
 	FixBroken       bool `json:"fix_broken"`
 }
 
+//export PlugInfo
+func PlugInfo() *C.char {
+	plugininfo := &api.PluginInfo{Name: "apt", Type: api.BuildPlugin}
+	pluginjson, err := json.Marshal(plugininfo)
+	if err != nil {
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+	return C.CString(string(pluginjson))
+}
+
 // BuildAptModule builds a module that installs packages
 // using the apt package manager
 //

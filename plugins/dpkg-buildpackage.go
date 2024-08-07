@@ -2,9 +2,9 @@ package main
 
 import (
 	"C"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"encoding/json"
 
 	"github.com/vanilla-os/vib/api"
 )
@@ -15,14 +15,24 @@ type DpkgBuildModule struct {
 	Source api.Source
 }
 
+//export PlugInfo
+func PlugInfo() *C.char {
+	plugininfo := &api.PluginInfo{Name: "dpkg-buildpackage", Type: api.BuildPlugin}
+	pluginjson, err := json.Marshal(plugininfo)
+	if err != nil {
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+	return C.CString(string(pluginjson))
+}
+
 // BuildDpkgModule builds a module that builds a dpkg project
 // and installs the resulting .deb package
+//
 //export BuildModule
 func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 	var module *DpkgBuildModule
 	var recipe *api.Recipe
 
-	
 	err := json.Unmarshal([]byte(C.GoString(moduleInterface)), &module)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
@@ -55,6 +65,4 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 	return C.CString(cmd)
 }
 
-
-
-func main() { fmt.Println("This plugin is not meant to run standalone!"); }
+func main() { fmt.Println("This plugin is not meant to run standalone!") }

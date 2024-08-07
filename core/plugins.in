@@ -13,7 +13,7 @@ import "os"
 
 var openedPlugins map[string]Plugin
 
-func LoadPlugin(name string, module interface{}, recipe *api.Recipe) (string, error) {
+func LoadPlugin(name string, plugintype api.PluginType, module interface{}, recipe *api.Recipe) (string, error) {
 	if openedPlugins == nil {
 		openedPlugins = make(map[string]Plugin)
 	}
@@ -26,7 +26,7 @@ func LoadPlugin(name string, module interface{}, recipe *api.Recipe) (string, er
 
 		localPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
 
-		globalPluginPath := fmt.Sprintf("$INSTALLPREFIX$/share/vib/plugins/%s.so", name)
+		globalPluginPath := fmt.Sprintf("%INSTALLPREFIX%/share/vib/plugins/%s.so", name)
 
 		// Prefer local plugins before global ones
 		var loadedPlugin uintptr
@@ -43,6 +43,36 @@ func LoadPlugin(name string, module interface{}, recipe *api.Recipe) (string, er
 			}
 		}
 
+		infoLoc, err := purego.Dlsym(loadedPlugin, "PlugInfo")
+		if err != nil && !strings.Contains(err.Error(), "undefined symbol: PlugInfo") {
+			fmt.Println(err)
+			return "", err
+		}
+
+		pluginInfo := &api.PluginInfo{}
+
+		if infoLoc == 0 {
+			fmt.Println("== WARN ==")
+			fmt.Printf("Plugin %s does not contain function PlugInfo, assuming old BuildPlugin type\n", name)
+			fmt.Printf("Please update the plugin or request the developer of the plugin to update it!\n")
+			fmt.Println("== WARN ==")
+			pluginInfo.Name = name
+			pluginInfo.Type = api.BuildPlugin
+		} else {
+			var pluginInfoFunc func() string
+			purego.RegisterLibFunc(&pluginInfoFunc, loadedPlugin, "PlugInfo")
+			json.Unmarshal([]byte(pluginInfoFunc()), &pluginInfo)
+		}
+
+		if pluginInfo.Type != plugintype {
+			if plugintype == api.BuildPlugin {
+				fmt.Printf("ERROR: Plugin %s is not of type BuildPlugin", name)
+				os.Exit(1)
+			} else if plugintype == api.FinalizePlugin {
+				fmt.Printf("ERROR: Plugin %s is not of type FinalizePlugin", name)
+				os.Exit(1)
+			}
+		}
 		var buildFunction func(*C.char, *C.char) string
 		purego.RegisterLibFunc(&buildFunction, loadedPlugin, "BuildModule")
 		buildModule.BuildFunc = buildFunction

@@ -14,6 +14,16 @@ type MesonModule struct {
 	Source api.Source
 }
 
+//export PlugInfo
+func PlugInfo() *C.char {
+	plugininfo := &api.PluginInfo{Name: "meson", Type: api.BuildPlugin}
+	pluginjson, err := json.Marshal(plugininfo)
+	if err != nil {
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+	return C.CString(string(pluginjson))
+}
+
 // BuildMesonModule builds a module that builds a Meson project
 //
 //export BuildModule

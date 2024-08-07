@@ -22,6 +22,7 @@ type Recipe struct {
 	SourcesPath   string
 	PluginPath    string
 	Containerfile string
+	Finalize      []interface{}
 }
 
 type Stage struct {
@@ -38,6 +39,18 @@ type Stage struct {
 	Cmd         Cmd               `json:"cmd"`
 	Modules     []interface{}     `json:"modules"`
 	Entrypoint  Entrypoint
+}
+
+type PluginType int
+
+const (
+	BuildPlugin PluginType = iota
+	FinalizePlugin
+)
+
+type PluginInfo struct {
+	Name string
+	Type PluginType
 }
 
 type Copy struct {
