@@ -60,7 +60,7 @@ func compileCommand(cmd *cobra.Command, args []string) error {
 		runtime = detectedRuntime
 	}
 
-	err := core.CompileRecipe(recipePath, runtime)
+	err := core.CompileRecipe(recipePath, runtime, IsRoot, OrigGID, OrigUID)
 	if err != nil {
 		return err
 	}
