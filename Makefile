@@ -16,7 +16,7 @@ build-plugins: FORCE
 	$(MAKE) -C plugins/
 
 install:
-	install -Dm755 -t ${DESTDIR}/${PREFIX}/bin/ ./${BINARY_NAME}
+	install -Dm755 -t ${DESTDIR}/${PREFIX}/bin/ ./build/${BINARY_NAME}
 
 install-plugins:
 	install -Dm644 -t ${DESTDIR}/${PREFIX}/share/vib/plugins/ ./build/plugins/*.so
