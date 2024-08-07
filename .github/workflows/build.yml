@@ -9,7 +9,10 @@ on:
 jobs:
 
   build:
+    name: Build
     runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/vanilla-os/pico:main
 
     steps:
     - uses: actions/checkout@v4
@@ -18,6 +21,11 @@ jobs:
       uses: actions/setup-go@v5
       with:
         go-version: 1.22
+
+    - name: Install Build Dependencies
+      run: |
+        apt-get update
+        apt-get install -y libbtrfs-dev libdevmapper-dev pkg-config build-essential
 
     - name: Build vib
       run: |

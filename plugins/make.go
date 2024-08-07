@@ -14,6 +14,16 @@ type MakeModule struct {
 	Source api.Source
 }
 
+//export PlugInfo
+func PlugInfo() *C.char {
+	plugininfo := &api.PluginInfo{Name: "make", Type: api.BuildPlugin}
+	pluginjson, err := json.Marshal(plugininfo)
+	if err != nil {
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+	return C.CString(string(pluginjson))
+}
+
 // BuildMakeModule builds a module that builds a Make project
 //
 //export BuildModule
