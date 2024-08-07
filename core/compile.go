@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
 )
 
@@ -30,6 +31,19 @@ func CompileRecipe(recipePath string, runtime string) error {
 		return fmt.Errorf("buildah not implemented yet")
 	default:
 		return fmt.Errorf("no runtime specified and the prometheus library is not implemented yet")
+	}
+
+	for _, finalizeInterface := range recipe.Finalize {
+		var module Finalize
+
+		err := mapstructure.Decode(finalizeInterface, &module)
+		if err != nil {
+			return err
+		}
+		err = LoadFinalizePlugin(module.Type, module, &recipe, runtime)
+		if err != nil {
+			return err
+		}
 	}
 
 	fmt.Printf("Image %s built successfully using %s\n", recipe.Id, runtime)

@@ -9,75 +9,85 @@ import (
 	"github.com/ebitengine/purego"
 	"github.com/vanilla-os/vib/api"
 )
-import "os"
+import (
+	"os"
+	"os/exec"
+)
 
-var openedPlugins map[string]Plugin
+var openedBuildPlugins map[string]Plugin
+var openedFinalizePlugins map[string]Plugin
 
-func LoadPlugin(name string, plugintype api.PluginType, module interface{}, recipe *api.Recipe) (string, error) {
-	if openedPlugins == nil {
-		openedPlugins = make(map[string]Plugin)
+func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uintptr, error) {
+	fmt.Println("Loading new plugin")
+
+	localPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
+
+	globalPluginPath := fmt.Sprintf("%INSTALLPREFIX%/share/vib/plugins/%s.so", name)
+
+	// Prefer local plugins before global ones
+	var loadedPlugin uintptr
+	_, err := os.Stat(localPluginPath)
+	if os.IsNotExist(err) {
+		loadedPlugin, err = purego.Dlopen(globalPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+		if err != nil {
+			panic(err) // yayyy panics <3
+		}
+	} else {
+		loadedPlugin, err = purego.Dlopen(localPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	infoLoc, err := purego.Dlsym(loadedPlugin, "PlugInfo")
+	if err != nil && !strings.Contains(err.Error(), "undefined symbol: PlugInfo") {
+		fmt.Println(err)
+		return loadedPlugin, err
+	}
+
+	pluginInfo := &api.PluginInfo{}
+
+	if infoLoc == 0 {
+		fmt.Println("== WARN ==")
+		fmt.Printf("Plugin %s does not contain function PlugInfo, assuming old BuildPlugin type\n", name)
+		fmt.Printf("Please update the plugin or request the developer of the plugin to update it!\n")
+		fmt.Println("== WARN ==")
+		pluginInfo.Name = name
+		pluginInfo.Type = api.BuildPlugin
+	} else {
+		var pluginInfoFunc func() string
+		purego.RegisterLibFunc(&pluginInfoFunc, loadedPlugin, "PlugInfo")
+		json.Unmarshal([]byte(pluginInfoFunc()), &pluginInfo)
+	}
+
+	if pluginInfo.Type != plugintype {
+		if plugintype == api.BuildPlugin {
+			return loadedPlugin, fmt.Errorf("ERROR: Plugin %s is not of type BuildPlugin", name)
+		} else if plugintype == api.FinalizePlugin {
+			return loadedPlugin, fmt.Errorf("ERROR: Plugin %s is not of type FinalizePlugin", name)
+		}
+	}
+	return loadedPlugin, nil
+}
+
+func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe) (string, error) {
+	if openedBuildPlugins == nil {
+		openedBuildPlugins = make(map[string]Plugin)
 	}
 	pluginOpened := false
 	var buildModule Plugin
-	buildModule, pluginOpened = openedPlugins[name]
+	buildModule, pluginOpened = openedBuildPlugins[name]
 	if !pluginOpened {
-		fmt.Println("Loading new plugin")
-		buildModule = Plugin{Name: name}
-
-		localPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
-
-		globalPluginPath := fmt.Sprintf("%INSTALLPREFIX%/share/vib/plugins/%s.so", name)
-
-		// Prefer local plugins before global ones
-		var loadedPlugin uintptr
-		_, err := os.Stat(localPluginPath)
-		if os.IsNotExist(err) {
-			loadedPlugin, err = purego.Dlopen(globalPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
-			if err != nil {
-				panic(err) // yayyy panics <3
-			}
-		} else {
-			loadedPlugin, err = purego.Dlopen(localPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
-			if err != nil {
-				panic(err)
-			}
-		}
-
-		infoLoc, err := purego.Dlsym(loadedPlugin, "PlugInfo")
-		if err != nil && !strings.Contains(err.Error(), "undefined symbol: PlugInfo") {
-			fmt.Println(err)
+		loadedPlugin, err := LoadPlugin(name, api.BuildPlugin, recipe)
+		if err != nil {
 			return "", err
-		}
-
-		pluginInfo := &api.PluginInfo{}
-
-		if infoLoc == 0 {
-			fmt.Println("== WARN ==")
-			fmt.Printf("Plugin %s does not contain function PlugInfo, assuming old BuildPlugin type\n", name)
-			fmt.Printf("Please update the plugin or request the developer of the plugin to update it!\n")
-			fmt.Println("== WARN ==")
-			pluginInfo.Name = name
-			pluginInfo.Type = api.BuildPlugin
-		} else {
-			var pluginInfoFunc func() string
-			purego.RegisterLibFunc(&pluginInfoFunc, loadedPlugin, "PlugInfo")
-			json.Unmarshal([]byte(pluginInfoFunc()), &pluginInfo)
-		}
-
-		if pluginInfo.Type != plugintype {
-			if plugintype == api.BuildPlugin {
-				fmt.Printf("ERROR: Plugin %s is not of type BuildPlugin", name)
-				os.Exit(1)
-			} else if plugintype == api.FinalizePlugin {
-				fmt.Printf("ERROR: Plugin %s is not of type FinalizePlugin", name)
-				os.Exit(1)
-			}
 		}
 		var buildFunction func(*C.char, *C.char) string
 		purego.RegisterLibFunc(&buildFunction, loadedPlugin, "BuildModule")
+		buildModule.Name = name
 		buildModule.BuildFunc = buildFunction
 		buildModule.LoadedPlugin = loadedPlugin
-		openedPlugins[name] = buildModule
+		openedBuildPlugins[name] = buildModule
 	}
 	fmt.Printf("Using plugin: %s\n", buildModule.Name)
 	moduleJson, err := json.Marshal(module)
@@ -94,5 +104,102 @@ func LoadPlugin(name string, plugintype api.PluginType, module interface{}, reci
 		return "", fmt.Errorf("%s", strings.Replace(res, "ERROR: ", "", 1))
 	} else {
 		return res, nil
+	}
+}
+
+func getImageID(name string, runtime string) (string, error) {
+	runtimePath, err := exec.LookPath(runtime)
+	if err != nil {
+		return "", err
+	}
+
+	out, err := exec.Command(
+		runtimePath, "images",
+		"--format=\"{{json . }}\"",
+	).Output()
+	if err != nil {
+		return "", err
+	}
+	for _, image := range strings.Split(string(out), "\n") {
+		if strings.Contains(image, fmt.Sprintf("{\"repository\":\"localhost/%s\",\"tag\":\"latest\"", name)) {
+			id := strings.Split(image, "\"Id\":\"")[1]
+			id = strings.Split(id, "\",")[0]
+			return id, nil
+		}
+	}
+	return "", fmt.Errorf("Unable to find id for: %s", name)
+
+}
+
+func LoadFinalizePlugin(name string, module interface{}, recipe *api.Recipe, runtime string) error {
+	if openedFinalizePlugins == nil {
+		openedFinalizePlugins = make(map[string]Plugin)
+	}
+	pluginOpened := false
+	var finalizeModule Plugin
+	finalizeModule, pluginOpened = openedFinalizePlugins[name]
+	if !pluginOpened {
+		loadedPlugin, err := LoadPlugin(name, api.FinalizePlugin, recipe)
+		if err != nil {
+			return err
+		}
+		var finalizeFunction func(*C.char, *C.char) string
+		purego.RegisterLibFunc(&finalizeFunction, loadedPlugin, "FinalizeBuild")
+		finalizeModule.Name = name
+		finalizeModule.BuildFunc = finalizeFunction
+		finalizeModule.LoadedPlugin = loadedPlugin
+		openedFinalizePlugins[name] = finalizeModule
+	}
+	fmt.Printf("Using Finalize plugin: %s\n", finalizeModule.Name)
+
+	var getPluginScope func() int32
+	purego.RegisterLibFunc(&getPluginScope, finalizeModule.LoadedPlugin, "PluginScope")
+	scope := getPluginScope()
+	fmt.Printf("\nFinalize Plugin %s registered scope:\n", finalizeModule.Name)
+	fmt.Printf("Get tagged image name: %t\n", (scope&api.IMAGENAME == api.IMAGENAME))
+	fmt.Printf("Get tagged image id: %t\n", (scope&api.IMAGEID == api.IMAGEID))
+	fmt.Printf("Get image recipe: %t\n", (scope&api.RECIPE == api.RECIPE))
+	fmt.Printf("Get build runtime: %t\n", (scope&api.RUNTIME == api.RUNTIME))
+	fmt.Printf("Create read-write filesystem of image: %t\n", (scope&api.RWFS == api.RWFS))
+	fmt.Printf("Create read-only filesystem of image: %t\n", (scope&api.ROFS == api.ROFS))
+	fmt.Printf("Prepare filesystem to be chrooted into: %t\n\n", (scope&api.CHROOTFS == api.CHROOTFS))
+	scopedata := &api.ScopeData{}
+	if scope&api.IMAGENAME == api.IMAGENAME {
+		scopedata.ImageName = fmt.Sprintf("localhost/%s:latest", recipe.Id)
+	}
+	if scope&api.IMAGEID == api.IMAGEID {
+		imageID, err := getImageID(recipe.Id, runtime)
+		if err != nil {
+			return err
+		}
+		scopedata.ImageID = imageID
+	}
+	if scope&api.RECIPE == api.RECIPE {
+		scopedata.Recipe = *recipe
+	}
+	if scope&api.RUNTIME == api.RUNTIME {
+		scopedata.Runtime = runtime
+	}
+	if scope&api.RWFS == api.RWFS {
+		scopedata.RWFS = "TO BE IMPLEMENTED"
+	} else if scope&api.ROFS == api.ROFS {
+		scopedata.ROFS = "TO BE IMPLEMENTED"
+	}
+	if scope&api.CHROOTFS == api.CHROOTFS {
+		// TO BE IMPLEMENTED
+	}
+	moduleJson, err := json.Marshal(module)
+	if err != nil {
+		return err
+	}
+	scopeJson, err := json.Marshal(scopedata)
+	if err != nil {
+		return err
+	}
+	res := finalizeModule.BuildFunc(C.CString(string(moduleJson)), C.CString(string(scopeJson)))
+	if strings.HasPrefix(res, "ERROR:") {
+		return fmt.Errorf("%s", strings.Replace(res, "ERROR: ", "", 1))
+	} else {
+		return nil
 	}
 }

@@ -10,6 +10,12 @@ type Module struct {
 	Content []byte // The entire module unparsed as a []byte, used by plugins
 }
 
+type Finalize struct {
+	Name    string `json:"name"`
+	Type    string `json:"type"`
+	Content []byte // The entire module unparsed as a []byte, used by plugins
+}
+
 type IncludesModule struct {
 	Name     string   `json:"name"`
 	Type     string   `json:"type"`
