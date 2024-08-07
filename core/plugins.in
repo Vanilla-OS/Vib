@@ -9,45 +9,85 @@ import (
 	"github.com/ebitengine/purego"
 	"github.com/vanilla-os/vib/api"
 )
-import "os"
+import (
+	"os"
+	"syscall"
+)
 
-var openedPlugins map[string]Plugin
+var openedBuildPlugins map[string]Plugin
+var openedFinalizePlugins map[string]Plugin
 
-func LoadPlugin(name string, module interface{}, recipe *api.Recipe) (string, error) {
-	if openedPlugins == nil {
-		openedPlugins = make(map[string]Plugin)
+func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uintptr, error) {
+	fmt.Println("Loading new plugin")
+
+	localPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
+
+	globalPluginPath := fmt.Sprintf("%INSTALLPREFIX%/share/vib/plugins/%s.so", name)
+
+	// Prefer local plugins before global ones
+	var loadedPlugin uintptr
+	_, err := os.Stat(localPluginPath)
+	if os.IsNotExist(err) {
+		loadedPlugin, err = purego.Dlopen(globalPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+		if err != nil {
+			panic(err) // yayyy panics <3
+		}
+	} else {
+		loadedPlugin, err = purego.Dlopen(localPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	infoLoc, err := purego.Dlsym(loadedPlugin, "PlugInfo")
+	if err != nil && !strings.Contains(err.Error(), "undefined symbol: PlugInfo") {
+		fmt.Println(err)
+		return loadedPlugin, err
+	}
+
+	pluginInfo := &api.PluginInfo{}
+
+	if infoLoc == 0 {
+		fmt.Println("== WARN ==")
+		fmt.Printf("Plugin %s does not contain function PlugInfo, assuming old BuildPlugin type\n", name)
+		fmt.Printf("Please update the plugin or request the developer of the plugin to update it!\n")
+		fmt.Println("== WARN ==")
+		pluginInfo.Name = name
+		pluginInfo.Type = api.BuildPlugin
+	} else {
+		var pluginInfoFunc func() string
+		purego.RegisterLibFunc(&pluginInfoFunc, loadedPlugin, "PlugInfo")
+		json.Unmarshal([]byte(pluginInfoFunc()), &pluginInfo)
+	}
+
+	if pluginInfo.Type != plugintype {
+		if plugintype == api.BuildPlugin {
+			return loadedPlugin, fmt.Errorf("ERROR: Plugin %s is not of type BuildPlugin", name)
+		} else if plugintype == api.FinalizePlugin {
+			return loadedPlugin, fmt.Errorf("ERROR: Plugin %s is not of type FinalizePlugin", name)
+		}
+	}
+	return loadedPlugin, nil
+}
+
+func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe) (string, error) {
+	if openedBuildPlugins == nil {
+		openedBuildPlugins = make(map[string]Plugin)
 	}
 	pluginOpened := false
 	var buildModule Plugin
-	buildModule, pluginOpened = openedPlugins[name]
+	buildModule, pluginOpened = openedBuildPlugins[name]
 	if !pluginOpened {
-		fmt.Println("Loading new plugin")
-		buildModule = Plugin{Name: name}
-
-		localPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
-
-		globalPluginPath := fmt.Sprintf("%INSTALLPREFIX%/share/vib/plugins/%s.so", name)
-
-		// Prefer local plugins before global ones
-		var loadedPlugin uintptr
-		_, err := os.Stat(localPluginPath)
-		if os.IsNotExist(err) {
-			loadedPlugin, err = purego.Dlopen(globalPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
-			if err != nil {
-				panic(err) // yayyy panics <3
-			}
-		} else {
-			loadedPlugin, err = purego.Dlopen(localPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
-			if err != nil {
-				panic(err)
-			}
+		loadedPlugin, err := LoadPlugin(name, api.BuildPlugin, recipe)
+		if err != nil {
+			return "", err
 		}
-
 		var buildFunction func(*C.char, *C.char) string
 		purego.RegisterLibFunc(&buildFunction, loadedPlugin, "BuildModule")
+		buildModule.Name = name
 		buildModule.BuildFunc = buildFunction
 		buildModule.LoadedPlugin = loadedPlugin
-		openedPlugins[name] = buildModule
+		openedBuildPlugins[name] = buildModule
 	}
 	fmt.Printf("Using plugin: %s\n", buildModule.Name)
 	moduleJson, err := json.Marshal(module)
@@ -64,5 +104,86 @@ func LoadPlugin(name string, module interface{}, recipe *api.Recipe) (string, er
 		return "", fmt.Errorf("%s", strings.Replace(res, "ERROR: ", "", 1))
 	} else {
 		return res, nil
+	}
+}
+
+func LoadFinalizePlugin(name string, module interface{}, recipe *api.Recipe, runtime string, isRoot bool, origGid int, origUid int) error {
+	if openedFinalizePlugins == nil {
+		openedFinalizePlugins = make(map[string]Plugin)
+	}
+	pluginOpened := false
+	var finalizeModule Plugin
+	finalizeModule, pluginOpened = openedFinalizePlugins[name]
+	if !pluginOpened {
+		loadedPlugin, err := LoadPlugin(name, api.FinalizePlugin, recipe)
+		if err != nil {
+			return err
+		}
+		var finalizeFunction func(*C.char, *C.char) string
+		purego.RegisterLibFunc(&finalizeFunction, loadedPlugin, "FinalizeBuild")
+		finalizeModule.Name = name
+		finalizeModule.BuildFunc = finalizeFunction
+		finalizeModule.LoadedPlugin = loadedPlugin
+		openedFinalizePlugins[name] = finalizeModule
+	}
+	fmt.Printf("Using Finalize plugin: %s\n", finalizeModule.Name)
+
+	syscall.Seteuid(0)
+	syscall.Setegid(0)
+
+	var getPluginScope func() int32
+	purego.RegisterLibFunc(&getPluginScope, finalizeModule.LoadedPlugin, "PluginScope")
+	scope := getPluginScope()
+	containerStorage, err := GetContainerStorage(runtime)
+	if err != nil {
+		return err
+	}
+	imageName := fmt.Sprintf("localhost/%s:latest", recipe.Id)
+	scopedata := &api.ScopeData{}
+	if scope&api.IMAGENAME == api.IMAGENAME {
+		scopedata.ImageName = imageName
+	}
+	if scope&api.IMAGEID == api.IMAGEID {
+		imageID, err := GetImageID(imageName, containerStorage)
+		if err != nil {
+			return err
+		}
+		scopedata.ImageID = imageID
+	}
+	if scope&api.RECIPE == api.RECIPE {
+		scopedata.Recipe = *recipe
+	}
+	if scope&api.RUNTIME == api.RUNTIME {
+		scopedata.Runtime = runtime
+	}
+	if scope&api.FS == api.FS {
+		if !isRoot {
+			return fmt.Errorf("Plugin %s requires scope api.FS, which requires vib to run as root", finalizeModule.Name)
+		}
+		imageID, err := GetImageID(imageName, containerStorage)
+		if err != nil {
+			return err
+		}
+		mountpoint, err := MountImage(imageName, imageID, runtime)
+		if err != nil {
+			return err
+		}
+		scopedata.FS = mountpoint
+	}
+	moduleJson, err := json.Marshal(module)
+	if err != nil {
+		return err
+	}
+	scopeJson, err := json.Marshal(scopedata)
+	if err != nil {
+		return err
+	}
+	res := finalizeModule.BuildFunc(C.CString(string(moduleJson)), C.CString(string(scopeJson)))
+	syscall.Seteuid(origGid)
+	syscall.Setegid(origUid)
+	if strings.HasPrefix(res, "ERROR:") {
+		return fmt.Errorf("%s", strings.Replace(res, "ERROR: ", "", 1))
+	} else {
+		return nil
 	}
 }

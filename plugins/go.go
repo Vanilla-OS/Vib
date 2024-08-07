@@ -16,6 +16,16 @@ type GoModule struct {
 	BuildFlags string
 }
 
+//export PlugInfo
+func PlugInfo() *C.char {
+	plugininfo := &api.PluginInfo{Name: "go", Type: api.BuildPlugin}
+	pluginjson, err := json.Marshal(plugininfo)
+	if err != nil {
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+	return C.CString(string(pluginjson))
+}
+
 // BuildGoModule builds a module that builds a Go project
 // buildVars are used to customize the build command
 // like setting the output binary name and location

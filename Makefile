@@ -14,11 +14,12 @@ build:
 build-plugins: FORCE
 	mkdir -p build/plugins
 	$(MAKE) -C plugins/
+	$(MAKE) -C finalize-plugins/
 
-install:
+install: build
 	install -Dm755 -t ${DESTDIR}/${PREFIX}/bin/ ./build/${BINARY_NAME}
 
-install-plugins:
+install-plugins: build-plugins
 	install -Dm644 -t ${DESTDIR}/${PREFIX}/share/vib/plugins/ ./build/plugins/*.so
 
 clean:
