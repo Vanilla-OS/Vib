@@ -15,8 +15,6 @@ import (
 )
 
 // LoadRecipe loads a recipe from a file and returns a Recipe
-// Does not validate the recipe but it will catch some errors
-// a proper validation will be done in the future
 func LoadRecipe(path string) (*api.Recipe, error) {
 	recipe := &api.Recipe{}
 
@@ -255,23 +253,4 @@ func GenModule(modulePath string) (map[string]interface{}, error) {
 	}
 
 	return module, nil
-}
-
-// TestRecipe validates a recipe by loading it and checking for errors
-func TestRecipe(path string) (*api.Recipe, error) {
-	recipe, err := LoadRecipe(path)
-	if err != nil {
-		fmt.Printf("Error validating recipe: %s\n", err)
-		return nil, err
-	}
-
-	modules := 0
-	for _, stage := range recipe.Stages {
-		modules += len(stage.Modules)
-	}
-
-	fmt.Printf("Recipe %s validated successfully\n", recipe.Id)
-	fmt.Printf("Found %d stages\n", len(recipe.Stages))
-	fmt.Printf("Found %d modules\n", modules)
-	return recipe, nil
 }

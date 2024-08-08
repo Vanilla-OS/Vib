@@ -1,8 +1,6 @@
 package cmd
 
-import (
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
 var Version = "0.7.4"
 
@@ -15,7 +13,7 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(NewBuildCommand())
-	rootCmd.AddCommand(NewTestCommand())
+	rootCmd.AddCommand(NewLintCommand())
 	rootCmd.AddCommand(NewCompileCommand())
 }
 
