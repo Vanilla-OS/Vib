@@ -8,7 +8,7 @@ all: build # plugins
 
 build:
 	mkdir -p build
-	sed 's|$$INSTALLPREFIX$$|${PREFIX}|g' core/plugins.in > core/plugins.go
+	sed 's|%INSTALLPREFIX%|${PREFIX}|g' core/plugins.in > core/plugins.go
 	go build -a -o build/${BINARY_NAME}
 
 build-plugins: FORCE
