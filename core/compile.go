@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"os/exec"
 	"syscall"
@@ -72,12 +71,6 @@ func compileDocker(recipe api.Recipe, gid int, uid int) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = recipe.ParentPath
-	cmd.SysProcAttr = &syscall.SysProcAttr{}
-	if uid > 0 && uid <= math.MaxUint32 && gid > 0 && gid <= math.MaxUint32 {
-		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
-	} else {
-		return fmt.Errorf("uid and gid exceed uint32")
-	}
 
 	return cmd.Run()
 }
@@ -97,12 +90,6 @@ func compilePodman(recipe api.Recipe, gid int, uid int) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = recipe.ParentPath
-	cmd.SysProcAttr = &syscall.SysProcAttr{}
-	if uid > 0 && uid <= math.MaxUint32 && gid > 0 && gid <= math.MaxUint32 {
-		cmd.SysProcAttr.Credential = &syscall.Credential{Uid: uint32(uid), Gid: uint32(gid)}
-	} else {
-		return fmt.Errorf("uid and gid exceed uint32")
-	}
 
 	return cmd.Run()
 }
