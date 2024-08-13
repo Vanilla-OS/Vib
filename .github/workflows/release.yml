@@ -8,8 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-        image: ghcr.io/vanilla-os/pico:main
     permissions:
       contents: write # to upload assets to releases
       attestations: write # to upload assets attestation for build provenance
@@ -25,8 +23,8 @@ jobs:
 
     - name: Install Build Dependencies
       run: |
-        apt-get update
-        apt-get install -y libbtrfs-dev libdevmapper-dev pkg-config build-essential
+        sudo apt-get update
+        sudo apt-get install -y libbtrfs-dev libdevmapper-dev pkg-config build-essential
 
     - name: Build
       run: |
