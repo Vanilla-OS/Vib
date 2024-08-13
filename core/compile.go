@@ -64,7 +64,7 @@ func compileDocker(recipe api.Recipe, gid int, uid int) error {
 
 	cmd := exec.Command(
 		docker, "build",
-		"-t", recipe.Id,
+		"-t", fmt.Sprintf("localhost/%s", recipe.Id),
 		"-f", recipe.Containerfile,
 		".",
 	)
@@ -83,7 +83,7 @@ func compilePodman(recipe api.Recipe, gid int, uid int) error {
 
 	cmd := exec.Command(
 		podman, "build",
-		"-t", recipe.Id,
+		"-t", fmt.Sprintf("localhost/%s", recipe.Id),
 		"-f", recipe.Containerfile,
 		".",
 	)
