@@ -197,6 +197,26 @@ Refer to the [Use Modules](/vib/en/use-modules) article for more information on 
 
 You can also write your custom modules by making a Vib plugin, see the [Making a Plugin](/vib/en/making-plugin) article for more information.
 
+#### Setting up the working directory
+
+Each module can have a `workdir` field that changes the directory before executing the rest of the module operations. The following is an example of how to use the `workdir` field:
+
+```yml
+- name: example-module
+  type: shell
+  workdir: /app
+  commands:
+    - touch file.txt
+  
+- name: example-module-2
+  type: shell
+  workdir: /app
+  commands:
+    - ls -la
+```
+
+In this example, the `example-module` module creates a file named `file.txt` in the `/app` directory, and the `example-module-2` module lists the contents of the `/app` directory.
+
 ### Copying files between stages
 
 You can copy files between stages using the `copy` field. This consists of a list of files or directories to copy from another stage. Each item in the list is a YAML snippet that defines the source and destination of the copy operation. The common structure is:

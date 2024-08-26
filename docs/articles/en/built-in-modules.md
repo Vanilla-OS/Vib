@@ -10,7 +10,7 @@ Tags:
 ---
 
 > **Note**
-> At the time of writing, Vib is in active development and the list of built-in modules may grow over time. This article covers the modules available in Vib v0.5.0.
+> At the time of writing, Vib is in active development and the list of built-in modules may grow over time. This article covers the modules available in Vib v0.8.1.
 
 Vib supports a variety of built-in modules that you can use to build your recipes. These modules are designed to automate common tasks, such as installing packages, building software, and running custom scripts.
 
@@ -28,6 +28,7 @@ To keep this article concise, we'll cover only the fields that are specific to e
 - [Make](#make)
 - [Meson](#meson)
 - [Shell](#shell)
+- [Flatpak](#flatpak)
 
 ## Package manager
 
@@ -226,4 +227,34 @@ The following specific fields are available:
   commands:
     - "echo Hello, World!"
     - "apt update && apt install -y curl"
+```
+
+## Flatpak
+
+The Flatpak module installs Flatpak packages using the `flatpak` command.
+
+The following specific fields are available:
+
+- `system`: If configured, the module will install the applications system-wide.
+- `user`: If configured, the module will install the applications user-wide.
+
+### Example
+
+```yaml
+- name: install-flatpak-app
+  type: flatpak
+  system:
+    repourl: "https://flathub.org/repo/flathub.flatpakrepo"
+    reponame: "flathub"
+    install:
+      - "org.gnome.Epiphany"
+    remove:
+      - "org.gnome.Epiphany"
+  user:
+    repourl: "https://flathub.org/repo/flathub.flatpakrepo"
+    reponame: "flathub"
+    install:
+      - "org.gnome.Epiphany"
+    remove:
+      - "org.gnome.Epiphany"
 ```
