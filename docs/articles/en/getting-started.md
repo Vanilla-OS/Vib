@@ -69,7 +69,8 @@ stages:
     args:
       DEBIAN_FRONTEND: noninteractive
     runs:
-      - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
+      commands:
+        - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
     modules:
       - name: update
         type: shell
