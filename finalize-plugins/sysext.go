@@ -51,7 +51,7 @@ func FinalizeBuild(moduleInterface *C.char, extraData *C.char) *C.char {
 
 	var extensionRelease strings.Builder
 	fmt.Fprintf(&extensionRelease, "ID=%s\n", module.OSReleaseID)
-	fmt.Fprintf(&extensionRelease, "VersionID=%s\n", module.OSReleaseVersionID)
+	fmt.Fprintf(&extensionRelease, "VERSION_ID=%s\n", module.OSReleaseVersionID)
 
 	err = os.MkdirAll(filepath.Join(data.FS, "usr/lib/extension-release.d"), 0o777)
 	if err != nil {
