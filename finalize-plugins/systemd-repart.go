@@ -7,14 +7,19 @@ import (
 	"github.com/vanilla-os/vib/api"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 type SystemdRepart struct {
-	Name   string `json:"name"`
-	Type   string `json:"type"`
-	Output string `json:"output"`
-	Size   string `json:"size"`
-	Seed   string `json:"seed"`
+	Name            string   `json:"name"`
+	Type            string   `json:"type"`
+	Output          string   `json:"output"`
+	Json            string   `json:"json"`
+	SpecOutput      string   `json:"spec_output"`
+	Size            string   `json:"size"`
+	Seed            string   `json:"seed"`
+	Split           bool     `json:"split"`
+	DeferPartitions []string `json:"defer_partitions"`
 }
 
 //export PlugInfo
@@ -51,8 +56,12 @@ func FinalizeBuild(moduleInterface *C.char, extraData *C.char) *C.char {
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
-	cmd := exec.Command(
-		repart,
+
+	if len(strings.TrimSpace(module.Json)) == 0 {
+		module.Json = "off"
+	}
+
+	args := []string{
 		"--definitions=definitions",
 		"--empty=create",
 		fmt.Sprintf("--size=%s", module.Size),
@@ -60,11 +69,27 @@ func FinalizeBuild(moduleInterface *C.char, extraData *C.char) *C.char {
 		"--discard=no",
 		"--offline=true",
 		"--no-pager",
+		fmt.Sprintf("--split=%t", module.Split),
 		fmt.Sprintf("--seed=%s", module.Seed),
 		fmt.Sprintf("--root=%s", data.FS),
 		module.Output,
+		fmt.Sprintf("--json=%s", module.Json),
+	}
+
+	if len(module.DeferPartitions) > 0 {
+		args = append(args, fmt.Sprintf("--defer-partitions=%s", strings.Join(module.DeferPartitions, ",")))
+	}
+
+	cmd := exec.Command(
+		repart,
+		args...,
 	)
-	cmd.Stdout = os.Stdout
+	jsonFile, err := os.Create(module.SpecOutput)
+	if err != nil {
+		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+	defer jsonFile.Close()
+	cmd.Stdout = jsonFile
 	cmd.Stderr = os.Stderr
 	cmd.Dir = data.Recipe.ParentPath
 
