@@ -11,7 +11,7 @@ import (
 type ShellModule struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`
-	Source   api.Source
+	Sources  []api.Source
 	Commands []string
 }
 
@@ -22,14 +22,16 @@ func BuildShellModule(moduleInterface interface{}, recipe *api.Recipe) (string, 
 		return "", err
 	}
 
-	if strings.TrimSpace(module.Source.Type) != "" {
-		err := api.DownloadSource(recipe.DownloadsPath, module.Source, module.Name)
-		if err != nil {
-			return "", err
-		}
-		err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, module.Source, module.Name)
-		if err != nil {
-			return "", err
+	for _, source := range module.Sources {
+		if strings.TrimSpace(source.Type) != "" {
+			err := api.DownloadSource(recipe.DownloadsPath, source, module.Name)
+			if err != nil {
+				return "", err
+			}
+			err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, source, module.Name)
+			if err != nil {
+				return "", err
+			}
 		}
 	}
 
