@@ -23,12 +23,14 @@ var rootCmd = &cobra.Command{
 	Version: Version,
 }
 
+// Initialize the root command with build, test, and compile commands
 func init() {
 	rootCmd.AddCommand(NewBuildCommand())
 	rootCmd.AddCommand(NewTestCommand())
 	rootCmd.AddCommand(NewCompileCommand())
 }
 
+// Execute the root command, handling root user environment setup and privilege dropping
 func Execute() error {
 	if os.Getuid() == 0 {
 		IsRoot = true

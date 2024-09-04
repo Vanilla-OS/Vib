@@ -15,6 +15,7 @@ var RUNTIME int32 = 8
 // / Get a read-only filesystem of the Image
 var FS int32 = 16
 
+// Information about the image, recipe, runtime, and file system mountpoint
 type ScopeData struct {
 	ImageName string
 	ImageID   string

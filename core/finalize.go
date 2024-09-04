@@ -7,12 +7,14 @@ import (
 	"strings"
 )
 
+// Configuration for storage drivers
 type StorageConf struct {
 	Driver    string
 	Runroot   string
 	Graphroot string
 }
 
+// Retrieve the container storage configuration based on the runtime
 func GetContainerStorage(runtime string) (cstorage.Store, error) {
 	storageconfig := &StorageConf{}
 	if runtime == "podman" {
@@ -50,6 +52,7 @@ func GetContainerStorage(runtime string) (cstorage.Store, error) {
 	return store, err
 }
 
+// Retrieve the image ID for a given image name from the storage
 func GetImageID(name string, store cstorage.Store) (string, error) {
 	images, err := store.Images()
 	if err != nil {
@@ -65,6 +68,7 @@ func GetImageID(name string, store cstorage.Store) (string, error) {
 	return "", fmt.Errorf("image not found")
 }
 
+// Retrieve the top layer ID for a given image ID from the storage
 func GetTopLayerID(imageid string, store cstorage.Store) (string, error) {
 	images, err := store.Images()
 	if err != nil {
@@ -78,6 +82,7 @@ func GetTopLayerID(imageid string, store cstorage.Store) (string, error) {
 	return "", fmt.Errorf("no top layer for id %s found", imageid)
 }
 
+// Mount the image and return the mount directory
 func MountImage(imagename string, imageid string, runtime string) (string, error) {
 	store, err := GetContainerStorage(runtime)
 	if err != nil {

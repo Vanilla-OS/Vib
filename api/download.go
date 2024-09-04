@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-// retrieves the Source directory of a given Source
+// Generate the destination path for the source based on its type and module name
 func GetSourcePath(source Source, moduleName string) string {
 	switch source.Type {
 	case "git":
@@ -30,8 +30,7 @@ func GetSourcePath(source Source, moduleName string) string {
 	return ""
 }
 
-// DownloadSource downloads a source to the downloads directory
-// according to its type (git, tar, ...)
+// Download the source based on its type and validate its checksum
 func DownloadSource(downloadPath string, source Source, moduleName string) error {
 	fmt.Printf("Downloading source: %s\n", source.URL)
 
@@ -60,6 +59,7 @@ func DownloadSource(downloadPath string, source Source, moduleName string) error
 	}
 }
 
+// Clone a specific tag from a Git repository to the destination directory
 func gitCloneTag(url, tag, dest string) error {
 	cmd := exec.Command(
 		"git",
@@ -71,6 +71,7 @@ func gitCloneTag(url, tag, dest string) error {
 	return cmd.Run()
 }
 
+// Retrieve the latest Git repository commit hash for a given branch from the destination directory
 func gitGetLatestCommit(branch, dest string) (string, error) {
 	cmd := exec.Command("git", "--no-pager", "log", "-n", "1", "--pretty=format:\"%H\"", branch)
 	cmd.Dir = dest
@@ -82,6 +83,7 @@ func gitGetLatestCommit(branch, dest string) (string, error) {
 	return strings.Trim(string(latest_tag), "\""), nil
 }
 
+// Check out a specific Git repository branch or commit in the destination directory
 func gitCheckout(value, dest string) error {
 	cmd := exec.Command("git", "checkout", value)
 	cmd.Stdout = os.Stdout
@@ -90,8 +92,7 @@ func gitCheckout(value, dest string) error {
 	return cmd.Run()
 }
 
-// DownloadGitSource downloads a git source to the downloads directory
-// and checks out the commit or tag
+// Download a Git source repository based on the specified tag, branch, or commit
 func DownloadGitSource(downloadPath string, source Source, moduleName string) error {
 	fmt.Printf("Downloading git source: %s\n", source.URL)
 
@@ -136,7 +137,7 @@ func DownloadGitSource(downloadPath string, source Source, moduleName string) er
 	return gitCheckout(source.Commit, dest)
 }
 
-// DownloadTarSource downloads a tar archive to the downloads directory
+// Download a tarball from the specified URL and save it to the destination path
 func DownloadTarSource(downloadPath string, source Source, moduleName string) error {
 	fmt.Printf("Source is tar: %s\n", source.URL)
 	// Create the destination path
@@ -165,8 +166,7 @@ func DownloadTarSource(downloadPath string, source Source, moduleName string) er
 	return nil
 }
 
-// MoveSources moves all sources from the downloads directory to the
-// sources directory
+// Move downloaded sources from the download path to the sources path
 func MoveSources(downloadPath string, sourcesPath string, sources []Source, moduleName string) error {
 	fmt.Println("Moving sources")
 
@@ -180,9 +180,9 @@ func MoveSources(downloadPath string, sourcesPath string, sources []Source, modu
 	return nil
 }
 
-// MoveSource moves a source from the downloads directory to the
-// sources directory, by extracting if a tar archive or moving if a
-// git repository
+// Move or extract a source from the download path to the sources path depending on its type
+// tarballs: extract
+// git repositories: move
 func MoveSource(downloadPath string, sourcesPath string, source Source, moduleName string) error {
 	fmt.Printf("Moving source: %s\n", moduleName)
 
@@ -211,7 +211,7 @@ func MoveSource(downloadPath string, sourcesPath string, source Source, moduleNa
 	}
 }
 
-// checksumValidation validates the checksum of a file
+// Validate the checksum of the downloaded file
 func checksumValidation(source Source, path string) error {
 	// No checksum provided
 	if len(strings.TrimSpace(source.Checksum)) == 0 {
@@ -243,6 +243,8 @@ func checksumValidation(source Source, path string) error {
 	return nil
 }
 
+// Download a file source from a URL and save it to the specified download path.
+// Create necessary directories and handle file naming based on the URL extension.
 func DownloadFileSource(downloadPath string, source Source, moduleName string) error {
 	fmt.Printf("Source is file: %s\n", source.URL)
 

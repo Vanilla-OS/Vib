@@ -8,6 +8,7 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 
+// Test the DownloadSource function to ensure it downloads and verifies the source file
 func TestDownloadSource(t *testing.T) {
 	tmp := t.TempDir()
 
@@ -29,6 +30,7 @@ func TestDownloadSource(t *testing.T) {
 	defer os.Remove("/tmp/example") // clean up
 }
 
+// Test the DownloadTarSource function to ensure it downloads and verifies the tar file
 func TestDownloadTarSource(t *testing.T) {
 	tmp := t.TempDir()
 

@@ -8,6 +8,7 @@ import (
 )
 import "encoding/json"
 
+// Configuration for building a Go module
 type GoModule struct {
 	Name       string `json:"name"`
 	Type       string `json:"type"`
@@ -16,6 +17,8 @@ type GoModule struct {
 	BuildFlags string
 }
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "go", Type: api.BuildPlugin}
@@ -26,9 +29,9 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
-// BuildGoModule builds a module that builds a Go project
-// buildVars are used to customize the build command
-// like setting the output binary name and location
+// Generate a command to build a Go project. Add options for
+// setting the output binary name and location based on the provided buildVars
+// and BuildFlags, and handle downloading and moving the source.
 //
 //export BuildModule
 func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {

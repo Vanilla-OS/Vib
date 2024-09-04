@@ -14,12 +14,15 @@ import (
 	"path/filepath"
 )
 
+// Configuration for a shim module
 type ShimModule struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`
 	ShimType string `json:"shimtype"`
 }
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "shim", Type: api.BuildPlugin}
@@ -30,6 +33,10 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
+// Generate a command to build a shim module. Create temporary directories,
+// write module and recipe data to files, and execute the plugin command with
+// the paths to these files.
+//
 //export BuildModule
 func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 	var module *ShimModule

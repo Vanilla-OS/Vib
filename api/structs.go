@@ -1,5 +1,6 @@
 package api
 
+// Configuration for a source
 type Source struct {
 	URL         string   `json:"url"`
 	Checksum    string   `json:"checksum"`
@@ -12,6 +13,7 @@ type Source struct {
 	Paths       []string `json:"paths"`
 }
 
+// Configuration for a recipe
 type Recipe struct {
 	Name          string
 	Id            string
@@ -25,6 +27,7 @@ type Recipe struct {
 	Finalize      []interface{}
 }
 
+// Configuration for a stage in the recipe
 type Stage struct {
 	Id          string            `json:"id"`
 	Base        string            `json:"base"`
@@ -48,32 +51,38 @@ const (
 	FinalizePlugin
 )
 
+// Information about a plugin
 type PluginInfo struct {
 	Name string
 	Type PluginType
 }
 
+// Configuration for copying files or directories in a stage
 type Copy struct {
 	From    string
 	SrcDst  map[string]string
 	Workdir string
 }
 
+// Configuration for adding files or directories in a stage
 type Add struct {
 	SrcDst  map[string]string
 	Workdir string
 }
 
+// Configuration for the entrypoint of a container
 type Entrypoint struct {
 	Exec    []string
 	Workdir string
 }
 
+// Configuration for a command to run in the container
 type Cmd struct {
 	Exec    []string
 	Workdir string
 }
 
+// Configuration for commands to run in the container
 type Run struct {
 	Commands []string
 	Workdir  string

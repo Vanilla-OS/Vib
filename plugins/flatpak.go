@@ -13,6 +13,7 @@ import (
 	"strings"
 )
 
+// Configuration for managing Flatpak repositories and packages
 type innerFlatpakModule struct {
 	Repourl  string   `json:"repo-url"`
 	Reponame string   `json:"repo-name"`
@@ -20,6 +21,8 @@ type innerFlatpakModule struct {
 	Remove   []string `json:"remove"`
 }
 
+// Configuration for managing Flatpak repositories and packages
+// for both system and user contexts
 type FlatpakModule struct {
 	Name   string             `json:"name"`
 	Type   string             `json:"type"`
@@ -59,6 +62,8 @@ RestartSec=30
 WantedBy=default.target
 `
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "flatpak", Type: api.BuildPlugin}
@@ -69,6 +74,8 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
+// Generate a command to add a Flatpak remote repository.
+// Add appropriate flags for system-wide or user-specific installation.
 func createRepo(module innerFlatpakModule, isSystem bool) string {
 	fmt.Println("Adding remote ", isSystem, " ", module)
 	command := "flatpak remote-add --if-not-exists"
@@ -80,6 +87,10 @@ func createRepo(module innerFlatpakModule, isSystem bool) string {
 	return fmt.Sprintf("%s %s %s", command, module.Reponame, module.Repourl)
 }
 
+// Generate setup commands for Flatpak module configuration.
+// Create scripts for system-wide and user-specific Flatpak setups, 
+// including repository addition, package installation, and service configuration.
+//
 //export BuildModule
 func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 	var module *FlatpakModule

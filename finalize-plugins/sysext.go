@@ -12,6 +12,7 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 
+// Configuration for system extensions
 type Sysext struct {
 	Name               string `json:"name"`
 	Type               string `json:"type"`
@@ -19,6 +20,8 @@ type Sysext struct {
 	OSReleaseVersionID string `json:"osreleaseversionid"`
 }
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "sysext", Type: api.FinalizePlugin}
@@ -29,11 +32,16 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
+// Provide the plugin scope
+//
 //export PluginScope
 func PluginScope() int32 { // int32 is defined as GoInt32 in cgo which is the same as a C int
 	return api.IMAGENAME | api.FS | api.RECIPE
 }
 
+// Process and finalize the build by creating an extension release file and
+// creating a SquashFS image from the filesystem
+//
 //export FinalizeBuild
 func FinalizeBuild(moduleInterface *C.char, extraData *C.char) *C.char {
 	var module *Sysext

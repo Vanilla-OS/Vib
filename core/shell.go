@@ -8,6 +8,7 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 
+// Configuration for shell modules
 type ShellModule struct {
 	Name     string `json:"name"`
 	Type     string `json:"type"`
@@ -15,6 +16,9 @@ type ShellModule struct {
 	Commands []string
 }
 
+// Build shell module commands and return them as a single string
+//
+// Returns: Concatenated shell commands or an error if any step fails
 func BuildShellModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
 	var module ShellModule
 	err := mapstructure.Decode(moduleInterface, &module)

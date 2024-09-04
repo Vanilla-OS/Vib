@@ -7,6 +7,7 @@ import (
 	"github.com/vanilla-os/vib/core"
 )
 
+// Create and return a new test command for the Cobra CLI
 func NewTestCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "test",
@@ -19,6 +20,7 @@ func NewTestCommand() *cobra.Command {
 	return cmd
 }
 
+// Validate the provided recipe by testing it
 func testCommand(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("no recipe path specified")

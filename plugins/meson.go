@@ -8,12 +8,15 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 
+// Configuration for building a Meson project
 type MesonModule struct {
 	Name   string
 	Type   string
 	Source api.Source
 }
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "meson", Type: api.BuildPlugin}
@@ -24,7 +27,8 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
-// BuildMesonModule builds a module that builds a Meson project
+// Generate a command to build a Meson project. Handle source downloading, moving,
+// and use Meson and Ninja build tools with a temporary build directory based on the checksum.
 //
 //export BuildModule
 func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {

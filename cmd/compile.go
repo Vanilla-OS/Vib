@@ -9,6 +9,7 @@ import (
 	"github.com/vanilla-os/vib/core"
 )
 
+// Create and return a new compile command for the Cobra CLI
 func NewCompileCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "compile",
@@ -26,6 +27,7 @@ func NewCompileCommand() *cobra.Command {
 	return cmd
 }
 
+// Execute the compile command: compile the given recipe into a container image
 func compileCommand(cmd *cobra.Command, args []string) error {
 	commonNames := []string{
 		"recipe.yml",
@@ -68,6 +70,9 @@ func compileCommand(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// Detect the container runtime by checking the system path
+//
+// Returns: runtime name or an empty string if no runtime is found
 func detectRuntime() string {
 	path, _ := exec.LookPath("docker")
 	if path != "" {

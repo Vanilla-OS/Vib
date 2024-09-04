@@ -10,7 +10,7 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 
-// CompileRecipe compiles a recipe into a runnable image.
+// Compile and build the recipe using the specified runtime
 func CompileRecipe(recipePath string, runtime string, isRoot bool, origGid int, origUid int) error {
 	recipe, err := BuildRecipe(recipePath)
 	if err != nil {
@@ -56,6 +56,7 @@ func CompileRecipe(recipePath string, runtime string, isRoot bool, origGid int, 
 	return nil
 }
 
+// Build an OCI image using the specified recipe through Docker
 func compileDocker(recipe api.Recipe, gid int, uid int) error {
 	docker, err := exec.LookPath("docker")
 	if err != nil {
@@ -75,6 +76,7 @@ func compileDocker(recipe api.Recipe, gid int, uid int) error {
 	return cmd.Run()
 }
 
+// Build an OCI image using the specified recipe through Podman
 func compilePodman(recipe api.Recipe, gid int, uid int) error {
 	podman, err := exec.LookPath("podman")
 	if err != nil {
