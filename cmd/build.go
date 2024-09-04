@@ -11,6 +11,9 @@ import (
 	"github.com/vanilla-os/vib/core"
 )
 
+// Create a new build command for the Cobra CLI
+//
+// Returns: new Cobra command for building a recipe
 func NewBuildCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "build",
@@ -28,6 +31,7 @@ func NewBuildCommand() *cobra.Command {
 	return cmd
 }
 
+// Handle the build command for the Cobra CLI
 func buildCommand(cmd *cobra.Command, args []string) error {
 	commonNames := []string{
 		"recipe.yml",

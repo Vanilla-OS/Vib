@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// Configuration for systemd repartitioning
 type SystemdRepart struct {
 	Name            string   `json:"name"`
 	Type            string   `json:"type"`
@@ -22,6 +23,8 @@ type SystemdRepart struct {
 	DeferPartitions []string `json:"defer_partitions"`
 }
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "systemd-repart", Type: api.FinalizePlugin}
@@ -32,11 +35,16 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
+// Provide the plugin scope
+//
 //export PluginScope
 func PluginScope() int32 { // int32 is defined as GoInt32 in cgo which is the same as a C int
 	return api.IMAGENAME | api.FS | api.RECIPE
 }
 
+// Finalize the build by executing systemd-repart with the provided configuration
+// to generate and apply partitioning specifications and output results
+//
 //export FinalizeBuild
 func FinalizeBuild(moduleInterface *C.char, extraData *C.char) *C.char {
 	var module *SystemdRepart

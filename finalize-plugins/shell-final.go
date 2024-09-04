@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// Configuration for a set of shell commands
 type Shell struct {
 	Name     string   `json:"name"`
 	Type     string   `json:"type"`
@@ -17,6 +18,8 @@ type Shell struct {
 	Cwd      string   `json:"cwd"`
 }
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "shell-final", Type: api.FinalizePlugin}
@@ -27,17 +30,24 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
+// Provide the plugin scope
+//
 //export PluginScope
 func PluginScope() int32 { // int32 is defined as GoInt32 in cgo which is the same as a C int
 	return api.IMAGENAME | api.FS | api.RECIPE
 }
 
+// Replace placeholders in the path with actual values from ScopeData
+// $PROJROOT -> Recipe.ParentPath
+// $FSROOT -> FS
 func parsePath(path string, data *api.ScopeData) string {
 	path = strings.ReplaceAll(path, "$PROJROOT", data.Recipe.ParentPath)
 	path = strings.ReplaceAll(path, "$FSROOT", data.FS)
 	return path
 }
 
+// Check if the command is in $PATH or includes a directory path.
+// Return the full path if found, otherwise return the command unchanged.
 func baseCommand(command string, data *api.ScopeData) string {
 	commandParts := strings.Split(command, " ")
 	if strings.Contains(commandParts[0], "/") {
@@ -51,17 +61,24 @@ func baseCommand(command string, data *api.ScopeData) string {
 	}
 }
 
+// Extract and return arguments from a command string
 func getArgs(command string, data *api.ScopeData) []string {
 	commandParts := strings.Split(parsePath(command, data), " ")
 	return commandParts[1:]
 }
 
+// Generate an executable command by resolving the base command and arguments
+// and wrapping them with appropriate syntax for execution.
 func genCommand(command string, data *api.ScopeData) []string {
 	baseCommand := baseCommand(command, data)
 	args := getArgs(command, data)
 	return append(append(append([]string{"-c", "'"}, strings.Join(args, " ")), baseCommand), "'")
 }
 
+// Execute shell commands from a Shell struct using the provided ScopeData.
+// It parses and runs each command in the context of the provided working directory,
+// or the recipe's parent path if no specific directory is given.
+//
 //export FinalizeBuild
 func FinalizeBuild(moduleInterface *C.char, extraData *C.char) *C.char {
 	var module *Shell

@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+// Configuration for generating an image
 type Genimage struct {
 	Name         string `json:"name"`
 	Type         string `json:"type"`
@@ -20,6 +21,8 @@ type Genimage struct {
 	Outputpath   string `json:"outputpath"`
 }
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "genimage", Type: api.FinalizePlugin}
@@ -30,17 +33,27 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
+// Provide the plugin scope
+//
 //export PluginScope
 func PluginScope() int32 { // int32 is defined as GoInt32 in cgo which is the same as a C int
 	return api.IMAGENAME | api.FS | api.RECIPE
 }
 
+// Replace placeholders in the path with actual values from ScopeData
+// $PROJROOT -> Recipe.ParentPath
+// $FSROOT -> FS
 func ParsePath(path string, data *api.ScopeData) string {
 	path = strings.Replace(path, "$PROJROOT", data.Recipe.ParentPath, 1)
 	path = strings.Replace(path, "$FSROOT", data.FS, 1)
 	return path
 }
 
+// Complete the build process for a generated image module.
+// Find the binary if not specified, replace path placeholders 
+// in the module paths, and run the command
+// with the provided configuration
+//
 //export FinalizeBuild
 func FinalizeBuild(moduleInterface *C.char, extraData *C.char) *C.char {
 	var module *Genimage

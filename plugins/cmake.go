@@ -9,6 +9,7 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 
+// Configuration for a CMake module
 type CMakeModule struct {
 	Name       string            `json:"name"`
 	Type       string            `json:"type"`
@@ -17,6 +18,8 @@ type CMakeModule struct {
 	Source     api.Source
 }
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "cmake", Type: api.BuildPlugin}
@@ -27,7 +30,8 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
-// BuildCMakeModule builds a module that builds a CMake project
+// Generate a shell command to build a CMake project based on the provided module and recipe.
+// Download and move the source, set up build variables and flags, and construct the CMake build command.
 //
 //export BuildModule
 func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {

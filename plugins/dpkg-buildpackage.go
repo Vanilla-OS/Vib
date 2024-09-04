@@ -9,12 +9,15 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 
+// Configuration for building a Debian package using dpkg
 type DpkgBuildModule struct {
 	Name   string `json:"name"`
 	Type   string `json:"type"`
 	Source api.Source
 }
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "dpkg-buildpackage", Type: api.BuildPlugin}
@@ -25,8 +28,9 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
-// BuildDpkgModule builds a module that builds a dpkg project
-// and installs the resulting .deb package
+// Generate a command to build a Debian package using dpkg and install
+// the resulting .deb package. Handle downloading, moving the source,
+// and running dpkg-buildpackage with appropriate options.
 //
 //export BuildModule
 func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {

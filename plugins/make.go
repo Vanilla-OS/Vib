@@ -8,12 +8,15 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 
+// Configuration for building a project using Make
 type MakeModule struct {
 	Name   string `json:"name"`
 	Type   string `json:"type"`
 	Source api.Source
 }
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "make", Type: api.BuildPlugin}
@@ -24,7 +27,9 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
-// BuildMakeModule builds a module that builds a Make project
+// Generate a command to build a Make project. Change directory
+// to the source path, run 'make' to build the project, and 'make install'
+// to install the built project. Handle downloading and moving the source.
 //
 //export BuildModule
 func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {

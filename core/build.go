@@ -10,6 +10,7 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 
+// Add a WORKDIR instruction to the containerfile
 func ChangeWorkingDirectory(workdir string, containerfile *os.File) error {
 	if workdir != "" {
 		_, err := containerfile.WriteString(
@@ -22,6 +23,7 @@ func ChangeWorkingDirectory(workdir string, containerfile *os.File) error {
 	return nil
 }
 
+// Add a WORKDIR instruction to reset to the root directory
 func RestoreWorkingDirectory(workdir string, containerfile *os.File) error {
 	if workdir != "" {
 		_, err := containerfile.WriteString(
@@ -35,7 +37,7 @@ func RestoreWorkingDirectory(workdir string, containerfile *os.File) error {
 	return nil
 }
 
-// BuildRecipe builds a Containerfile from a recipe path
+// Load and build a Containerfile from the specified recipe
 func BuildRecipe(recipePath string) (api.Recipe, error) {
 	// load the recipe
 	recipe, err := LoadRecipe(recipePath)
@@ -63,8 +65,7 @@ func BuildRecipe(recipePath string) (api.Recipe, error) {
 	return *recipe, nil
 }
 
-// BuildContainerfile builds a Containerfile from a recipe
-// and a list of modules commands
+// Generate a Containerfile from the recipe
 func BuildContainerfile(recipe *api.Recipe) error {
 	containerfile, err := os.Create(recipe.Containerfile)
 	if err != nil {
@@ -357,7 +358,7 @@ func BuildContainerfile(recipe *api.Recipe) error {
 	return nil
 }
 
-// BuildModules builds a list of modules commands from a list of modules
+// Build commands for each module in the recipe
 func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, error) {
 	cmds := []ModuleCommand{}
 	for _, moduleInterface := range modules {
@@ -382,9 +383,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, e
 	return cmds, nil
 }
 
-// BuildModule builds a module command from a module
-// this is done by calling the appropriate module builder
-// function based on the module type
+// Build a command string for the given module in the recipe
 func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error) {
 	var module Module
 	err := mapstructure.Decode(moduleInterface, &module)

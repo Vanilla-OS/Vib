@@ -12,6 +12,7 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 
+// Configuration for an APT module
 type AptModule struct {
 	Name    string     `json:"name"`
 	Type    string     `json:"type"`
@@ -19,6 +20,7 @@ type AptModule struct {
 	Source  api.Source `json:"source"`
 }
 
+// Options for APT package management
 type AptOptions struct {
 	NoRecommends    bool `json:"no_recommends"`
 	InstallSuggests bool `json:"install_suggests"`
@@ -26,6 +28,8 @@ type AptOptions struct {
 	FixBroken       bool `json:"fix_broken"`
 }
 
+// Provide plugin information as a JSON string
+//
 //export PlugInfo
 func PlugInfo() *C.char {
 	plugininfo := &api.PluginInfo{Name: "apt", Type: api.BuildPlugin}
@@ -36,8 +40,8 @@ func PlugInfo() *C.char {
 	return C.CString(string(pluginjson))
 }
 
-// BuildAptModule builds a module that installs packages
-// using the apt package manager
+// Generate an apt-get install command from the provided module and recipe.
+// Handle package installation and apply appropriate options.
 //
 //export BuildModule
 func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
