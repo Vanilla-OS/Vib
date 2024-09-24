@@ -4,6 +4,7 @@ import (
 	"C"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/vanilla-os/vib/api"
 )
@@ -11,6 +12,7 @@ import (
 type MesonModule struct {
 	Name   string
 	Type   string
+	BuildFlags []string            `json:"buildflags"`
 	Source api.Source
 }
 
@@ -54,8 +56,9 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 	// it is safe to simply use the specified checksum from the module definition
 	tmpDir := fmt.Sprintf("/tmp/%s-%s", module.Source.Checksum, module.Name)
 	cmd := fmt.Sprintf(
-		"cd /sources/%s && meson %s && ninja -C %s && ninja -C %s install",
+		"cd /sources/%s && meson %s %s && ninja -C %s && ninja -C %s install",
 		api.GetSourcePath(module.Source, module.Name),
+		strings.Join(module.BuildFlags, " "),
 		tmpDir,
 		tmpDir,
 		tmpDir,
