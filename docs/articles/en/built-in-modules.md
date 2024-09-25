@@ -205,7 +205,8 @@ The following specific fields are available:
 ```yaml
 - name: example-meson-project
   type: meson
-  buildflags: "-Dfoo=bar"
+  buildflags:
+  - "-Dfoo=bar"
   source:
     url: "https://example.com/meson-project-source.tar.gz"
     type: tar
