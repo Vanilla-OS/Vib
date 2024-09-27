@@ -179,14 +179,19 @@ The Make module automates the build process for projects that use GNU Make.
 
 The following specific fields are available:
 
-- `buildFlags`: Additional flags for the `make` command.
+- `buildCommand`: What command different command for the build, defaults to `make build`
+- `intermediateSteps`: Extra commands to run between the build and install command
+- `installCommand`: What command to run for installing, defaults to `make install`
 
 ### Example
 
 ```yaml
 - name: example-make-project
   type: make
-  buildflags: "all"
+  buildCommand: "make PREFIX=/custompath build"
+  intermediateSteps:
+    - "make docs-all -j4"
+  installCommand: "make DESTDIR=/root install"
   source:
     url: "https://example.com/make-project-source.tar.gz"
     type: tar
