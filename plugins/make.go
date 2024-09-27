@@ -7,12 +7,16 @@ import (
 
 	"github.com/vanilla-os/vib/api"
 )
+import "strings"
 
 // Configuration for building a project using Make
 type MakeModule struct {
-	Name   string `json:"name"`
-	Type   string `json:"type"`
-	Source api.Source
+	Name              string   `json:"name"`
+	Type              string   `json:"type"`
+	BuildCommand      string   `json:"buildcommand"`
+	InstallCommand    string   `json:"installcommand"`
+	IntermediateSteps []string `json:"intermediatesteps"`
+	Source            api.Source
 }
 
 // Provide plugin information as a JSON string
@@ -55,7 +59,23 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 
-	cmd := "cd /sources/" + api.GetSourcePath(module.Source, module.Name) + " && make && make install"
+	buildCommand := "make"
+	installCommand := "make install"
+	intermediateSteps := " && "
+
+	if len(strings.TrimSpace(module.BuildCommand)) != 0 {
+		buildCommand = module.BuildCommand
+	}
+
+	if len(strings.TrimSpace(module.InstallCommand)) != 0 {
+		installCommand = module.InstallCommand
+	}
+
+	if len(module.IntermediateSteps) != 0 {
+		intermediateSteps = " && " + strings.Join(module.IntermediateSteps, " && ") + " && "
+	}
+
+	cmd := "cd /sources/" + api.GetSourcePath(module.Source, module.Name) + " && " + buildCommand + intermediateSteps + installCommand
 	return C.CString(cmd)
 }
 
