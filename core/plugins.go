@@ -10,6 +10,7 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 import (
+	"errors"
 	"os"
 	"syscall"
 )
@@ -20,23 +21,50 @@ var openedFinalizePlugins map[string]Plugin
 func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uintptr, error) {
 	fmt.Println("Loading new plugin")
 
-	localPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
+	projectPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
 
-	globalPluginPath := fmt.Sprintf("%INSTALLPREFIX%/share/vib/plugins/%s.so", name)
+	globalPluginPathsEnv, isGPPEDefined := os.LookupEnv("XDG_DATA_DIRS")
+	if !isGPPEDefined || globalPluginPathsEnv == "" {
+		globalPluginPathsEnv = "/usr/local/share:/usr/share"
+	}
 
-	// Prefer local plugins before global ones
+	globalPluginPaths_split := strings.Split(globalPluginPathsEnv, ":")
+
+	for index := range globalPluginPaths_split {
+		// Resolve each directory to a *possible* plugin file path.
+		globalPluginPaths_split[index] = fmt.Sprintf("%s/vib/plugins/%s.so", globalPluginPaths_split[index], name)
+	}
+
+	// Specify all the paths where the plugin file might be stored.
+	// Give priority to the project's "plugins" directory, then
+	// follow $XDG_DATA_DIRS.
+	var allPluginPaths = append([]string{projectPluginPath}, globalPluginPaths_split...)
+	var lastIndex = len(allPluginPaths) - 1
+
 	var loadedPlugin uintptr
-	_, err := os.Stat(localPluginPath)
-	if os.IsNotExist(err) {
-		loadedPlugin, err = purego.Dlopen(globalPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
+	var err error
+
+	// LoadPlugin() is run once for every plugin, therefore
+	// the size of the array is limited to the same number
+	// of paths to search.
+	var _errors = make([]error, len(allPluginPaths))
+
+	for index, path := range allPluginPaths {
+		loadedPlugin, err = purego.Dlopen(path, purego.RTLD_NOW|purego.RTLD_GLOBAL)
 		if err != nil {
-			panic(err) // yayyy panics <3
+			_errors = append(_errors, err)
+
+			if index == lastIndex {
+				// If the last available path does not exist
+				// (or something else happened with it), panic
+				// with all the error messages.
+				panic(errors.Join(_errors...))
+			}
+
+			continue
 		}
-	} else {
-		loadedPlugin, err = purego.Dlopen(localPluginPath, purego.RTLD_NOW|purego.RTLD_GLOBAL)
-		if err != nil {
-			panic(err)
-		}
+
+		break
 	}
 
 	infoLoc, err := purego.Dlsym(loadedPlugin, "PlugInfo")
@@ -67,6 +95,7 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 			return loadedPlugin, fmt.Errorf("ERROR: Plugin %s is not of type FinalizePlugin", name)
 		}
 	}
+
 	return loadedPlugin, nil
 }
 
