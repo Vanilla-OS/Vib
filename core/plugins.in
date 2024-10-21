@@ -23,6 +23,8 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 
 	projectPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
 
+	installPrefixPath := fmt.Sprintf("%INSTALLPREFIX%/share/vib/plugins/%s.so", name)
+
 	globalPluginPathsEnv, isGPPEDefined := os.LookupEnv("XDG_DATA_DIRS")
 	if !isGPPEDefined || globalPluginPathsEnv == "" {
 		globalPluginPathsEnv = "/usr/local/share:/usr/share"
@@ -36,13 +38,12 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 	}
 
 	// Specify all the paths where the plugin file might be stored.
-	// Give priority to the project's "plugins" directory, then
-	// follow $XDG_DATA_DIRS.
-	var allPluginPaths = append([]string{projectPluginPath}, globalPluginPaths_split...)
+	// Give priority to the projects "plugins" directory, then
+	// follow INSTALLPREFIX and $XDG_DATA_DIRS, respectively.
+	var allPluginPaths = append([]string{projectPluginPath, installPrefixPath}, globalPluginPaths_split...)
 	var lastIndex = len(allPluginPaths) - 1
 
 	var loadedPlugin uintptr
-	var err error
 
 	// LoadPlugin() is run once for every plugin, therefore
 	// the size of the array is limited to the same number
@@ -50,14 +51,24 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 	var _errors = make([]error, len(allPluginPaths))
 
 	for index, path := range allPluginPaths {
+		_, err := os.Stat(path)
+		if err != nil {
+			_errors = append(_errors, err)
+			if index == lastIndex {
+				// If the last available path doesn't exist,
+				// panic with all the error messages.
+				panic(errors.Join(_errors...))
+			}
+
+			continue
+		}
+
 		loadedPlugin, err = purego.Dlopen(path, purego.RTLD_NOW|purego.RTLD_GLOBAL)
 		if err != nil {
 			_errors = append(_errors, err)
-
 			if index == lastIndex {
-				// If the last available path does not exist
-				// (or something else happened with it), panic
-				// with all the error messages.
+				// If the last available plugin can't be loaded,
+				// panic with all the error messages.
 				panic(errors.Join(_errors...))
 			}
 

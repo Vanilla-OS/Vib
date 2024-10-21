@@ -8,6 +8,7 @@ all: build # plugins
 
 build:
 	mkdir -p build
+	sed "s|%INSTALLPREFIX%|${PREFIX}|g" core/plugins.in > core/plugins.go
 	go build -a -o build/${BINARY_NAME}
 
 build-plugins: FORCE
@@ -23,5 +24,6 @@ install-plugins: build-plugins
 
 clean:
 	rm -r build
+	rm core/plugins.go
 
 FORCE:

@@ -1,3 +1,4 @@
+core/plugins.go
 downloads/*
 example/downloads/*
 example/sources/*
