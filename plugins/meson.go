@@ -11,17 +11,17 @@ import (
 
 // Configuration for building a Meson project
 type MesonModule struct {
-	Name   string
-	Type   string
-	BuildFlags []string            `json:"buildflags"`
-	Source api.Source
+	Name       string
+	Type       string
+	BuildFlags []string `json:"buildflags"`
+	Source     api.Source
 }
 
 // Provide plugin information as a JSON string
 //
 //export PlugInfo
 func PlugInfo() *C.char {
-	plugininfo := &api.PluginInfo{Name: "meson", Type: api.BuildPlugin}
+	plugininfo := &api.PluginInfo{Name: "meson", Type: api.BuildPlugin, UseContainerCmds: false}
 	pluginjson, err := json.Marshal(plugininfo)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))

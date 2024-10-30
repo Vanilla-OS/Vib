@@ -66,7 +66,7 @@ WantedBy=default.target
 //
 //export PlugInfo
 func PlugInfo() *C.char {
-	plugininfo := &api.PluginInfo{Name: "flatpak", Type: api.BuildPlugin}
+	plugininfo := &api.PluginInfo{Name: "flatpak", Type: api.BuildPlugin, UseContainerCmds: false}
 	pluginjson, err := json.Marshal(plugininfo)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
@@ -88,7 +88,7 @@ func createRepo(module innerFlatpakModule, isSystem bool) string {
 }
 
 // Generate setup commands for Flatpak module configuration.
-// Create scripts for system-wide and user-specific Flatpak setups, 
+// Create scripts for system-wide and user-specific Flatpak setups,
 // including repository addition, package installation, and service configuration.
 //
 //export BuildModule

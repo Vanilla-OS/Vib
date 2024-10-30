@@ -1,7 +1,6 @@
 package core
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -172,26 +171,24 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// RUN(S)
-		if !stage.SingleLayer {
-			if len(stage.Runs.Commands) > 0 {
-				err = ChangeWorkingDirectory(stage.Runs.Workdir, containerfile)
+		if len(stage.Runs.Commands) > 0 {
+			err = ChangeWorkingDirectory(stage.Runs.Workdir, containerfile)
+			if err != nil {
+				return err
+			}
+
+			for _, cmd := range stage.Runs.Commands {
+				_, err = containerfile.WriteString(
+					fmt.Sprintf("RUN %s\n", cmd),
+				)
 				if err != nil {
 					return err
 				}
+			}
 
-				for _, cmd := range stage.Runs.Commands {
-					_, err = containerfile.WriteString(
-						fmt.Sprintf("RUN %s\n", cmd),
-					)
-					if err != nil {
-						return err
-					}
-				}
-
-				err = RestoreWorkingDirectory(stage.Runs.Workdir, containerfile)
-				if err != nil {
-					return err
-				}
+			err = RestoreWorkingDirectory(stage.Runs.Workdir, containerfile)
+			if err != nil {
+				return err
 			}
 		}
 
@@ -243,74 +240,20 @@ func BuildContainerfile(recipe *api.Recipe) error {
 			return err
 		}
 
-		// MODULES RUN(S)
-		if !stage.SingleLayer {
-			for _, cmd := range cmds {
-				if cmd.Command == "" {
-					continue
-				}
-
-				err = ChangeWorkingDirectory(cmd.Workdir, containerfile)
-				if err != nil {
-					return err
-				}
-
-				_, err = containerfile.WriteString(
-					fmt.Sprintf("RUN %s\n", cmd.Command),
-				)
-				if err != nil {
-					return err
-				}
-
-				err = RestoreWorkingDirectory(cmd.Workdir, containerfile)
-				if err != nil {
-					return err
-				}
+		for _, cmd := range cmds {
+			err = ChangeWorkingDirectory(cmd.Workdir, containerfile)
+			if err != nil {
+				return err
 			}
-		}
 
-		// SINGLE LAYER
-		if stage.SingleLayer {
-			if len(stage.Runs.Commands) > 0 {
-				err = ChangeWorkingDirectory(stage.Runs.Workdir, containerfile)
-				if err != nil {
-					return err
-				}
-
-				unifiedCmd := "RUN "
-
-				for i, cmd := range stage.Runs.Commands {
-					unifiedCmd += cmd
-					if i != len(stage.Runs.Commands)-1 {
-						unifiedCmd += " && "
-					}
-				}
-
-				if len(cmds) > 0 {
-					unifiedCmd += " && "
-				}
-
-				for i, cmd := range cmds {
-					if cmd.Workdir != stage.Runs.Workdir {
-						return errors.New("Workdir mismatch")
-					}
-					unifiedCmd += cmd.Command
-					if i != len(cmds)-1 {
-						unifiedCmd += " && "
-					}
-				}
-
-				if len(unifiedCmd) > 4 {
-					_, err = containerfile.WriteString(fmt.Sprintf("%s\n", unifiedCmd))
-					if err != nil {
-						return err
-					}
-				}
-
-				err = RestoreWorkingDirectory(stage.Runs.Workdir, containerfile)
-				if err != nil {
-					return err
-				}
+			_, err = containerfile.WriteString(strings.Join(cmd.Command, "\n"))
+			if err != nil {
+				return err
+			}
+			fmt.Println(strings.Join(cmd.Command, "----"))
+			err = RestoreWorkingDirectory(cmd.Workdir, containerfile)
+			if err != nil {
+				return err
 			}
 		}
 
@@ -375,7 +318,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, e
 
 		cmds = append(cmds, ModuleCommand{
 			Name:    module.Name,
-			Command: cmd,
+			Command: append(cmd, ""), // add empty entry to ensure proper newline in Containerfile
 			Workdir: module.Workdir,
 		})
 	}
@@ -384,23 +327,23 @@ func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, e
 }
 
 // Build a command string for the given module in the recipe
-func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error) {
+func BuildModule(recipe *api.Recipe, moduleInterface interface{}) ([]string, error) {
 	var module Module
 	err := mapstructure.Decode(moduleInterface, &module)
 	if err != nil {
-		return "", err
+		return []string{""}, err
 	}
 
 	fmt.Printf("Building module [%s] of type [%s]\n", module.Name, module.Type)
 
-	var commands string
+	var commands []string
 	if len(module.Modules) > 0 {
 		for _, nestedModule := range module.Modules {
 			buildModule, err := BuildModule(recipe, nestedModule)
 			if err != nil {
-				return "", err
+				return []string{""}, err
 			}
-			commands = commands + " && " + buildModule
+			commands = append(commands, buildModule...)
 		}
 	}
 
@@ -412,23 +355,17 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error
 	if moduleBuilder, ok := moduleBuilders[module.Type]; ok {
 		command, err := moduleBuilder(moduleInterface, recipe)
 		if err != nil {
-			return "", err
+			return []string{""}, err
 		}
-		commands = commands + " && " + command
+		commands = append(commands, command)
 	} else {
 		command, err := LoadBuildPlugin(module.Type, moduleInterface, recipe)
 		if err != nil {
-			return "", err
+			return []string{""}, err
 		}
-		commands = commands + " && " + command
+		commands = append(commands, command...)
 	}
 
 	fmt.Printf("Module [%s] built successfully\n", module.Name)
-	result := strings.TrimPrefix(commands, " && ")
-
-	if result == "&&" {
-		return "", nil
-	}
-
-	return result, nil
+	return commands, nil
 }
