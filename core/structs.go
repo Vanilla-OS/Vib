@@ -1,6 +1,7 @@
 package core
 
 import "C"
+import "github.com/vanilla-os/vib/api"
 
 // Configuration for a module
 type Module struct {
@@ -28,7 +29,7 @@ type IncludesModule struct {
 // Information for building a module
 type ModuleCommand struct {
 	Name    string
-	Command string
+	Command []string
 	Workdir string
 }
 
@@ -37,4 +38,5 @@ type Plugin struct {
 	Name         string
 	BuildFunc    func(*C.char, *C.char) string
 	LoadedPlugin uintptr
+	PluginInfo   api.PluginInfo
 }
