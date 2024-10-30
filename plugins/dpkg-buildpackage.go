@@ -20,7 +20,7 @@ type DpkgBuildModule struct {
 //
 //export PlugInfo
 func PlugInfo() *C.char {
-	plugininfo := &api.PluginInfo{Name: "dpkg-buildpackage", Type: api.BuildPlugin}
+	plugininfo := &api.PluginInfo{Name: "dpkg-buildpackage", Type: api.BuildPlugin, UseContainerCmds: false}
 	pluginjson, err := json.Marshal(plugininfo)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))

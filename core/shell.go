@@ -51,5 +51,5 @@ func BuildShellModule(moduleInterface interface{}, recipe *api.Recipe) (string, 
 		}
 	}
 
-	return cmd, nil
+	return "RUN " + cmd, nil
 }
