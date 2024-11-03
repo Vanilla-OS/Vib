@@ -4,7 +4,6 @@ import (
 	"C"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 
 	"github.com/vanilla-os/vib/api"
 )
@@ -58,12 +57,10 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 
 	cmd := fmt.Sprintf(
 		"cd /sources/%s && dpkg-buildpackage -d -us -uc -b",
-		filepath.Join(api.GetSourcePath(module.Source, module.Name)),
+		api.GetSourcePath(module.Source, module.Name),
 	)
 
-	for _, path := range module.Source.Paths {
-		cmd += fmt.Sprintf(" && apt install -y --allow-downgrades ../%s*.deb", path)
-	}
+	cmd += fmt.Sprintf(" && apt install -y --allow-downgrades ../%s*.deb", module.Source.Path)
 
 	cmd += " && apt clean"
 	return C.CString(cmd)

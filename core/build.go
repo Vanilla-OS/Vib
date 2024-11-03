@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -235,10 +236,10 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// SOURCES
-		_, err = containerfile.WriteString("ADD sources /sources\n")
+		/*_, err = containerfile.WriteString("ADD sources /sources\n")
 		if err != nil {
 			return err
-		}
+		}*/
 
 		for _, cmd := range cmds {
 			err = ChangeWorkingDirectory(cmd.Workdir, containerfile)
@@ -250,7 +251,7 @@ func BuildContainerfile(recipe *api.Recipe) error {
 			if err != nil {
 				return err
 			}
-			fmt.Println(strings.Join(cmd.Command, "----"))
+
 			err = RestoreWorkingDirectory(cmd.Workdir, containerfile)
 			if err != nil {
 				return err
@@ -336,7 +337,8 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) ([]string, err
 
 	fmt.Printf("Building module [%s] of type [%s]\n", module.Name, module.Type)
 
-	var commands []string
+	commands := []string{fmt.Sprintf("\n# Begin Module %s - %s", module.Name, module.Type)}
+
 	if len(module.Modules) > 0 {
 		for _, nestedModule := range module.Modules {
 			buildModule, err := BuildModule(recipe, nestedModule)
@@ -365,6 +367,18 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) ([]string, err
 		}
 		commands = append(commands, command...)
 	}
+
+	_ = os.MkdirAll(fmt.Sprintf("%s/%s", recipe.SourcesPath, module.Name), 0755)
+
+	dirInfo, err := os.Stat(filepath.Join(recipe.SourcesPath, module.Name))
+	if err != nil {
+		return []string{""}, err
+	}
+	if dirInfo.Size() > 0 {
+		commands = append([]string{fmt.Sprintf("ADD sources/%s /sources/%s", module.Name, module.Name)}, commands...)
+		commands = append(commands, fmt.Sprintf("RUN rm -rf /sources/%s", module.Name))
+	}
+	commands = append(commands, fmt.Sprintf("# End Module %s - %s\n", module.Name, module.Type))
 
 	fmt.Printf("Module [%s] built successfully\n", module.Name)
 	return commands, nil
