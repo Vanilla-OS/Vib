@@ -1,7 +1,6 @@
 package core
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
 	"gopkg.in/yaml.v3"
 )
@@ -120,66 +118,6 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 			}
 		}
 
-		// here we expand modules of type "includes"
-		var newRecipeModules []interface{}
-
-		for _, moduleInterface := range stage.Modules {
-
-			var module Module
-			err := mapstructure.Decode(moduleInterface, &module)
-			if err != nil {
-				return nil, err
-			}
-
-			if module.Type == "includes" {
-				var include IncludesModule
-				err := mapstructure.Decode(moduleInterface, &include)
-				if err != nil {
-					return nil, err
-				}
-
-				if len(include.Includes) == 0 {
-					return nil, errors.New("includes module must have at least one module to include")
-				}
-
-				for _, include := range include.Includes {
-					var modulePath string
-
-					// in case of a remote include, we need to download the
-					// recipe before including it
-					if include[:4] == "http" {
-						fmt.Printf("Downloading recipe from %s\n", include)
-						modulePath, err = downloadRecipe(include)
-						if err != nil {
-							return nil, err
-						}
-					} else if followsGhPattern(include) {
-						// if the include follows the github pattern, we need to
-						// download the recipe from the github repository
-						fmt.Printf("Downloading recipe from %s\n", include)
-						modulePath, err = downloadGhRecipe(include)
-						if err != nil {
-							return nil, err
-						}
-					} else {
-						modulePath = filepath.Join(recipe.ParentPath, include)
-					}
-
-					includeModule, err := GenModule(modulePath)
-					if err != nil {
-						return nil, err
-					}
-
-					newRecipeModules = append(newRecipeModules, includeModule)
-				}
-
-				continue
-			}
-
-			newRecipeModules = append(newRecipeModules, moduleInterface)
-		}
-
-		stage.Modules = newRecipeModules
 		recipe.Stages[i] = stage
 	}
 
