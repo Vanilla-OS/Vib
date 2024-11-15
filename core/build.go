@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -321,6 +322,55 @@ func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, e
 	return cmds, nil
 }
 
+func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
+	var include IncludesModule
+	err := mapstructure.Decode(moduleInterface, &include)
+	if err != nil {
+		return "", err
+	}
+
+	if len(include.Includes) == 0 {
+		return "", errors.New("includes module must have at least one module to include")
+	}
+
+	var commands []string
+	for _, include := range include.Includes {
+		var modulePath string
+
+		// in case of a remote include, we need to download the
+		// recipe before including it
+		if include[:4] == "http" {
+			fmt.Printf("Downloading recipe from %s\n", include)
+			modulePath, err = downloadRecipe(include)
+			if err != nil {
+				return "", err
+			}
+		} else if followsGhPattern(include) {
+			// if the include follows the github pattern, we need to
+			// download the recipe from the github repository
+			fmt.Printf("Downloading recipe from %s\n", include)
+			modulePath, err = downloadGhRecipe(include)
+			if err != nil {
+				return "", err
+			}
+		} else {
+			modulePath = filepath.Join(recipe.ParentPath, include)
+		}
+
+		includeModule, err := GenModule(modulePath)
+		if err != nil {
+			return "", err
+		}
+
+		buildModule, err := BuildModule(recipe, includeModule)
+		if err != nil {
+			return "", err
+		}
+		commands = append(commands, buildModule...)
+	}
+	return strings.Join(commands, "\n"), nil
+}
+
 // Build a command string for the given module in the recipe
 func BuildModule(recipe *api.Recipe, moduleInterface interface{}) ([]string, error) {
 	var module Module
@@ -345,7 +395,7 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) ([]string, err
 
 	moduleBuilders := map[string]func(interface{}, *api.Recipe) (string, error){
 		"shell":    BuildShellModule,
-		"includes": func(interface{}, *api.Recipe) (string, error) { return "", nil },
+		"includes": buildIncludesModule,
 	}
 
 	if moduleBuilder, ok := moduleBuilders[module.Type]; ok {
