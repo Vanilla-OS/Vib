@@ -97,10 +97,12 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 	// directory. For example, if you want to include a file in
 	// /etc/nginx/nginx.conf you must place it in includes/etc/nginx/nginx.conf
 	// so it will be copied to the correct location in the container
-	includesContainerPath := filepath.Join(filepath.Dir(recipePath), "includes.container")
-	_, err = os.Stat(includesContainerPath)
+	if len(strings.TrimSpace(recipe.IncludesPath)) == 0 {
+		recipe.IncludesPath = filepath.Join("includes.container")
+	}
+	_, err = os.Stat(recipe.IncludesPath)
 	if os.IsNotExist(err) {
-		err := os.MkdirAll(includesContainerPath, 0755)
+		err := os.MkdirAll(recipe.IncludesPath, 0755)
 		if err != nil {
 			return nil, err
 		}

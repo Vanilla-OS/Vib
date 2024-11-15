@@ -34,35 +34,40 @@ func GetSourcePath(source Source, moduleName string) string {
 		file := strings.Split(url[len(url)-1], "?")[0]
 		fileParts := strings.Split(file, ".")
 		return filepath.Join(moduleName, strings.Join(fileParts[:len(fileParts)-1], "."))
+	case "local":
+		toplevelDir := strings.Split(source.URL, "/")
+		return filepath.Join(moduleName, toplevelDir[len(toplevelDir)-1])
 	}
 
 	return ""
 }
 
 // Download the source based on its type and validate its checksum
-func DownloadSource(downloadPath string, source Source, moduleName string) error {
+func DownloadSource(recipe *Recipe, source Source, moduleName string) error {
 	fmt.Printf("Downloading source: %s\n", source.URL)
 
 	switch source.Type {
 	case "git":
-		return DownloadGitSource(downloadPath, source, moduleName)
+		return DownloadGitSource(recipe.DownloadsPath, source, moduleName)
 	case "tar":
-		err := DownloadTarSource(downloadPath, source, moduleName)
+		err := DownloadTarSource(recipe.DownloadsPath, source, moduleName)
 		if err != nil {
 			return err
 		}
-		return checksumValidation(source, filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"))
+		return checksumValidation(source, filepath.Join(recipe.DownloadsPath, GetSourcePath(source, moduleName), moduleName+".tar"))
 	case "file":
-		err := DownloadFileSource(downloadPath, source, moduleName)
+		err := DownloadFileSource(recipe.DownloadsPath, source, moduleName)
 		if err != nil {
 			return err
 		}
 
 		extension := filepath.Ext(source.URL)
 		filename := fmt.Sprintf("%s%s", moduleName, extension)
-		destinationPath := filepath.Join(downloadPath, GetSourcePath(source, moduleName), filename)
+		destinationPath := filepath.Join(recipe.DownloadsPath, GetSourcePath(source, moduleName), filename)
 
 		return checksumValidation(source, destinationPath)
+	case "local":
+		return DownloadLocalSource(recipe.SourcesPath, source, moduleName)
 	default:
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
@@ -175,6 +180,42 @@ func DownloadTarSource(downloadPath string, source Source, moduleName string) er
 	return nil
 }
 
+// Copies a local source for use during the build, skips the Download directory and copies directly into the source path
+func DownloadLocalSource(sourcesPath string, source Source, moduleName string) error {
+	fmt.Printf("Source is local: %s\n", source.URL)
+	dest := filepath.Join(sourcesPath, GetSourcePath(source, moduleName))
+	os.MkdirAll(dest, 0o777)
+	fileInfo, err := os.Stat(source.URL)
+	if err != nil {
+		return err
+	}
+	if fileInfo.IsDir() {
+		fmt.Println("ROOTDIR:: ", source.URL)
+		root := os.DirFS(source.URL)
+		return os.CopyFS(dest, root)
+	} else {
+		fileName := strings.Split(source.URL, "/")
+		out, err := os.Create(filepath.Join(dest, fileName[len(fileName)-1]))
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+
+		in, err := os.Open(source.URL)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+
+		_, err = io.Copy(out, in)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+}
+
 // Move downloaded sources from the download path to the sources path
 func MoveSources(downloadPath string, sourcesPath string, sources []Source, moduleName string) error {
 	fmt.Println("Moving sources for " + moduleName)
@@ -224,6 +265,8 @@ func MoveSource(downloadPath string, sourcesPath string, source Source, moduleNa
 		}
 
 		return os.Remove(filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"))
+	case "local":
+		return nil
 	default:
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
