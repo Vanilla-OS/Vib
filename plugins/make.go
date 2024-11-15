@@ -50,7 +50,7 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 
-	err = api.DownloadSource(recipe.DownloadsPath, module.Source, module.Name)
+	err = api.DownloadSource(recipe, module.Source, module.Name)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}

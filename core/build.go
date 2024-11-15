@@ -230,16 +230,10 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// INCLUDES.CONTAINER
-		_, err = containerfile.WriteString("ADD includes.container /\n")
+		_, err = containerfile.WriteString(fmt.Sprintf("ADD %s /\n", recipe.IncludesPath))
 		if err != nil {
 			return err
 		}
-
-		// SOURCES
-		/*_, err = containerfile.WriteString("ADD sources /sources\n")
-		if err != nil {
-			return err
-		}*/
 
 		for _, cmd := range cmds {
 			err = ChangeWorkingDirectory(cmd.Workdir, containerfile)
