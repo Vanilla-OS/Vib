@@ -28,7 +28,7 @@ func BuildShellModule(moduleInterface interface{}, recipe *api.Recipe) (string, 
 
 	for _, source := range module.Sources {
 		if strings.TrimSpace(source.Type) != "" {
-			err := api.DownloadSource(recipe.DownloadsPath, source, module.Name)
+			err := api.DownloadSource(recipe, source, module.Name)
 			if err != nil {
 				return "", err
 			}
