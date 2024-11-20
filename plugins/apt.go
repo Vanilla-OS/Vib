@@ -11,16 +11,15 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 import (
-	"path/filepath"
 	"strings"
 )
 
 // Configuration for an APT module
 type AptModule struct {
-	Name    string     `json:"name"`
-	Type    string     `json:"type"`
-	Options AptOptions `json:"options"`
-	Source  api.Source `json:"source"`
+	Name    string       `json:"name"`
+	Type    string       `json:"type"`
+	Options AptOptions   `json:"options"`
+	Sources []api.Source `json:"sources"`
 }
 
 // Options for APT package management
@@ -75,32 +74,23 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 		args += "--fix-broken "
 	}
 
-	if len(module.Source.Packages) > 0 {
-		packages := ""
-		for _, pkg := range module.Source.Packages {
-			packages += pkg + " "
+	packages := ""
+	for _, source := range module.Sources {
+		if len(source.Packages) > 0 {
+			for _, pkg := range source.Packages {
+				packages += pkg + " "
+			}
 		}
 
-		return C.CString(fmt.Sprintf("apt-get install -y %s %s && apt-get clean", args, packages))
-	}
-
-	if len(strings.TrimSpace(module.Source.Path)) > 0 {
-		cmd := ""
-		installFiles, err := os.ReadDir(module.Source.Path)
-		if err != nil {
-			return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
-		}
-		for i, path := range installFiles {
-			fullPath := filepath.Join(module.Source.Path, path.Name())
-			fileInfo, err := os.Stat(fullPath)
+		if len(strings.TrimSpace(source.Path)) > 0 {
+			fileInfo, err := os.Stat(source.Path)
 			if err != nil {
 				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 			}
 			if !fileInfo.Mode().IsRegular() {
 				continue
 			}
-			packages := ""
-			file, err := os.Open(fullPath)
+			file, err := os.Open(source.Path)
 			if err != nil {
 				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 			}
@@ -114,15 +104,11 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 			if err := scanner.Err(); err != nil {
 				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 			}
-
-			cmd += fmt.Sprintf("apt-get install -y %s %s", args, packages)
-
-			if i != len(installFiles)-1 {
-				cmd += "&& "
-			} else {
-				cmd += "&& apt-get clean"
-			}
 		}
+	}
+
+	if len(packages) >= 1 {
+		cmd := fmt.Sprintf("apt-get install -y %s %s && apt-get clean", args, packages)
 
 		return C.CString(cmd)
 	}

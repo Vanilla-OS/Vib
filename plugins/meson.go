@@ -8,13 +8,14 @@ import (
 
 	"github.com/vanilla-os/vib/api"
 )
+import "crypto/sha1"
 
 // Configuration for building a Meson project
 type MesonModule struct {
 	Name       string
 	Type       string
-	BuildFlags []string `json:"buildflags"`
-	Source     api.Source
+	BuildFlags []string     `json:"buildflags"`
+	Sources    []api.Source `json"sources"`
 }
 
 // Provide plugin information as a JSON string
@@ -47,21 +48,28 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 
-	err = api.DownloadSource(recipe, module.Source, module.Name)
-	if err != nil {
-		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
-	}
-	err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, module.Source, module.Name)
-	if err != nil {
-		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	for _, source := range module.Sources {
+		err = api.DownloadSource(recipe, source, module.Name)
+		if err != nil {
+			return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+		}
+		err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, source, module.Name)
+		if err != nil {
+			return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+		}
 	}
 
-	// Since the downloaded source goes through checksum verification already
-	// it is safe to simply use the specified checksum from the module definition
-	tmpDir := fmt.Sprintf("/tmp/%s-%s", module.Source.Checksum, module.Name)
+	var tmpDir string
+	if strings.EqualFold(module.Sources[0].Type, "git") == true {
+		tmpDir = fmt.Sprintf("/tmp/%s-%s", module.Sources[0].Commit, module.Name)
+	} else if module.Sources[0].Type == "tar" || module.Sources[0].Type == "local" {
+		tmpDir = fmt.Sprintf("/tmp/%s-%s", module.Sources[0].Checksum, module.Name)
+	} else {
+		tmpDir = fmt.Sprintf("/tmp/%s-%s", sha1.Sum([]byte(module.Sources[0].URL)), module.Name)
+	}
 	cmd := fmt.Sprintf(
 		"cd /sources/%s && meson %s %s && ninja -C %s && ninja -C %s install",
-		api.GetSourcePath(module.Source, module.Name),
+		api.GetSourcePath(module.Sources[0], module.Name),
 		strings.Join(module.BuildFlags, " "),
 		tmpDir,
 		tmpDir,
