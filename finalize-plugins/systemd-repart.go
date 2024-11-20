@@ -20,6 +20,8 @@ type SystemdRepart struct {
 	Size            string   `json:"size"`
 	Seed            string   `json:"seed"`
 	Split           bool     `json:"split"`
+	Empty           string   `json:"empty"`
+	Root            string   `json:"root"`
 	DeferPartitions []string `json:"defer_partitions"`
 }
 
@@ -40,6 +42,15 @@ func PlugInfo() *C.char {
 //export PluginScope
 func PluginScope() int32 { // int32 is defined as GoInt32 in cgo which is the same as a C int
 	return api.IMAGENAME | api.FS | api.RECIPE
+}
+
+// Replace placeholders in the path with actual values from ScopeData
+// $PROJROOT -> Recipe.ParentPath
+// $FSROOT -> FS
+func parsePath(path string, data *api.ScopeData) string {
+	path = strings.ReplaceAll(path, "$PROJROOT", data.Recipe.ParentPath)
+	path = strings.ReplaceAll(path, "$FSROOT", data.FS)
+	return path
 }
 
 // Finalize the build by executing systemd-repart with the provided configuration
@@ -69,9 +80,19 @@ func FinalizeBuild(moduleInterface *C.char, extraData *C.char) *C.char {
 		module.Json = "off"
 	}
 
+	if len(strings.TrimSpace(module.Empty)) == 0 {
+		module.Empty = "create"
+	}
+
+	if len(strings.TrimSpace(module.Root)) == 0 {
+		module.Root = data.FS
+	} else {
+		module.Root = parsePath(module.Root, data)
+	}
+
 	args := []string{
 		"--definitions=definitions",
-		"--empty=create",
+		fmt.Sprintf("--empty=%s", module.Empty),
 		fmt.Sprintf("--size=%s", module.Size),
 		"--dry-run=no",
 		"--discard=no",
