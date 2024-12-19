@@ -3,14 +3,18 @@ package core
 import (
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/vanilla-os/vib/api"
 	"gopkg.in/yaml.v3"
 )
+
+var Min_Recipe_Version = []uint8{1, 0, 0}
 
 // LoadRecipe loads a recipe from a file and returns a Recipe
 // Does not validate the recipe but it will catch some errors
@@ -42,6 +46,32 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 	err = yaml.Unmarshal(recipeYAML, recipe)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(strings.TrimSpace(recipe.Vibversion)) <= 0 {
+		return nil, fmt.Errorf("version key not found in recipe file, assuming outdated recipe")
+	}
+
+	recipeVersionS := strings.Split(recipe.Vibversion, ".")
+	if len(recipeVersionS) != 3 {
+		return nil, fmt.Errorf("invalid version format, expected x.x.x, got %s", recipe.Vibversion)
+	}
+
+	recipeVersion := []uint8{0, 0, 0}
+	for i := 0; i < len(recipeVersion); i++ {
+		versionInt, err := strconv.ParseUint(recipeVersionS[i], 10, 8)
+		if err != nil {
+			return nil, err
+		}
+		if versionInt > math.MaxUint8 {
+			recipeVersion[i] = math.MaxUint8
+		} else {
+			recipeVersion[i] = uint8(versionInt)
+		}
+	}
+
+	if recipeVersion[0] < Min_Recipe_Version[0] || recipeVersion[1] < Min_Recipe_Version[1] || recipeVersion[2] < Min_Recipe_Version[2] {
+		return nil, fmt.Errorf("outdated recipe, this version of vib supports recipes starting at version %s", strings.Join(strings.Fields(fmt.Sprint(Min_Recipe_Version)), "."))
 	}
 
 	// the recipe path is stored in the recipe itself
