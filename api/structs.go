@@ -29,18 +29,19 @@ type Recipe struct {
 
 // Configuration for a stage in the recipe
 type Stage struct {
-	Id         string            `json:"id"`
-	Base       string            `json:"base"`
-	Copy       []Copy            `json:"copy"`
-	Labels     map[string]string `json:"labels"`
-	Env        map[string]string `json:"env"`
-	Adds       []Add             `json:"adds"`
-	Args       map[string]string `json:"args"`
-	Runs       Run               `json:"runs"`
-	Expose     map[string]string `json:"expose"`
-	Cmd        Cmd               `json:"cmd"`
-	Modules    []interface{}     `json:"modules"`
-	Entrypoint Entrypoint
+	Id          string            `json:"id"`
+	Base        string            `json:"base"`
+	Copy        []Copy            `json:"copy"`
+	Addincludes bool              `json:"addincludes"`
+	Labels      map[string]string `json:"labels"`
+	Env         map[string]string `json:"env"`
+	Adds        []Add             `json:"adds"`
+	Args        map[string]string `json:"args"`
+	Runs        Run               `json:"runs"`
+	Expose      map[string]string `json:"expose"`
+	Cmd         Cmd               `json:"cmd"`
+	Modules     []interface{}     `json:"modules"`
+	Entrypoint  Entrypoint
 }
 
 type PluginType int
