@@ -231,9 +231,11 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// INCLUDES.CONTAINER
-		_, err = containerfile.WriteString(fmt.Sprintf("ADD %s /\n", recipe.IncludesPath))
-		if err != nil {
-			return err
+		if stage.Addincludes {
+			_, err = containerfile.WriteString(fmt.Sprintf("ADD %s /\n", recipe.IncludesPath))
+			if err != nil {
+				return err
+			}
 		}
 
 		for _, cmd := range cmds {
