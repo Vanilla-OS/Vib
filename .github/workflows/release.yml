@@ -28,6 +28,7 @@ jobs:
 
     - name: Build
       run: |
+        ./set_new_version ${{ github.ref_name }}
         go get ./...
         make build
 

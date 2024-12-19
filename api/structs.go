@@ -16,6 +16,7 @@ type Source struct {
 type Recipe struct {
 	Name          string
 	Id            string
+	Vibversion    string
 	Stages        []Stage
 	Path          string
 	ParentPath    string
