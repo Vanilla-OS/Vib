@@ -141,7 +141,7 @@ func DownloadGitSource(downloadPath string, source Source, moduleName string) er
 	}
 
 	// Default to latest commit
-	if source.Commit == "" || source.Commit == "latest" {
+	if len(strings.TrimSpace(source.Commit)) == 0 || strings.EqualFold(source.Commit, "latest") {
 		source.Commit, err = gitGetLatestCommit(source.Branch, dest)
 		if err != nil {
 			return fmt.Errorf("could not get latest commit: %s", err.Error())
