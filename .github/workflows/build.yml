@@ -28,6 +28,7 @@ jobs:
     - name: Build vib
       run: |
         go get ./...
+        go get github.com/ebitengine/purego
         make build
 
     - name: Build plugins
