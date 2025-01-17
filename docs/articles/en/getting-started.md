@@ -28,7 +28,7 @@ Other container engines might work but have not been tested. If you have tested 
 
 ## Installation
 
-Vib is distributed as a single binary, so there's no need to install any runtime or dependencies. You can download the latest version of Vib from the [GitHub releases page](https://github.com/Vanilla-OS/Vib). In addition to this, Vib has official plugins which are used for all the Vanilla-OS images, they can also be downlaoded from the [Github releases page](https://github.com/Vanilla-OS/Vib) as the `plugins.tar.xz` archvie. Once downloaded, make vib executable and move it to a directory included in your PATH. Vib searches for plugins in a global search path at `/usr/share/vib/plugins/` and inside the `plugins` directory in your project directory. It is recommended to extract `plugins.tar.xz` to `/usr/share/vib/plugins/` as they are considered core vib plugins and may be used by a lot of images.
+Vib is distributed as a single binary, so there's no need to install any runtime or dependencies. You can download the latest version of Vib from the [GitHub releases page](https://github.com/Vanilla-OS/Vib). In addition to this, Vib has official plugins which are used for all the Vanilla-OS images, they can also be downlaoded from the [Github releases page](https://github.com/Vanilla-OS/Vib) as the `plugins.tar.xz` archvie. Once downloaded, make `vib` executable and move it to a directory included in your `PATH`. Vib searches for plugins in a global search path at `/usr/share/vib/plugins/` and inside the `plugins` directory in your project directory. It is recommended to extract `plugins.tar.xz` to `/usr/share/vib/plugins/` as they are considered core vib plugins and may be used by a lot of images.
 
 The following commands will allow you to download and install Vib:
 
@@ -126,9 +126,6 @@ changing `docker` with the container engine you have installed. Both `docker` an
 
 > **Note:**
 > On a Vanilla OS host, you need to run `vib compile` from the `host-shell`.
-
-> **Note:**
-> For versions of Vib before 0.5.0, the syntax of the `compile` command was different. The `--runtime` flag was not available, and the command was `vib compile vib.yml docker`.
 
 The generated `Containerfile` is compatible with both Docker and Podman.
 

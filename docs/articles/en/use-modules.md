@@ -47,9 +47,9 @@ You will find that some modules have a common `source` field, this instructs Vib
 ```yml
 - name: vanilla-tools
   type: shell
-  source:
-    type: tar
-    url: https://github.com/Vanilla-OS/vanilla-tools/releases/download/continuous/vanilla-tools.tar.gz
+  sources:
+    - type: tar
+      url: https://github.com/Vanilla-OS/vanilla-tools/releases/download/continuous/vanilla-tools.tar.gz
   commands:
     - mkdir -p /usr/bin
     - cp /sources/vanilla-tools/lpkg /usr/bin/lpkg
@@ -69,11 +69,11 @@ In the latter case, you can specify the branch, tag or commit to checkout like t
 ```yaml
 name: apx-gui
 type: meson
-source:
-  type: git
-  url: https://github.com/Vanilla-OS/apx-gui
-  branch: main
-  commit: latest
+sources:
+  - type: git
+	url: https://github.com/Vanilla-OS/apx-gui
+	branch: main
+	commit: latest
 modules:
   - name: apx-gui-deps-install
     type: apt

@@ -50,17 +50,20 @@ The function returns the `api.PluginInfo` struct serialised as a json:
 ```json
 {
 	"name": "<plugin name>",
-	"type": 0
+	"type": 0,
+	"usecontainercmds": 0/1
 }
 ```
 
 Vib gets the plugin type from the `type` field: `0` means `BuildPlugin`, and `1` means `FinalizePlugin`. For this article, it should be set to `0`, as it does not cover the requirements for a finalize plugin.
 
+`usecontainercmds` tells vib whether the plugin adds the relevant containerfile directives itself, or if vib should automatically prepend `CMD` to them, this allows plugins to do more advanced things outside of just specifing commands to run.
+
 example function:
 
 ```C
 char* PlugInfo() {
-	return "{\"name\":\"example\",\"type\":0}";
+	return "{\"name\":\"example\",\"type\":0,\"usecontainercmds\":0}";
 }
 ```
 
@@ -101,5 +104,5 @@ echo "useradd -m ${username} && echo '${username}' | passwd ${username} --stdin"
 
 We provide a plugin template for plugins written in go in the [vib-plugin repo](https://github.com/Vanilla-OS/vib-plugin).
 
-Example plugins written in other languages than go can be found in axtlos' [vib-plugins repo](https://github.com/axtloss/vib-plugins/)
+Example plugins written in languages other than go can be found in axtlos' [vib-plugins repo](https://github.com/axtloss/vib-plugins/)
 
