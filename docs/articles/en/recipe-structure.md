@@ -165,6 +165,8 @@ The metadata block contains the following mandatory fields:
 - `name`: the name of the image.
 - `id`: the ID of the image is used to specify an image's unique identifier, it is used by platforms like [Atlas](https://images.vanillaos.org/#/) to identify the image.
 - `stages`: a list of stages to build the image, useful to split the build process into multiple stages (e.g. to build the application in one stage and copy the artifacts into another one).
+- `vibversion`: the vib version with which this recipe was created, used to avoid vib from processing incompatible recipes
+- `includsepath`: an alternative includes path other than `includes.container`
 
 ## Stages
 
@@ -182,6 +184,7 @@ Each stage has the following fields:
 - `entrypoint`: the entry point for the container, it's similar to `cmd` but it's not overridden by the command passed to the container at runtime, useful to handle the container as an executable.
 - `copy`: a list of files or directories to copy from another stage (or copy from host), useful to copy files from one stage to another.
 - `modules`: a list of modules to use in the stage.
+- `addincludes`: whether `includes.container` should be copied into this stage
 
 ### Modules
 

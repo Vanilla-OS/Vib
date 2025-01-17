@@ -46,7 +46,7 @@ The following specific fields are available:
 ```yaml
 - name: install-utils
   type: apt # or any other supported package manager
-  source:
+  sources:
     packages:
       - curl
       - git
@@ -57,10 +57,11 @@ In the context of this module, this directive also supports the `packages` and `
 ```yaml
 - name: install-utils
   type: apt # or any other supported package manager
-  source:
-    paths:
+  sources:
+    - path:
       - "./utils.inst"
-      - "./more-utils.inst"
+    - path:
+	  - "./more-utils.inst"
 ```
 
 where `utils.inst` and `more-utils.inst` follow the format:
@@ -85,13 +86,13 @@ The `apt` module, has some additional fields under the `options` key:
 ```yaml
 - name: install-utils
   type: apt
-  source:
+  sources:
     packages:
       - curl
       - git
   options:
     noRecommends: true
-    installSuggestions: true
+    installSuggests: true
     fixMissing: true
     fixBroken: true
 ```
@@ -136,24 +137,6 @@ The following specific fields are available:
     type: tar
 ```
 
-## Dpkg
-
-The Dpkg module installs `.deb` packages directly using `dpkg` and resolves dependencies using `apt`.
-
-The following specific fields are available:
-
-- `source`: source of the `.deb` package(s) to install.
-
-### Example
-
-```yaml
-- name: install-custom-deb
-  type: dpkg
-  source:
-    paths:
-      - "./packages/my-package.deb"
-```
-
 ## Go
 
 The Go module compiles Go projects, allowing for customization through build variables and flags.
@@ -192,7 +175,7 @@ The following specific fields are available:
   intermediateSteps:
     - "make docs-all -j4"
   installCommand: "make DESTDIR=/root install"
-  source:
+  sources:
     url: "https://example.com/make-project-source.tar.gz"
     type: tar
 ```
@@ -212,7 +195,7 @@ The following specific fields are available:
   type: meson
   buildflags:
   - "-Dfoo=bar"
-  source:
+  sources:
     url: "https://example.com/meson-project-source.tar.gz"
     type: tar
 ```
