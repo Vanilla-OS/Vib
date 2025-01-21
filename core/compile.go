@@ -17,8 +17,8 @@ func CompileRecipe(recipePath string, runtime string, isRoot bool, origGid int, 
 		return err
 	}
 
-	syscall.Seteuid(0)
 	syscall.Setegid(0)
+	syscall.Seteuid(0)
 	switch runtime {
 	case "docker":
 		err = compileDocker(recipe, origGid, origUid)
@@ -35,8 +35,8 @@ func CompileRecipe(recipePath string, runtime string, isRoot bool, origGid int, 
 	default:
 		return fmt.Errorf("no runtime specified and the prometheus library is not implemented yet")
 	}
-	syscall.Seteuid(origUid)
 	syscall.Setegid(origGid)
+	syscall.Seteuid(origUid)
 
 	for _, finalizeInterface := range recipe.Finalize {
 		var module Finalize
