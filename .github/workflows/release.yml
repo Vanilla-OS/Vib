@@ -28,7 +28,7 @@ jobs:
 
     - name: Build
       run: |
-        ./set_new_version ${{ github.ref_name }}
+        ./set_new_version.sh ${{ github.ref_name }}
         go get ./...
         go get github.com/ebitengine/purego
         make build
