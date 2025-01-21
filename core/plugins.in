@@ -11,6 +11,7 @@ import (
 )
 import (
 	"errors"
+	"encoding/base64"
 	"os"
 	"syscall"
 )
@@ -18,7 +19,20 @@ import (
 var openedBuildPlugins map[string]Plugin
 var openedFinalizePlugins map[string]Plugin
 
-func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uintptr, error) {
+func decodeBuildCmds(cmds string) ([]string, error) {
+	splitCmds := strings.Split(cmds, ",")
+	resCmds := []string{}
+	for _, cmd := range splitCmds {
+		decodedCmd, err := base64.StdEncoding.DecodeString(cmd)
+		if err != nil {
+			return []string{}, err
+		}
+		resCmds = append(resCmds, string(decodedCmd))
+	}
+	return resCmds, nil
+}
+
+func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uintptr, api.PluginInfo, error) {
 	fmt.Println("Loading new plugin")
 
 	projectPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
@@ -81,7 +95,7 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 	infoLoc, err := purego.Dlsym(loadedPlugin, "PlugInfo")
 	if err != nil && !strings.Contains(err.Error(), "undefined symbol: PlugInfo") {
 		fmt.Println(err)
-		return loadedPlugin, err
+		return loadedPlugin, api.PluginInfo{}, err
 	}
 
 	pluginInfo := &api.PluginInfo{}
@@ -93,6 +107,7 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 		fmt.Println("== WARN ==")
 		pluginInfo.Name = name
 		pluginInfo.Type = api.BuildPlugin
+		pluginInfo.UseContainerCmds = false
 	} else {
 		var pluginInfoFunc func() string
 		purego.RegisterLibFunc(&pluginInfoFunc, loadedPlugin, "PlugInfo")
@@ -101,16 +116,16 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 
 	if pluginInfo.Type != plugintype {
 		if plugintype == api.BuildPlugin {
-			return loadedPlugin, fmt.Errorf("ERROR: Plugin %s is not of type BuildPlugin", name)
+			return loadedPlugin, *pluginInfo, fmt.Errorf("ERROR: Plugin %s is not of type BuildPlugin", name)
 		} else if plugintype == api.FinalizePlugin {
-			return loadedPlugin, fmt.Errorf("ERROR: Plugin %s is not of type FinalizePlugin", name)
+			return loadedPlugin, *pluginInfo, fmt.Errorf("ERROR: Plugin %s is not of type FinalizePlugin", name)
 		}
 	}
 
-	return loadedPlugin, nil
+	return loadedPlugin, *pluginInfo, nil
 }
 
-func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe) (string, error) {
+func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe) ([]string, error) {
 	if openedBuildPlugins == nil {
 		openedBuildPlugins = make(map[string]Plugin)
 	}
@@ -118,32 +133,35 @@ func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe) (strin
 	var buildModule Plugin
 	buildModule, pluginOpened = openedBuildPlugins[name]
 	if !pluginOpened {
-		loadedPlugin, err := LoadPlugin(name, api.BuildPlugin, recipe)
+		loadedPlugin, pluginInfo, err := LoadPlugin(name, api.BuildPlugin, recipe)
 		if err != nil {
-			return "", err
+			return []string{""}, err
 		}
 		var buildFunction func(*C.char, *C.char) string
 		purego.RegisterLibFunc(&buildFunction, loadedPlugin, "BuildModule")
 		buildModule.Name = name
 		buildModule.BuildFunc = buildFunction
 		buildModule.LoadedPlugin = loadedPlugin
+		buildModule.PluginInfo = pluginInfo
 		openedBuildPlugins[name] = buildModule
 	}
 	fmt.Printf("Using plugin: %s\n", buildModule.Name)
 	moduleJson, err := json.Marshal(module)
 	if err != nil {
-		return "", err
+		return []string{""}, err
 	}
 	recipeJson, err := json.Marshal(recipe)
 	if err != nil {
-		return "", err
+		return []string{""}, err
 	}
 
 	res := buildModule.BuildFunc(C.CString(string(moduleJson)), C.CString(string(recipeJson)))
 	if strings.HasPrefix(res, "ERROR:") {
-		return "", fmt.Errorf("%s", strings.Replace(res, "ERROR: ", "", 1))
+		return []string{""}, fmt.Errorf("%s", strings.Replace(res, "ERROR: ", "", 1))
+	} else if !buildModule.PluginInfo.UseContainerCmds {
+		return []string{"RUN " + res}, nil
 	} else {
-		return res, nil
+		return decodeBuildCmds(res)
 	}
 }
 
@@ -155,7 +173,7 @@ func LoadFinalizePlugin(name string, module interface{}, recipe *api.Recipe, run
 	var finalizeModule Plugin
 	finalizeModule, pluginOpened = openedFinalizePlugins[name]
 	if !pluginOpened {
-		loadedPlugin, err := LoadPlugin(name, api.FinalizePlugin, recipe)
+		loadedPlugin, pluginInfo, err := LoadPlugin(name, api.FinalizePlugin, recipe)
 		if err != nil {
 			return err
 		}
@@ -164,6 +182,7 @@ func LoadFinalizePlugin(name string, module interface{}, recipe *api.Recipe, run
 		finalizeModule.Name = name
 		finalizeModule.BuildFunc = finalizeFunction
 		finalizeModule.LoadedPlugin = loadedPlugin
+		finalizeModule.PluginInfo = pluginInfo
 		openedFinalizePlugins[name] = finalizeModule
 	}
 	fmt.Printf("Using Finalize plugin: %s\n", finalizeModule.Name)

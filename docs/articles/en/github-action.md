@@ -32,7 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: vanilla-os/vib-gh-action@v0.7.0
+      - uses: vanilla-os/vib-gh-action@v1.0.0
         with:
           recipe: "vib.yml"
           plugins: "org/repo:tag, org/repo:tag"

@@ -1,18 +1,20 @@
 package core
 
 import (
-	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
 	"gopkg.in/yaml.v3"
 )
+
+var Min_Recipe_Version = []uint8{1, 0, 0}
 
 // LoadRecipe loads a recipe from a file and returns a Recipe
 // Does not validate the recipe but it will catch some errors
@@ -44,6 +46,32 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 	err = yaml.Unmarshal(recipeYAML, recipe)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(strings.TrimSpace(recipe.Vibversion)) <= 0 {
+		return nil, fmt.Errorf("version key not found in recipe file, assuming outdated recipe")
+	}
+
+	recipeVersionS := strings.Split(recipe.Vibversion, ".")
+	if len(recipeVersionS) != 3 {
+		return nil, fmt.Errorf("invalid version format, expected x.x.x, got %s", recipe.Vibversion)
+	}
+
+	recipeVersion := []uint8{0, 0, 0}
+	for i := 0; i < len(recipeVersion); i++ {
+		versionInt, err := strconv.ParseUint(recipeVersionS[i], 10, 8)
+		if err != nil {
+			return nil, err
+		}
+		if versionInt > math.MaxUint8 {
+			recipeVersion[i] = math.MaxUint8
+		} else {
+			recipeVersion[i] = uint8(versionInt)
+		}
+	}
+
+	if recipeVersion[0] < Min_Recipe_Version[0] || recipeVersion[1] < Min_Recipe_Version[1] || recipeVersion[2] < Min_Recipe_Version[2] {
+		return nil, fmt.Errorf("outdated recipe, this version of vib supports recipes starting at version %s", strings.Join(strings.Fields(fmt.Sprint(Min_Recipe_Version)), "."))
 	}
 
 	// the recipe path is stored in the recipe itself
@@ -97,10 +125,12 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 	// directory. For example, if you want to include a file in
 	// /etc/nginx/nginx.conf you must place it in includes/etc/nginx/nginx.conf
 	// so it will be copied to the correct location in the container
-	includesContainerPath := filepath.Join(filepath.Dir(recipePath), "includes.container")
-	_, err = os.Stat(includesContainerPath)
+	if len(strings.TrimSpace(recipe.IncludesPath)) == 0 {
+		recipe.IncludesPath = filepath.Join("includes.container")
+	}
+	_, err = os.Stat(recipe.IncludesPath)
 	if os.IsNotExist(err) {
-		err := os.MkdirAll(includesContainerPath, 0755)
+		err := os.MkdirAll(recipe.IncludesPath, 0755)
 		if err != nil {
 			return nil, err
 		}
@@ -118,66 +148,6 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 			}
 		}
 
-		// here we expand modules of type "includes"
-		var newRecipeModules []interface{}
-
-		for _, moduleInterface := range stage.Modules {
-
-			var module Module
-			err := mapstructure.Decode(moduleInterface, &module)
-			if err != nil {
-				return nil, err
-			}
-
-			if module.Type == "includes" {
-				var include IncludesModule
-				err := mapstructure.Decode(moduleInterface, &include)
-				if err != nil {
-					return nil, err
-				}
-
-				if len(include.Includes) == 0 {
-					return nil, errors.New("includes module must have at least one module to include")
-				}
-
-				for _, include := range include.Includes {
-					var modulePath string
-
-					// in case of a remote include, we need to download the
-					// recipe before including it
-					if include[:4] == "http" {
-						fmt.Printf("Downloading recipe from %s\n", include)
-						modulePath, err = downloadRecipe(include)
-						if err != nil {
-							return nil, err
-						}
-					} else if followsGhPattern(include) {
-						// if the include follows the github pattern, we need to
-						// download the recipe from the github repository
-						fmt.Printf("Downloading recipe from %s\n", include)
-						modulePath, err = downloadGhRecipe(include)
-						if err != nil {
-							return nil, err
-						}
-					} else {
-						modulePath = filepath.Join(recipe.ParentPath, include)
-					}
-
-					includeModule, err := GenModule(modulePath)
-					if err != nil {
-						return nil, err
-					}
-
-					newRecipeModules = append(newRecipeModules, includeModule)
-				}
-
-				continue
-			}
-
-			newRecipeModules = append(newRecipeModules, moduleInterface)
-		}
-
-		stage.Modules = newRecipeModules
 		recipe.Stages[i] = stage
 	}
 

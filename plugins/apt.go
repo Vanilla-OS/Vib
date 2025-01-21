@@ -5,19 +5,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"C"
 
 	"github.com/vanilla-os/vib/api"
 )
+import (
+	"strings"
+)
 
 // Configuration for an APT module
 type AptModule struct {
-	Name    string     `json:"name"`
-	Type    string     `json:"type"`
-	Options AptOptions `json:"options"`
-	Source  api.Source `json:"source"`
+	Name    string       `json:"name"`
+	Type    string       `json:"type"`
+	Options AptOptions   `json:"options"`
+	Sources []api.Source `json:"sources"`
 }
 
 // Options for APT package management
@@ -32,7 +34,7 @@ type AptOptions struct {
 //
 //export PlugInfo
 func PlugInfo() *C.char {
-	plugininfo := &api.PluginInfo{Name: "apt", Type: api.BuildPlugin}
+	plugininfo := &api.PluginInfo{Name: "apt", Type: api.BuildPlugin, UseContainerCmds: false}
 	pluginjson, err := json.Marshal(plugininfo)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
@@ -72,22 +74,23 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 		args += "--fix-broken "
 	}
 
-	if len(module.Source.Packages) > 0 {
-		packages := ""
-		for _, pkg := range module.Source.Packages {
-			packages += pkg + " "
+	packages := ""
+	for _, source := range module.Sources {
+		if len(source.Packages) > 0 {
+			for _, pkg := range source.Packages {
+				packages += pkg + " "
+			}
 		}
 
-		return C.CString(fmt.Sprintf("apt-get install -y %s %s && apt-get clean", args, packages))
-	}
-
-	if len(module.Source.Paths) > 0 {
-		cmd := ""
-
-		for i, path := range module.Source.Paths {
-			instPath := filepath.Join(recipe.ParentPath, path+".inst")
-			packages := ""
-			file, err := os.Open(instPath)
+		if len(strings.TrimSpace(source.Path)) > 0 {
+			fileInfo, err := os.Stat(source.Path)
+			if err != nil {
+				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+			}
+			if !fileInfo.Mode().IsRegular() {
+				continue
+			}
+			file, err := os.Open(source.Path)
 			if err != nil {
 				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 			}
@@ -101,15 +104,11 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 			if err := scanner.Err(); err != nil {
 				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 			}
-
-			cmd += fmt.Sprintf("apt-get install -y %s %s", args, packages)
-
-			if i != len(module.Source.Paths)-1 {
-				cmd += "&& "
-			} else {
-				cmd += "&& apt-get clean"
-			}
 		}
+	}
+
+	if len(packages) >= 1 {
+		cmd := fmt.Sprintf("apt-get install -y %s %s && apt-get clean", args, packages)
 
 		return C.CString(cmd)
 	}

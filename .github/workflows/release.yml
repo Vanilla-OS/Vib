@@ -28,7 +28,9 @@ jobs:
 
     - name: Build
       run: |
+        ./set_new_version ${{ github.ref_name }}
         go get ./...
+        go get github.com/ebitengine/purego
         make build
 
     - name: Build plugins
@@ -48,6 +50,6 @@ jobs:
     - name: Attest generated files
       if: github.repository == 'Vanilla-OS/Vib'
       id: attest
-      uses: actions/attest-build-provenance@v1
+      uses: actions/attest-build-provenance@v2
       with:
         subject-path: 'build/vib, plugins.tar.xz'

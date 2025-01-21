@@ -13,47 +13,61 @@ import (
 
 // Generate the destination path for the source based on its type and module name
 func GetSourcePath(source Source, moduleName string) string {
+	if len(strings.TrimSpace(source.Path)) > 0 {
+		return filepath.Join(moduleName, source.Path)
+	}
 	switch source.Type {
 	case "git":
-		var dest string
-		if source.Destination != "" {
-			repoName := strings.Split(source.URL, "/")
-			dest = filepath.Join(moduleName, strings.ReplaceAll(repoName[len(repoName)-1], ".git", ""))
+		repoName := strings.Split(source.URL, "/")
+		return filepath.Join(moduleName, strings.ReplaceAll(repoName[len(repoName)-1], ".git", ""))
+	case "tar":
+		url := strings.Split(source.URL, "/")
+		tarFile := strings.Split(url[len(url)-1], "?")[0]
+		tarParts := strings.Split(tarFile, ".")
+		if strings.TrimSpace(tarParts[len(tarParts)-2]) != "tar" {
+			return filepath.Join(moduleName, strings.Join(tarParts[:len(tarParts)-1], "."))
 		} else {
-			dest = filepath.Join(moduleName, source.Destination)
+			return filepath.Join(moduleName, strings.Join(tarParts[:len(tarParts)-2], "."))
 		}
-		return dest
-	case "tar", "file":
-		return filepath.Join(moduleName, source.Destination)
+	case "file":
+		url := strings.Split(source.URL, "/")
+		file := strings.Split(url[len(url)-1], "?")[0]
+		fileParts := strings.Split(file, ".")
+		return filepath.Join(moduleName, strings.Join(fileParts[:len(fileParts)-1], "."))
+	case "local":
+		toplevelDir := strings.Split(source.URL, "/")
+		return filepath.Join(moduleName, toplevelDir[len(toplevelDir)-1])
 	}
 
 	return ""
 }
 
 // Download the source based on its type and validate its checksum
-func DownloadSource(downloadPath string, source Source, moduleName string) error {
+func DownloadSource(recipe *Recipe, source Source, moduleName string) error {
 	fmt.Printf("Downloading source: %s\n", source.URL)
 
 	switch source.Type {
 	case "git":
-		return DownloadGitSource(downloadPath, source, moduleName)
+		return DownloadGitSource(recipe.DownloadsPath, source, moduleName)
 	case "tar":
-		err := DownloadTarSource(downloadPath, source, moduleName)
+		err := DownloadTarSource(recipe.DownloadsPath, source, moduleName)
 		if err != nil {
 			return err
 		}
-		return checksumValidation(source, filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"))
+		return checksumValidation(source, filepath.Join(recipe.DownloadsPath, GetSourcePath(source, moduleName), moduleName+".tar"))
 	case "file":
-		err := DownloadFileSource(downloadPath, source, moduleName)
+		err := DownloadFileSource(recipe.DownloadsPath, source, moduleName)
 		if err != nil {
 			return err
 		}
 
 		extension := filepath.Ext(source.URL)
 		filename := fmt.Sprintf("%s%s", moduleName, extension)
-		destinationPath := filepath.Join(downloadPath, GetSourcePath(source, moduleName), filename)
+		destinationPath := filepath.Join(recipe.DownloadsPath, GetSourcePath(source, moduleName), filename)
 
 		return checksumValidation(source, destinationPath)
+	case "local":
+		return DownloadLocalSource(recipe.SourcesPath, source, moduleName)
 	default:
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}
@@ -127,7 +141,7 @@ func DownloadGitSource(downloadPath string, source Source, moduleName string) er
 	}
 
 	// Default to latest commit
-	if source.Commit == "" || source.Commit == "latest" {
+	if len(strings.TrimSpace(source.Commit)) == 0 || strings.EqualFold(source.Commit, "latest") {
 		source.Commit, err = gitGetLatestCommit(source.Branch, dest)
 		if err != nil {
 			return fmt.Errorf("could not get latest commit: %s", err.Error())
@@ -166,12 +180,52 @@ func DownloadTarSource(downloadPath string, source Source, moduleName string) er
 	return nil
 }
 
+// Copies a local source for use during the build, skips the Download directory and copies directly into the source path
+func DownloadLocalSource(sourcesPath string, source Source, moduleName string) error {
+	fmt.Printf("Source is local: %s\n", source.URL)
+	dest := filepath.Join(sourcesPath, GetSourcePath(source, moduleName))
+	os.MkdirAll(dest, 0o777)
+	fileInfo, err := os.Stat(source.URL)
+	if err != nil {
+		return err
+	}
+	if fileInfo.IsDir() {
+		fmt.Println("ROOTDIR:: ", source.URL)
+		root := os.DirFS(source.URL)
+		return os.CopyFS(dest, root)
+	} else {
+		fileName := strings.Split(source.URL, "/")
+		out, err := os.Create(filepath.Join(dest, fileName[len(fileName)-1]))
+		if err != nil {
+			return err
+		}
+		defer out.Close()
+
+		in, err := os.Open(source.URL)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+
+		_, err = io.Copy(out, in)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+}
+
 // Move downloaded sources from the download path to the sources path
 func MoveSources(downloadPath string, sourcesPath string, sources []Source, moduleName string) error {
-	fmt.Println("Moving sources")
+	fmt.Println("Moving sources for " + moduleName)
 
+	err := os.MkdirAll(filepath.Join(sourcesPath, moduleName), 0777)
+	if err != nil {
+		return err
+	}
 	for _, source := range sources {
-		err := MoveSource(downloadPath, sourcesPath, source, moduleName)
+		err = MoveSource(downloadPath, sourcesPath, source, moduleName)
 		if err != nil {
 			return err
 		}
@@ -186,6 +240,11 @@ func MoveSources(downloadPath string, sourcesPath string, sources []Source, modu
 func MoveSource(downloadPath string, sourcesPath string, source Source, moduleName string) error {
 	fmt.Printf("Moving source: %s\n", moduleName)
 
+	err := os.MkdirAll(filepath.Join(sourcesPath, moduleName), 0777)
+	if err != nil {
+		return err
+	}
+
 	switch source.Type {
 	case "git", "file":
 		dest := GetSourcePath(source, moduleName)
@@ -197,7 +256,7 @@ func MoveSource(downloadPath string, sourcesPath string, source Source, moduleNa
 		os.MkdirAll(filepath.Join(sourcesPath, GetSourcePath(source, moduleName)), 0o777)
 		cmd := exec.Command(
 			"tar",
-			"-xf", filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"),
+			"-xf", filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar*"),
 			"-C", filepath.Join(sourcesPath, GetSourcePath(source, moduleName)),
 		)
 		err := cmd.Run()
@@ -206,6 +265,8 @@ func MoveSource(downloadPath string, sourcesPath string, source Source, moduleNa
 		}
 
 		return os.Remove(filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"))
+	case "local":
+		return nil
 	default:
 		return fmt.Errorf("unsupported source type %s", source.Type)
 	}

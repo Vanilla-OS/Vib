@@ -11,19 +11,19 @@ import "strings"
 
 // Configuration for building a project using Make
 type MakeModule struct {
-	Name              string   `json:"name"`
-	Type              string   `json:"type"`
-	BuildCommand      string   `json:"buildcommand"`
-	InstallCommand    string   `json:"installcommand"`
-	IntermediateSteps []string `json:"intermediatesteps"`
-	Source            api.Source
+	Name              string       `json:"name"`
+	Type              string       `json:"type"`
+	BuildCommand      string       `json:"buildcommand"`
+	InstallCommand    string       `json:"installcommand"`
+	IntermediateSteps []string     `json:"intermediatesteps"`
+	Sources           []api.Source `json:"sources"`
 }
 
 // Provide plugin information as a JSON string
 //
 //export PlugInfo
 func PlugInfo() *C.char {
-	plugininfo := &api.PluginInfo{Name: "make", Type: api.BuildPlugin}
+	plugininfo := &api.PluginInfo{Name: "make", Type: api.BuildPlugin, UseContainerCmds: false}
 	pluginjson, err := json.Marshal(plugininfo)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
@@ -50,13 +50,15 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 
-	err = api.DownloadSource(recipe.DownloadsPath, module.Source, module.Name)
-	if err != nil {
-		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
-	}
-	err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, module.Source, module.Name)
-	if err != nil {
-		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	for _, source := range module.Sources {
+		err = api.DownloadSource(recipe, source, module.Name)
+		if err != nil {
+			return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+		}
+		err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, source, module.Name)
+		if err != nil {
+			return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+		}
 	}
 
 	buildCommand := "make"
@@ -75,7 +77,7 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 		intermediateSteps = " && " + strings.Join(module.IntermediateSteps, " && ") + " && "
 	}
 
-	cmd := "cd /sources/" + api.GetSourcePath(module.Source, module.Name) + " && " + buildCommand + intermediateSteps + installCommand
+	cmd := "cd /sources/" + api.GetSourcePath(module.Sources[0], module.Name) + " && " + buildCommand + intermediateSteps + installCommand
 	return C.CString(cmd)
 }
 

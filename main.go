@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"github.com/vanilla-os/vib/cmd"
 )
 
@@ -9,5 +10,8 @@ var (
 )
 
 func main() {
-	cmd.Execute()
+	err := cmd.Execute()
+	if (err != nil) {
+		os.Exit(1)
+	}
 }

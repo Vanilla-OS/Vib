@@ -4,7 +4,6 @@ import (
 	"C"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 
 	"github.com/vanilla-os/vib/api"
 )
@@ -20,7 +19,7 @@ type DpkgBuildModule struct {
 //
 //export PlugInfo
 func PlugInfo() *C.char {
-	plugininfo := &api.PluginInfo{Name: "dpkg-buildpackage", Type: api.BuildPlugin}
+	plugininfo := &api.PluginInfo{Name: "dpkg-buildpackage", Type: api.BuildPlugin, UseContainerCmds: false}
 	pluginjson, err := json.Marshal(plugininfo)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
@@ -47,7 +46,7 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 
-	err = api.DownloadSource(recipe.DownloadsPath, module.Source, module.Name)
+	err = api.DownloadSource(recipe, module.Source, module.Name)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
@@ -58,12 +57,10 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 
 	cmd := fmt.Sprintf(
 		"cd /sources/%s && dpkg-buildpackage -d -us -uc -b",
-		filepath.Join(api.GetSourcePath(module.Source, module.Name)),
+		api.GetSourcePath(module.Source, module.Name),
 	)
 
-	for _, path := range module.Source.Paths {
-		cmd += fmt.Sprintf(" && apt install -y --allow-downgrades ../%s*.deb", path)
-	}
+	cmd += fmt.Sprintf(" && apt install -y --allow-downgrades ../%s*.deb", module.Source.Path)
 
 	cmd += " && apt clean"
 	return C.CString(cmd)

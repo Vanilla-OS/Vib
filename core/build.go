@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -172,26 +173,24 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// RUN(S)
-		if !stage.SingleLayer {
-			if len(stage.Runs.Commands) > 0 {
-				err = ChangeWorkingDirectory(stage.Runs.Workdir, containerfile)
+		if len(stage.Runs.Commands) > 0 {
+			err = ChangeWorkingDirectory(stage.Runs.Workdir, containerfile)
+			if err != nil {
+				return err
+			}
+
+			for _, cmd := range stage.Runs.Commands {
+				_, err = containerfile.WriteString(
+					fmt.Sprintf("RUN %s\n", cmd),
+				)
 				if err != nil {
 					return err
 				}
+			}
 
-				for _, cmd := range stage.Runs.Commands {
-					_, err = containerfile.WriteString(
-						fmt.Sprintf("RUN %s\n", cmd),
-					)
-					if err != nil {
-						return err
-					}
-				}
-
-				err = RestoreWorkingDirectory(stage.Runs.Workdir, containerfile)
-				if err != nil {
-					return err
-				}
+			err = RestoreWorkingDirectory(stage.Runs.Workdir, containerfile)
+			if err != nil {
+				return err
 			}
 		}
 
@@ -232,85 +231,27 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		}
 
 		// INCLUDES.CONTAINER
-		_, err = containerfile.WriteString("ADD includes.container /\n")
-		if err != nil {
-			return err
-		}
-
-		// SOURCES
-		_, err = containerfile.WriteString("ADD sources /sources\n")
-		if err != nil {
-			return err
-		}
-
-		// MODULES RUN(S)
-		if !stage.SingleLayer {
-			for _, cmd := range cmds {
-				if cmd.Command == "" {
-					continue
-				}
-
-				err = ChangeWorkingDirectory(cmd.Workdir, containerfile)
-				if err != nil {
-					return err
-				}
-
-				_, err = containerfile.WriteString(
-					fmt.Sprintf("RUN %s\n", cmd.Command),
-				)
-				if err != nil {
-					return err
-				}
-
-				err = RestoreWorkingDirectory(cmd.Workdir, containerfile)
-				if err != nil {
-					return err
-				}
+		if stage.Addincludes {
+			_, err = containerfile.WriteString(fmt.Sprintf("ADD %s /\n", recipe.IncludesPath))
+			if err != nil {
+				return err
 			}
 		}
 
-		// SINGLE LAYER
-		if stage.SingleLayer {
-			if len(stage.Runs.Commands) > 0 {
-				err = ChangeWorkingDirectory(stage.Runs.Workdir, containerfile)
-				if err != nil {
-					return err
-				}
+		for _, cmd := range cmds {
+			err = ChangeWorkingDirectory(cmd.Workdir, containerfile)
+			if err != nil {
+				return err
+			}
 
-				unifiedCmd := "RUN "
+			_, err = containerfile.WriteString(strings.Join(cmd.Command, "\n"))
+			if err != nil {
+				return err
+			}
 
-				for i, cmd := range stage.Runs.Commands {
-					unifiedCmd += cmd
-					if i != len(stage.Runs.Commands)-1 {
-						unifiedCmd += " && "
-					}
-				}
-
-				if len(cmds) > 0 {
-					unifiedCmd += " && "
-				}
-
-				for i, cmd := range cmds {
-					if cmd.Workdir != stage.Runs.Workdir {
-						return errors.New("Workdir mismatch")
-					}
-					unifiedCmd += cmd.Command
-					if i != len(cmds)-1 {
-						unifiedCmd += " && "
-					}
-				}
-
-				if len(unifiedCmd) > 4 {
-					_, err = containerfile.WriteString(fmt.Sprintf("%s\n", unifiedCmd))
-					if err != nil {
-						return err
-					}
-				}
-
-				err = RestoreWorkingDirectory(stage.Runs.Workdir, containerfile)
-				if err != nil {
-					return err
-				}
+			err = RestoreWorkingDirectory(cmd.Workdir, containerfile)
+			if err != nil {
+				return err
 			}
 		}
 
@@ -375,7 +316,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, e
 
 		cmds = append(cmds, ModuleCommand{
 			Name:    module.Name,
-			Command: cmd,
+			Command: append(cmd, ""), // add empty entry to ensure proper newline in Containerfile
 			Workdir: module.Workdir,
 		})
 	}
@@ -383,52 +324,108 @@ func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, e
 	return cmds, nil
 }
 
-// Build a command string for the given module in the recipe
-func BuildModule(recipe *api.Recipe, moduleInterface interface{}) (string, error) {
-	var module Module
-	err := mapstructure.Decode(moduleInterface, &module)
+func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
+	var include IncludesModule
+	err := mapstructure.Decode(moduleInterface, &include)
 	if err != nil {
 		return "", err
 	}
 
+	if len(include.Includes) == 0 {
+		return "", errors.New("includes module must have at least one module to include")
+	}
+
+	var commands []string
+	for _, include := range include.Includes {
+		var modulePath string
+
+		// in case of a remote include, we need to download the
+		// recipe before including it
+		if include[:4] == "http" {
+			fmt.Printf("Downloading recipe from %s\n", include)
+			modulePath, err = downloadRecipe(include)
+			if err != nil {
+				return "", err
+			}
+		} else if followsGhPattern(include) {
+			// if the include follows the github pattern, we need to
+			// download the recipe from the github repository
+			fmt.Printf("Downloading recipe from %s\n", include)
+			modulePath, err = downloadGhRecipe(include)
+			if err != nil {
+				return "", err
+			}
+		} else {
+			modulePath = filepath.Join(recipe.ParentPath, include)
+		}
+
+		includeModule, err := GenModule(modulePath)
+		if err != nil {
+			return "", err
+		}
+
+		buildModule, err := BuildModule(recipe, includeModule)
+		if err != nil {
+			return "", err
+		}
+		commands = append(commands, buildModule...)
+	}
+	return strings.Join(commands, "\n"), nil
+}
+
+// Build a command string for the given module in the recipe
+func BuildModule(recipe *api.Recipe, moduleInterface interface{}) ([]string, error) {
+	var module Module
+	err := mapstructure.Decode(moduleInterface, &module)
+	if err != nil {
+		return []string{""}, err
+	}
+
 	fmt.Printf("Building module [%s] of type [%s]\n", module.Name, module.Type)
 
-	var commands string
+	commands := []string{fmt.Sprintf("\n# Begin Module %s - %s", module.Name, module.Type)}
+
 	if len(module.Modules) > 0 {
 		for _, nestedModule := range module.Modules {
 			buildModule, err := BuildModule(recipe, nestedModule)
 			if err != nil {
-				return "", err
+				return []string{""}, err
 			}
-			commands = commands + " && " + buildModule
+			commands = append(commands, buildModule...)
 		}
 	}
 
 	moduleBuilders := map[string]func(interface{}, *api.Recipe) (string, error){
 		"shell":    BuildShellModule,
-		"includes": func(interface{}, *api.Recipe) (string, error) { return "", nil },
+		"includes": buildIncludesModule,
 	}
 
 	if moduleBuilder, ok := moduleBuilders[module.Type]; ok {
 		command, err := moduleBuilder(moduleInterface, recipe)
 		if err != nil {
-			return "", err
+			return []string{""}, err
 		}
-		commands = commands + " && " + command
+		commands = append(commands, command)
 	} else {
 		command, err := LoadBuildPlugin(module.Type, moduleInterface, recipe)
 		if err != nil {
-			return "", err
+			return []string{""}, err
 		}
-		commands = commands + " && " + command
+		commands = append(commands, command...)
 	}
+
+	_ = os.MkdirAll(fmt.Sprintf("%s/%s", recipe.SourcesPath, module.Name), 0755)
+
+	dirInfo, err := os.Stat(filepath.Join(recipe.SourcesPath, module.Name))
+	if err != nil {
+		return []string{""}, err
+	}
+	if dirInfo.Size() > 0 {
+		commands = append([]string{fmt.Sprintf("ADD sources/%s /sources/%s", module.Name, module.Name)}, commands...)
+		commands = append(commands, fmt.Sprintf("RUN rm -rf /sources/%s", module.Name))
+	}
+	commands = append(commands, fmt.Sprintf("# End Module %s - %s\n", module.Name, module.Type))
 
 	fmt.Printf("Module [%s] built successfully\n", module.Name)
-	result := strings.TrimPrefix(commands, " && ")
-
-	if result == "&&" {
-		return "", nil
-	}
-
-	return result, nil
+	return commands, nil
 }

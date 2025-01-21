@@ -1,11 +1,12 @@
 ---
 Title: Getting Started
 Description: How to start using Vib to build your Container images.
-PublicationDate: 2024-02-11
+PublicationDate: 2024-12-28
 Listed: true
 Authors:
   - mirkobrombin
   - kbdharun
+  - surinameclubcard
 Tags:
   - getting-started
 ---
@@ -27,7 +28,7 @@ Other container engines might work but have not been tested. If you have tested 
 
 ## Installation
 
-Vib is distributed as a single binary, so there's no need to install any runtime or dependencies. You can download the latest version of Vib from the [GitHub releases page](https://github.com/Vanilla-OS/Vib). In addition to this, Vib has official plugins which are used for all the Vanilla-OS images, they can also be downlaoded from the [Github releases page](https://github.com/Vanilla-OS/Vib) as the `plugins.tar.xz` archvie. Once downloaded, make vib executable and move it to a directory included in your PATH. Vib searches for plugins in a global search path at `/usr/share/vib/plugins/` and inside the `plugins` directory in your project directory. It is recommended to extract `plugins.tar.xz` to `/usr/share/vib/plugins/` as they are considered core vib plugins and may be used by a lot of images.
+Vib is distributed as a single binary, so there's no need to install any runtime or dependencies. You can download the latest version of Vib from the [GitHub releases page](https://github.com/Vanilla-OS/Vib). In addition to this, Vib has official plugins which are used for all the Vanilla-OS images, they can also be downlaoded from the [Github releases page](https://github.com/Vanilla-OS/Vib) as the `plugins.tar.xz` archvie. Once downloaded, make `vib` executable and move it to a directory included in your `PATH`. Vib searches for plugins in a global search path at `/usr/share/vib/plugins/` and inside the `plugins` directory in your project directory. It is recommended to extract `plugins.tar.xz` to `/usr/share/vib/plugins/` as they are considered core vib plugins and may be used by a lot of images.
 
 The following commands will allow you to download and install Vib:
 
@@ -49,16 +50,16 @@ The following commands for the plugins:
 
 ```bash
 wget https://github.com/Vanilla-OS/Vib/releases/latest/download/plugins.tar.xz
-mkdir -p /usr/share/vib/plugins
-tar -xvf plugins.tar.xz -C /usr/share/vib/plugins/
+sudo mkdir -p /usr/share/vib/plugins
+sudo tar -xvf plugins.tar.xz -C /usr/share/vib/plugins/
 ```
 
 Or with curl:
 
 ```bash
 curl -SLO https://github.com/Vanilla-OS/Vib/releases/latest/download/plugins.tar.xz
-mkdir -p /usr/share/vib/plugins
-tar xvf plugins.tar.xz -C /usr/share/vib/plugins
+sudo mkdir -p /usr/share/vib/plugins
+sudo tar -xvf plugins.tar.xz -C /usr/share/vib/plugins
 ```
 
 ## Usage
@@ -74,60 +75,57 @@ touch vib.yml
 Here's an example `vib.yml` file:
 
 ```yml
-name: My Image
-id: my-image
+name: my-recipe
+id: my-node-app
 stages:
   - id: build
-    base: debian:sid-slim
-    singlelayer: false
+    base: node:current-slim
     labels:
       maintainer: My Awesome Team
     args:
       DEBIAN_FRONTEND: noninteractive
+    expose: 
+      "3000": ""
+    entrypoint:
+      exec:
+        - node
+        - /app/app.js
     runs:
       commands:
         - echo 'APT::Install-Recommends "0";' > /etc/apt/apt.conf.d/01norecommends
     modules:
-      - name: update
-        type: shell
-        commands:
-          - apt update
-      - name: vib
-        type: go
-        source:
-          type: git
-          url: https://github.com/vanilla-os/vib
-          branch: main
-          commit: latest
-        buildVars:
-          GO_OUTPUT_BIN: /usr/bin/vib
-        modules:
-          - name: golang
-            type: apt
-            source:
-              packages:
-                - golang
-                - ca-certificates
+    - name: build-app
+      type: shell
+      source:
+        type: git
+        url: https://github.com/mirkobrombin/node-sample
+        branch: main
+        commit: latest
+      commands:
+        - mv /sources/build-app /app
+        - cd /app
+        - npm i
+        - npm run build
 ```
 
-In this example, we're creating a container image with one stage based on `debian:sid-slim` with some custom labels and environment variables. We're also installing a custom module that uses the default `go` module to clone a Git repository and install dependencies of the `golang` module via `apt`.
+In this example, we're creating a container image with one stage based on `node:current-slim` with some custom labels and environment variables. The image uses a single module to build a Node.js application from a Git repository. The application is then installed and built using `npm`. Then it exposes the port `3000` and sets the entrypoint to node `/app/app.js`. 
 
-Once you've created the `vib.yaml` file, you can run the command:
+Once you've created the `vib.yml` file, you can run the command:
 
 ```bash
-vib build vib.yaml
+vib build vib.yml
 ```
 
 to turn your recipe into a Containerfile. Use that file to build the container image with your container engine. To streamline the process, you can use the `compile` command to build the container image directly:
 
 ```bash
-vib compile vib.yml --runtime docker
+vib compile --runtime docker
 ```
 
 changing `docker` with the container engine you have installed. Both `docker` and `podman` are supported. If you leave out the `--runtime` flag, Vib will use the default container engine giving priority to Docker.
 
 > **Note:**
-> For versions of Vib before 0.5.0, the syntax of the `compile` command was different. The `--runtime` flag was not available, and the command was `vib compile vib.yml docker`.
+> On a Vanilla OS host, you need to run `vib compile` from the `host-shell`.
 
 The generated `Containerfile` is compatible with both Docker and Podman.
 

@@ -2,26 +2,27 @@ package api
 
 // Configuration for a source
 type Source struct {
-	URL         string   `json:"url"`
-	Checksum    string   `json:"checksum"`
-	Type        string   `json:"type"`
-	Destination string   `json:"destination"`
-	Commit      string   `json:"commit"`
-	Tag         string   `json:"tag"`
-	Branch      string   `json:"branch"`
-	Packages    []string `json:"packages"`
-	Paths       []string `json:"paths"`
+	URL      string   `json:"url"`
+	Checksum string   `json:"checksum"`
+	Type     string   `json:"type"`
+	Commit   string   `json:"commit"`
+	Tag      string   `json:"tag"`
+	Branch   string   `json:"branch"`
+	Packages []string `json:"packages"`
+	Path     string   `json:"path"`
 }
 
 // Configuration for a recipe
 type Recipe struct {
 	Name          string
 	Id            string
+	Vibversion    string
 	Stages        []Stage
 	Path          string
 	ParentPath    string
 	DownloadsPath string
 	SourcesPath   string
+	IncludesPath  string
 	PluginPath    string
 	Containerfile string
 	Finalize      []interface{}
@@ -31,8 +32,8 @@ type Recipe struct {
 type Stage struct {
 	Id          string            `json:"id"`
 	Base        string            `json:"base"`
-	SingleLayer bool              `json:"singlelayer"`
 	Copy        []Copy            `json:"copy"`
+	Addincludes bool              `json:"addincludes"`
 	Labels      map[string]string `json:"labels"`
 	Env         map[string]string `json:"env"`
 	Adds        []Add             `json:"adds"`
@@ -53,8 +54,9 @@ const (
 
 // Information about a plugin
 type PluginInfo struct {
-	Name string
-	Type PluginType
+	Name             string
+	Type             PluginType
+	UseContainerCmds bool
 }
 
 // Configuration for copying files or directories in a stage

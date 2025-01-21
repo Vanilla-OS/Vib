@@ -22,7 +22,7 @@ type CMakeModule struct {
 //
 //export PlugInfo
 func PlugInfo() *C.char {
-	plugininfo := &api.PluginInfo{Name: "cmake", Type: api.BuildPlugin}
+	plugininfo := &api.PluginInfo{Name: "cmake", Type: api.BuildPlugin, UseContainerCmds: false}
 	pluginjson, err := json.Marshal(plugininfo)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
@@ -48,7 +48,7 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
 
-	err = api.DownloadSource(recipe.DownloadsPath, module.Source, module.Name)
+	err = api.DownloadSource(recipe, module.Source, module.Name)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
 	}
@@ -67,7 +67,7 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 	}
 
 	cmd := fmt.Sprintf(
-		"cd /sources/%s && mkdir -p build && cd build && cmake ..%s && make",
+		"cd /sources/%s && mkdir -p build && cd build && cmake ../%s && make",
 		filepath.Join(recipe.SourcesPath, api.GetSourcePath(module.Source, module.Name)),
 		buildFlags,
 	)
