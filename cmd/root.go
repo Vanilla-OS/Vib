@@ -37,23 +37,27 @@ func Execute() error {
 		IsRoot = true
 		gid, err := strconv.Atoi(os.Getenv("SUDO_GID"))
 		if err != nil {
-			return fmt.Errorf("failed to get user uid through SUDO_UID: %s", err.Error())
+			return fmt.Errorf("failed to get user gid through SUDO_GID: %s", err.Error())
 		}
 		OrigGID = gid // go moment??
+
 		uid, err := strconv.Atoi(os.Getenv("SUDO_UID"))
 		if err != nil {
-			return fmt.Errorf("failed to get user uid through SUDO_GID: %s", err.Error())
+			return fmt.Errorf("failed to get user uid through SUDO_UID: %s", err.Error())
 		}
 		OrigUID = uid
+
 		user := os.Getenv("SUDO_USER")
 		os.Setenv("HOME", filepath.Join("/home", user))
+
+		err = syscall.Setegid(OrigGID)
+		if err != nil {
+			fmt.Println("WARN: Failed to drop GID root privileges ", OrigGID)
+
+		}
 		err = syscall.Seteuid(OrigUID)
 		if err != nil {
-			fmt.Println("WARN: Failed to drop root privileges")
-		}
-		err = syscall.Setgid(OrigGID)
-		if err != nil {
-			fmt.Println("WARN: Failed to drop root privileges")
+			fmt.Println("WARN: Failed to drop UID root privileges ", OrigUID)
 		}
 	}
 	return rootCmd.Execute()
