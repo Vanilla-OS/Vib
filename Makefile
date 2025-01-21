@@ -6,7 +6,7 @@ BINARY_NAME=vib
 
 all: build # plugins
 
-build:
+build: FORCE
 	mkdir -p build
 	sed "s|%INSTALLPREFIX%|${PREFIX}|g" core/plugins.in > core/plugins.go
 	go build -a -o build/${BINARY_NAME}

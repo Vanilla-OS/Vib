@@ -39,8 +39,8 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 
 	installPrefixPath := fmt.Sprintf("%INSTALLPREFIX%/share/vib/plugins/%s.so", name)
 
-	globalPluginPathsEnv, isGPPEDefined := os.LookupEnv("XDG_DATA_DIRS")
-	if !isGPPEDefined || globalPluginPathsEnv == "" {
+	globalPluginPathsEnv, isXDDDefined := os.LookupEnv("XDG_DATA_DIRS")
+	if !isXDDDefined || len(strings.TrimSpace(globalPluginPathsEnv)) == 0 {
 		globalPluginPathsEnv = "/usr/local/share:/usr/share"
 	}
 
