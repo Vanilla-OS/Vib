@@ -106,3 +106,4 @@ We provide a plugin template for plugins written in go in the [vib-plugin repo](
 
 Example plugins written in languages other than go can be found in axtlos' [vib-plugins repo](https://github.com/axtloss/vib-plugins/)
 
+A Rust client for making plugins can be found in stoorps' [vib-rs repo](https://github.com/stoorps/vib-rs), with an example implementation [here](https://github.com/stoorps/vib-rs/tree/main/examples/example-plugin).
