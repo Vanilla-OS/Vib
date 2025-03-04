@@ -23,23 +23,30 @@ jobs:
     - name: Install Build Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libbtrfs-dev libdevmapper-dev pkg-config build-essential
+        sudo apt-get install -y libbtrfs-dev libdevmapper-dev pkg-config build-essential gcc-aarch64-linux-gnu
 
     - name: Build vib
       run: |
         go get ./...
         go get github.com/ebitengine/purego
-        make build
+        make BINARY_NAME=vib-amd64 build
+        mv build/vib-amd64 ./
+        make clean
+        GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc make BINARY_NAME=vib-arm64 build
+        mv build/vib-arm64 ./
 
     - name: Build plugins
       run: |
         go get ./...
         make build-plugins
-        tar cvf plugins.tar.xz build/plugins
+        tar cvf plugins-amd64.tar.xz build/plugins
+        make clean
+        GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc make build-plugins
+        tar cvf plugins-arm64.tar.xz build/plugins
 
     - uses: actions/upload-artifact@v4
       with:
          name: Vib
          path: |
-            build/vib
-            plugins.tar.xz
+            vib*
+            plugins*.tar.xz
