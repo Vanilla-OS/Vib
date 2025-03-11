@@ -25,17 +25,17 @@ jobs:
       run: |
         go get
         go mod vendor
-        tar cvf vib-vendored-deps.tar.xz *
+        tar czvf vib-vendored-deps.tar.gz *
 
     - name: Upload a Release Asset
       if: github.repository == 'Vanilla-OS/Vib'
       uses: softprops/action-gh-release@v2
       with:
-        files: vib-vendored-deps.tar.xz
+        files: vib-vendored-deps.tar.gz
 
     - name: Attest generated files
       if: github.repository == 'Vanilla-OS/Vib'
       id: attest
       uses: actions/attest-build-provenance@v2
       with:
-        subject-path: 'vib-vendored-deps.tar.xz'
+        subject-path: 'vib-vendored-deps.tar.gz'
