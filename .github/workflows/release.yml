@@ -41,10 +41,10 @@ jobs:
       run: |
         go get ./...
         make build-plugins
-        tar cvf plugins-amd64.tar.xz build/plugins
+        tar czvf plugins-amd64.tar.gz build/plugins
         make clean
         GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc make build-plugins
-        tar cvf plugins-arm64.tar.xz build/plugins
+        tar czvf plugins-arm64.tar.gz build/plugins
 
     - name: Upload a Release Asset
       if: github.repository == 'Vanilla-OS/Vib'
@@ -52,11 +52,11 @@ jobs:
       with:
         files: |
           vib*
-          plugins*.tar.xz
+          plugins*.tar.gz
 
     - name: Attest generated files
       if: github.repository == 'Vanilla-OS/Vib'
       id: attest
       uses: actions/attest-build-provenance@v2
       with:
-        subject-path: 'vib*, plugins*.tar.xz'
+        subject-path: 'vib*, plugins*.tar.gz'
