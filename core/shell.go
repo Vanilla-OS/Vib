@@ -19,7 +19,7 @@ type ShellModule struct {
 // Build shell module commands and return them as a single string
 //
 // Returns: Concatenated shell commands or an error if any step fails
-func BuildShellModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
+func BuildShellModule(moduleInterface interface{}, recipe *api.Recipe, arch string) (string, error) {
 	var module ShellModule
 	err := mapstructure.Decode(moduleInterface, &module)
 	if err != nil {
@@ -27,14 +27,16 @@ func BuildShellModule(moduleInterface interface{}, recipe *api.Recipe) (string, 
 	}
 
 	for _, source := range module.Sources {
-		if strings.TrimSpace(source.Type) != "" {
-			err := api.DownloadSource(recipe, source, module.Name)
-			if err != nil {
-				return "", err
-			}
-			err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, source, module.Name)
-			if err != nil {
-				return "", err
+		if api.TestArch(source.OnlyArches, arch) {
+			if strings.TrimSpace(source.Type) != "" {
+				err := api.DownloadSource(recipe, source, module.Name)
+				if err != nil {
+					return "", err
+				}
+				err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, source, module.Name)
+				if err != nil {
+					return "", err
+				}
 			}
 		}
 	}
