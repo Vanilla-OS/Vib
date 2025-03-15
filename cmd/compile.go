@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 
 	"github.com/spf13/cobra"
 	"github.com/vanilla-os/vib/core"
@@ -36,9 +37,11 @@ func compileCommand(cmd *cobra.Command, args []string) error {
 		"vib.yaml",
 	}
 	var recipePath string
-	var runtime string
+	var arch string
+	var containerRuntime string
 
-	runtime, _ = cmd.Flags().GetString("runtime")
+	arch = runtime.GOARCH
+	containerRuntime, _ = cmd.Flags().GetString("runtime")
 
 	if len(args) == 0 {
 		for _, name := range commonNames {
@@ -56,13 +59,13 @@ func compileCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	detectedRuntime := detectRuntime()
-	if runtime == "" && detectedRuntime == "" {
+	if containerRuntime == "" && detectedRuntime == "" {
 		return fmt.Errorf("missing runtime, and no one was detected")
-	} else if runtime == "" {
-		runtime = detectedRuntime
+	} else if containerRuntime == "" {
+		containerRuntime = detectedRuntime
 	}
 
-	err := core.CompileRecipe(recipePath, runtime, IsRoot, OrigGID, OrigUID)
+	err := core.CompileRecipe(recipePath, arch, containerRuntime, IsRoot, OrigGID, OrigUID)
 	if err != nil {
 		return err
 	}
