@@ -36,7 +36,7 @@ type ModuleCommand struct {
 // Configuration for a plugin
 type Plugin struct {
 	Name         string
-	BuildFunc    func(*C.char, *C.char) string
+	BuildFunc    func(*C.char, *C.char, *C.char) string
 	LoadedPlugin uintptr
 	PluginInfo   api.PluginInfo
 }

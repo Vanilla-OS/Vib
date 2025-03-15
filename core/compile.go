@@ -11,8 +11,8 @@ import (
 )
 
 // Compile and build the recipe using the specified runtime
-func CompileRecipe(recipePath string, runtime string, isRoot bool, origGid int, origUid int) error {
-	recipe, err := BuildRecipe(recipePath)
+func CompileRecipe(recipePath string, arch string, runtime string, isRoot bool, origGid int, origUid int) error {
+	recipe, err := BuildRecipe(recipePath, arch)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func CompileRecipe(recipePath string, runtime string, isRoot bool, origGid int, 
 		if err != nil {
 			return err
 		}
-		err = LoadFinalizePlugin(module.Type, finalizeInterface, &recipe, runtime, isRoot, origGid, origUid)
+		err = LoadFinalizePlugin(module.Type, finalizeInterface, &recipe, arch, runtime, isRoot, origGid, origUid)
 		if err != nil {
 			return err
 		}
