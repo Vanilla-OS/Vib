@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -26,6 +27,7 @@ func NewBuildCommand() *cobra.Command {
     vib build /path/to/recipe.yml`,
 		RunE: buildCommand,
 	}
+	cmd.Flags().StringP("arch", "a", runtime.GOARCH, "target architecture")
 	cmd.Flags().SetInterspersed(false)
 
 	return cmd
@@ -40,6 +42,9 @@ func buildCommand(cmd *cobra.Command, args []string) error {
 		"vib.yaml",
 	}
 	var recipePath string
+	var arch string
+
+	arch, _ = cmd.Flags().GetString("arch")
 
 	if len(args) == 0 {
 		for _, name := range commonNames {
@@ -81,7 +86,7 @@ func buildCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("missing recipe path")
 	}
 
-	_, err := core.BuildRecipe(recipePath)
+	_, err := core.BuildRecipe(recipePath, arch)
 	if err != nil {
 		return err
 	}

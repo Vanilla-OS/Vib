@@ -39,7 +39,7 @@ func RestoreWorkingDirectory(workdir string, containerfile *os.File) error {
 }
 
 // Load and build a Containerfile from the specified recipe
-func BuildRecipe(recipePath string) (api.Recipe, error) {
+func BuildRecipe(recipePath string, arch string) (api.Recipe, error) {
 	// load the recipe
 	recipe, err := LoadRecipe(recipePath)
 	if err != nil {
@@ -49,7 +49,7 @@ func BuildRecipe(recipePath string) (api.Recipe, error) {
 	fmt.Printf("Building recipe %s\n", recipe.Name)
 
 	// build the Containerfile
-	err = BuildContainerfile(recipe)
+	err = BuildContainerfile(recipe, arch)
 	if err != nil {
 		return api.Recipe{}, err
 	}
@@ -67,7 +67,7 @@ func BuildRecipe(recipePath string) (api.Recipe, error) {
 }
 
 // Generate a Containerfile from the recipe
-func BuildContainerfile(recipe *api.Recipe) error {
+func BuildContainerfile(recipe *api.Recipe, arch string) error {
 	containerfile, err := os.Create(recipe.Containerfile)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func BuildContainerfile(recipe *api.Recipe) error {
 		// build the modules*
 		// * actually just build the commands that will be used
 		//   in the Containerfile to build the modules
-		cmds, err := BuildModules(recipe, stage.Modules)
+		cmds, err := BuildModules(recipe, stage.Modules, arch)
 		if err != nil {
 			return err
 		}
@@ -300,7 +300,7 @@ func BuildContainerfile(recipe *api.Recipe) error {
 }
 
 // Build commands for each module in the recipe
-func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, error) {
+func BuildModules(recipe *api.Recipe, modules []interface{}, arch string) ([]ModuleCommand, error) {
 	cmds := []ModuleCommand{}
 	for _, moduleInterface := range modules {
 		var module Module
@@ -309,7 +309,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, e
 			return nil, err
 		}
 
-		cmd, err := BuildModule(recipe, moduleInterface)
+		cmd, err := BuildModule(recipe, moduleInterface, arch)
 		if err != nil {
 			return nil, err
 		}
@@ -324,7 +324,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}) ([]ModuleCommand, e
 	return cmds, nil
 }
 
-func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe) (string, error) {
+func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe, arch string) (string, error) {
 	var include IncludesModule
 	err := mapstructure.Decode(moduleInterface, &include)
 	if err != nil {
@@ -364,7 +364,7 @@ func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe) (strin
 			return "", err
 		}
 
-		buildModule, err := BuildModule(recipe, includeModule)
+		buildModule, err := BuildModule(recipe, includeModule, arch)
 		if err != nil {
 			return "", err
 		}
@@ -374,7 +374,7 @@ func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe) (strin
 }
 
 // Build a command string for the given module in the recipe
-func BuildModule(recipe *api.Recipe, moduleInterface interface{}) ([]string, error) {
+func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string) ([]string, error) {
 	var module Module
 	err := mapstructure.Decode(moduleInterface, &module)
 	if err != nil {
@@ -387,7 +387,7 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) ([]string, err
 
 	if len(module.Modules) > 0 {
 		for _, nestedModule := range module.Modules {
-			buildModule, err := BuildModule(recipe, nestedModule)
+			buildModule, err := BuildModule(recipe, nestedModule, arch)
 			if err != nil {
 				return []string{""}, err
 			}
@@ -395,13 +395,13 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}) ([]string, err
 		}
 	}
 
-	moduleBuilders := map[string]func(interface{}, *api.Recipe) (string, error){
+	moduleBuilders := map[string]func(interface{}, *api.Recipe, string) (string, error){
 		"shell":    BuildShellModule,
 		"includes": buildIncludesModule,
 	}
 
 	if moduleBuilder, ok := moduleBuilders[module.Type]; ok {
-		command, err := moduleBuilder(moduleInterface, recipe)
+		command, err := moduleBuilder(moduleInterface, recipe, arch)
 		if err != nil {
 			return []string{""}, err
 		}
