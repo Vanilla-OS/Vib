@@ -45,7 +45,7 @@ func CompileRecipe(recipePath string, arch string, runtime string, isRoot bool, 
 		if err != nil {
 			return err
 		}
-		err = LoadFinalizePlugin(module.Type, finalizeInterface, &recipe, runtime, isRoot, origGid, origUid)
+		err = LoadFinalizePlugin(module.Type, finalizeInterface, &recipe, arch, runtime, isRoot, origGid, origUid)
 		if err != nil {
 			return err
 		}

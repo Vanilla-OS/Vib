@@ -407,7 +407,7 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string) (
 		}
 		commands = append(commands, command)
 	} else {
-		command, err := LoadBuildPlugin(module.Type, moduleInterface, recipe)
+		command, err := LoadBuildPlugin(module.Type, moduleInterface, recipe, arch)
 		if err != nil {
 			return []string{""}, err
 		}
