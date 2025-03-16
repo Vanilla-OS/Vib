@@ -32,7 +32,7 @@ func PlugInfo() *C.char {
 // and running dpkg-buildpackage with appropriate options.
 //
 //export BuildModule
-func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
+func BuildModule(moduleInterface *C.char, recipeInterface *C.char, arch *C.char) *C.char {
 	var module *DpkgBuildModule
 	var recipe *api.Recipe
 
@@ -44,6 +44,10 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 	err = json.Unmarshal([]byte(C.GoString(recipeInterface)), &recipe)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+
+	if !api.TestArch(module.Source.OnlyArches, C.GoString(arch)) {
+		return C.CString("")
 	}
 
 	err = api.DownloadSource(recipe, module.Source, module.Name)

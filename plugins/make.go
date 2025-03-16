@@ -36,7 +36,7 @@ func PlugInfo() *C.char {
 // to install the built project. Handle downloading and moving the source.
 //
 //export BuildModule
-func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
+func BuildModule(moduleInterface *C.char, recipeInterface *C.char, arch *C.char) *C.char {
 	var module *MakeModule
 	var recipe *api.Recipe
 
@@ -51,13 +51,15 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 	}
 
 	for _, source := range module.Sources {
-		err = api.DownloadSource(recipe, source, module.Name)
-		if err != nil {
-			return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
-		}
-		err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, source, module.Name)
-		if err != nil {
-			return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+		if api.TestArch(source.OnlyArches, C.GoString(arch)) {
+			err = api.DownloadSource(recipe, source, module.Name)
+			if err != nil {
+				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+			}
+			err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, source, module.Name)
+			if err != nil {
+				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+			}
 		}
 	}
 

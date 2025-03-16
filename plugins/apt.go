@@ -46,7 +46,7 @@ func PlugInfo() *C.char {
 // Handle package installation and apply appropriate options.
 //
 //export BuildModule
-func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
+func BuildModule(moduleInterface *C.char, recipeInterface *C.char, arch *C.char) *C.char {
 	var module *AptModule
 	var recipe *api.Recipe
 
@@ -76,33 +76,35 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 
 	packages := ""
 	for _, source := range module.Sources {
-		if len(source.Packages) > 0 {
-			for _, pkg := range source.Packages {
-				packages += pkg + " "
-			}
-		}
-
-		if len(strings.TrimSpace(source.Path)) > 0 {
-			fileInfo, err := os.Stat(source.Path)
-			if err != nil {
-				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
-			}
-			if !fileInfo.Mode().IsRegular() {
-				continue
-			}
-			file, err := os.Open(source.Path)
-			if err != nil {
-				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
-			}
-			defer file.Close()
-
-			scanner := bufio.NewScanner(file)
-			for scanner.Scan() {
-				packages += scanner.Text() + " "
+		if api.TestArch(source.OnlyArches, C.GoString(arch)) {
+			if len(source.Packages) > 0 {
+				for _, pkg := range source.Packages {
+					packages += pkg + " "
+				}
 			}
 
-			if err := scanner.Err(); err != nil {
-				return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+			if len(strings.TrimSpace(source.Path)) > 0 {
+				fileInfo, err := os.Stat(source.Path)
+				if err != nil {
+					return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+				}
+				if !fileInfo.Mode().IsRegular() {
+					continue
+				}
+				file, err := os.Open(source.Path)
+				if err != nil {
+					return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+				}
+				defer file.Close()
+
+				scanner := bufio.NewScanner(file)
+				for scanner.Scan() {
+					packages += scanner.Text() + " "
+				}
+
+				if err := scanner.Err(); err != nil {
+					return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+				}
 			}
 		}
 	}
