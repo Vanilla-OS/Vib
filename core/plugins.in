@@ -125,7 +125,7 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 	return loadedPlugin, *pluginInfo, nil
 }
 
-func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe) ([]string, error) {
+func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe, arch string) ([]string, error) {
 	if openedBuildPlugins == nil {
 		openedBuildPlugins = make(map[string]Plugin)
 	}
@@ -137,7 +137,7 @@ func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe) ([]str
 		if err != nil {
 			return []string{""}, err
 		}
-		var buildFunction func(*C.char, *C.char) string
+		var buildFunction func(*C.char, *C.char, *C.char) string
 		purego.RegisterLibFunc(&buildFunction, loadedPlugin, "BuildModule")
 		buildModule.Name = name
 		buildModule.BuildFunc = buildFunction
@@ -155,7 +155,7 @@ func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe) ([]str
 		return []string{""}, err
 	}
 
-	res := buildModule.BuildFunc(C.CString(string(moduleJson)), C.CString(string(recipeJson)))
+	res := buildModule.BuildFunc(C.CString(string(moduleJson)), C.CString(string(recipeJson)), C.CString(arch))
 	if strings.HasPrefix(res, "ERROR:") {
 		return []string{""}, fmt.Errorf("%s", strings.Replace(res, "ERROR: ", "", 1))
 	} else if !buildModule.PluginInfo.UseContainerCmds {
@@ -165,7 +165,7 @@ func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe) ([]str
 	}
 }
 
-func LoadFinalizePlugin(name string, module interface{}, recipe *api.Recipe, runtime string, isRoot bool, origGid int, origUid int) error {
+func LoadFinalizePlugin(name string, module interface{}, recipe *api.Recipe, arch string, runtime string, isRoot bool, origGid int, origUid int) error {
 	if openedFinalizePlugins == nil {
 		openedFinalizePlugins = make(map[string]Plugin)
 	}
@@ -177,7 +177,7 @@ func LoadFinalizePlugin(name string, module interface{}, recipe *api.Recipe, run
 		if err != nil {
 			return err
 		}
-		var finalizeFunction func(*C.char, *C.char) string
+		var finalizeFunction func(*C.char, *C.char, *C.char) string
 		purego.RegisterLibFunc(&finalizeFunction, loadedPlugin, "FinalizeBuild")
 		finalizeModule.Name = name
 		finalizeModule.BuildFunc = finalizeFunction
@@ -237,7 +237,7 @@ func LoadFinalizePlugin(name string, module interface{}, recipe *api.Recipe, run
 	if err != nil {
 		return err
 	}
-	res := finalizeModule.BuildFunc(C.CString(string(moduleJson)), C.CString(string(scopeJson)))
+	res := finalizeModule.BuildFunc(C.CString(string(moduleJson)), C.CString(string(scopeJson)), C.CString(arch))
 	syscall.Seteuid(origGid)
 	syscall.Setegid(origUid)
 	if strings.HasPrefix(res, "ERROR:") {

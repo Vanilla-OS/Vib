@@ -34,7 +34,7 @@ func PlugInfo() *C.char {
 // Download and move the source, set up build variables and flags, and construct the CMake build command.
 //
 //export BuildModule
-func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
+func BuildModule(moduleInterface *C.char, recipeInterface *C.char, arch *C.char) *C.char {
 	var module *CMakeModule
 	var recipe *api.Recipe
 
@@ -46,6 +46,10 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char) *C.char {
 	err = json.Unmarshal([]byte(C.GoString(recipeInterface)), &recipe)
 	if err != nil {
 		return C.CString(fmt.Sprintf("ERROR: %s", err.Error()))
+	}
+
+	if !api.TestArch(module.Source.OnlyArches, C.GoString(arch)) {
+		return C.CString("")
 	}
 
 	err = api.DownloadSource(recipe, module.Source, module.Name)
