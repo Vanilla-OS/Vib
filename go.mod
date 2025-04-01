@@ -1,11 +1,10 @@
 module github.com/vanilla-os/vib
 
 go 1.24.0
-
 require github.com/spf13/cobra v1.9.1
 
 require (
-	github.com/containers/storage v1.57.1
+	github.com/containers/storage v1.57.2
 	github.com/mitchellh/mapstructure v1.5.0
 )
 
