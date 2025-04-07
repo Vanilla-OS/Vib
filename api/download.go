@@ -256,7 +256,7 @@ func MoveSource(downloadPath string, sourcesPath string, source Source, moduleNa
 		os.MkdirAll(filepath.Join(sourcesPath, GetSourcePath(source, moduleName)), 0o777)
 		cmd := exec.Command(
 			"tar",
-			"-xf", filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar*"),
+			"-xf", filepath.Join(downloadPath, GetSourcePath(source, moduleName), moduleName+".tar"),
 			"-C", filepath.Join(sourcesPath, GetSourcePath(source, moduleName)),
 		)
 		err := cmd.Run()
