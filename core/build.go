@@ -414,13 +414,14 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string) (
 		commands = append(commands, command...)
 	}
 
-	_ = os.MkdirAll(fmt.Sprintf("%s/%s", recipe.SourcesPath, module.Name), 0755)
-
-	dirInfo, err := os.Stat(filepath.Join(recipe.SourcesPath, module.Name))
+	moduleSourcePath := filepath.Join(recipe.SourcesPath, module.Name)
+	_ = os.MkdirAll(moduleSourcePath, 0755)
+	entries, err := os.ReadDir(moduleSourcePath)
 	if err != nil {
 		return []string{""}, err
 	}
-	if dirInfo.Size() > 0 {
+
+	if len(entries) > 0 {
 		commands = append([]string{fmt.Sprintf("ADD sources/%s /sources/%s", module.Name, module.Name)}, commands...)
 		commands = append(commands, fmt.Sprintf("RUN rm -rf /sources/%s", module.Name))
 	}
