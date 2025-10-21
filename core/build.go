@@ -79,7 +79,7 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 		// build the modules*
 		// * actually just build the commands that will be used
 		//   in the Containerfile to build the modules
-		cmds, err := BuildModules(recipe, stage.Modules, arch)
+		cmds, err := BuildModules(recipe, stage.Modules, arch, stage.Id)
 		if err != nil {
 			return err
 		}
@@ -238,6 +238,13 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 			}
 		}
 
+		// SOURCES
+		sourcePath := filepath.Join("sources", stage.Id)
+		_, err = containerfile.WriteString(fmt.Sprintf("ADD %s /sources\n", sourcePath))
+		if err != nil {
+			return err
+		}
+
 		for _, cmd := range cmds {
 			err = ChangeWorkingDirectory(cmd.Workdir, containerfile)
 			if err != nil {
@@ -275,6 +282,12 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 			}
 		}
 
+		// DELETE SOURCES
+		_, err = containerfile.WriteString("CMD rm -r /sources\n")
+		if err != nil {
+			return err
+		}
+
 		// ENTRYPOINT
 		err = ChangeWorkingDirectory(stage.Entrypoint.Workdir, containerfile)
 		if err != nil {
@@ -294,13 +307,15 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 				return err
 			}
 		}
+
+		containerfile.WriteString("\n")
 	}
 
 	return nil
 }
 
 // Build commands for each module in the recipe
-func BuildModules(recipe *api.Recipe, modules []interface{}, arch string) ([]ModuleCommand, error) {
+func BuildModules(recipe *api.Recipe, modules []interface{}, arch string, stageName string) ([]ModuleCommand, error) {
 	cmds := []ModuleCommand{}
 	for _, moduleInterface := range modules {
 		var module Module
@@ -309,7 +324,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}, arch string) ([]Mod
 			return nil, err
 		}
 
-		cmd, err := BuildModule(recipe, moduleInterface, arch)
+		cmd, err := BuildModule(recipe, moduleInterface, arch, stageName)
 		if err != nil {
 			return nil, err
 		}
@@ -324,7 +339,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}, arch string) ([]Mod
 	return cmds, nil
 }
 
-func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe, arch string) (string, error) {
+func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe, arch string, stageName string) (string, error) {
 	var include IncludesModule
 	err := mapstructure.Decode(moduleInterface, &include)
 	if err != nil {
@@ -364,7 +379,7 @@ func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe, arch s
 			return "", err
 		}
 
-		buildModule, err := BuildModule(recipe, includeModule, arch)
+		buildModule, err := BuildModule(recipe, includeModule, arch, stageName)
 		if err != nil {
 			return "", err
 		}
@@ -374,7 +389,7 @@ func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe, arch s
 }
 
 // Build a command string for the given module in the recipe
-func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string) ([]string, error) {
+func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string, stageName string) ([]string, error) {
 	var module Module
 	err := mapstructure.Decode(moduleInterface, &module)
 	if err != nil {
@@ -387,7 +402,7 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string) (
 
 	if len(module.Modules) > 0 {
 		for _, nestedModule := range module.Modules {
-			buildModule, err := BuildModule(recipe, nestedModule, arch)
+			buildModule, err := BuildModule(recipe, nestedModule, arch, stageName)
 			if err != nil {
 				return []string{""}, err
 			}
@@ -395,18 +410,20 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string) (
 		}
 	}
 
-	moduleBuilders := map[string]func(interface{}, *api.Recipe, string) (string, error){
-		"shell":    BuildShellModule,
-		"includes": buildIncludesModule,
-	}
-
-	if moduleBuilder, ok := moduleBuilders[module.Type]; ok {
-		command, err := moduleBuilder(moduleInterface, recipe, arch)
+	switch module.Type {
+	case "shell":
+		command, err := BuildShellModule(moduleInterface, recipe, arch)
 		if err != nil {
 			return []string{""}, err
 		}
 		commands = append(commands, command)
-	} else {
+	case "includes":
+		command, err := buildIncludesModule(moduleInterface, recipe, arch, stageName)
+		if err != nil {
+			return []string{""}, err
+		}
+		commands = append(commands, command)
+	default:
 		command, err := LoadBuildPlugin(module.Type, moduleInterface, recipe, arch)
 		if err != nil {
 			return []string{""}, err
@@ -414,17 +431,15 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string) (
 		commands = append(commands, command...)
 	}
 
-	moduleSourcePath := filepath.Join(recipe.SourcesPath, module.Name)
-	_ = os.MkdirAll(moduleSourcePath, 0755)
-	entries, err := os.ReadDir(moduleSourcePath)
+	sourcePath := filepath.Join(recipe.SourcesPath, module.Name)
+	stageSourcePath := filepath.Join(recipe.SourcesPath, stageName, module.Name)
+	_ = os.MkdirAll(sourcePath, 0o777)
+	_ = os.MkdirAll(filepath.Dir(stageSourcePath), 0o777)
+	err = os.Rename(sourcePath, stageSourcePath)
 	if err != nil {
-		return []string{""}, err
+		return []string{}, fmt.Errorf("could not move source: %w", err)
 	}
 
-	if len(entries) > 0 {
-		commands = append([]string{fmt.Sprintf("ADD sources/%s /sources/%s", module.Name, module.Name)}, commands...)
-		commands = append(commands, fmt.Sprintf("RUN rm -rf /sources/%s", module.Name))
-	}
 	commands = append(commands, fmt.Sprintf("# End Module %s - %s\n", module.Name, module.Type))
 
 	fmt.Printf("Module [%s] built successfully\n", module.Name)
