@@ -6,6 +6,7 @@ require github.com/spf13/cobra v1.9.1
 
 require (
 	github.com/containers/storage v1.57.1
+	github.com/ebitengine/purego v0.9.0
 	github.com/mitchellh/mapstructure v1.5.0
 )
 

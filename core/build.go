@@ -395,6 +395,8 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string) (
 		}
 	}
 
+	moduleCommandStart := len(commands)
+
 	moduleBuilders := map[string]func(interface{}, *api.Recipe, string) (string, error){
 		"shell":    BuildShellModule,
 		"includes": buildIncludesModule,
@@ -421,8 +423,36 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string) (
 		return []string{""}, err
 	}
 	if dirInfo.Size() > 0 {
-		commands = append([]string{fmt.Sprintf("ADD sources/%s /sources/%s", module.Name, module.Name)}, commands...)
-		commands = append(commands, fmt.Sprintf("RUN rm -rf /sources/%s", module.Name))
+		addInstruction := fmt.Sprintf("ADD sources/%s /sources/%s", module.Name, module.Name)
+		if len(commands) > 0 {
+			insertIndex := 1
+			if insertIndex > len(commands) {
+				insertIndex = len(commands)
+			}
+			commands = append(commands[:insertIndex], append([]string{addInstruction}, commands[insertIndex:]...)...)
+			if insertIndex <= moduleCommandStart {
+				moduleCommandStart++
+			}
+		} else {
+			commands = append(commands, addInstruction)
+		}
+
+		cleanupInstruction := fmt.Sprintf("rm -rf /sources/%s", module.Name)
+		cleanupAttached := false
+		for i := len(commands) - 1; i >= moduleCommandStart; i-- {
+			trimmedCommand := strings.TrimSpace(commands[i])
+			if strings.HasPrefix(trimmedCommand, "RUN ") {
+				if !strings.Contains(trimmedCommand, cleanupInstruction) {
+					commands[i] = fmt.Sprintf("%s && %s", commands[i], cleanupInstruction)
+				}
+				cleanupAttached = true
+				break
+			}
+		}
+
+		if !cleanupAttached {
+			commands = append(commands, fmt.Sprintf("RUN %s", cleanupInstruction))
+		}
 	}
 	commands = append(commands, fmt.Sprintf("# End Module %s - %s\n", module.Name, module.Type))
 
