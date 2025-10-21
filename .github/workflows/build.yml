@@ -28,7 +28,6 @@ jobs:
     - name: Build vib
       run: |
         go get ./...
-        go get github.com/ebitengine/purego
         make BINARY_NAME=vib-amd64 build
         mv build/vib-amd64 ./
         make clean
