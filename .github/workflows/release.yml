@@ -56,6 +56,6 @@ jobs:
     - name: Attest generated files
       if: github.repository == 'Vanilla-OS/Vib'
       id: attest
-      uses: actions/attest-build-provenance@v2
+      uses: actions/attest-build-provenance@v3
       with:
         subject-path: 'vib*, plugins*.tar.gz'
