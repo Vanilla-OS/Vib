@@ -240,6 +240,10 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 
 		// SOURCES
 		sourcePath := filepath.Join("sources", stage.Id)
+		err = os.MkdirAll(sourcePath, 0o755)
+		if err != nil {
+			return fmt.Errorf("could not create source path: %w", err)
+		}
 		_, err = containerfile.WriteString(fmt.Sprintf("ADD %s /sources\n", sourcePath))
 		if err != nil {
 			return err
