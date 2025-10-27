@@ -283,7 +283,7 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 		}
 
 		// DELETE SOURCES
-		_, err = containerfile.WriteString("CMD rm -r /sources\n")
+		_, err = containerfile.WriteString("RUN rm -r /sources\n")
 		if err != nil {
 			return err
 		}
