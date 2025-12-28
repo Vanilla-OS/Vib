@@ -30,36 +30,36 @@ Other container engines might work but have not been tested. If you have tested 
 
 Vib is distributed as a single binary, so there's no need to install any runtime or dependencies. You can download the latest version of Vib from the [GitHub releases page](https://github.com/Vanilla-OS/Vib). In addition to this, Vib has official plugins which are used for all the Vanilla-OS images, they can also be downlaoded from the [Github releases page](https://github.com/Vanilla-OS/Vib) as the `plugins.tar.xz` archvie. Once downloaded, make `vib` executable and move it to a directory included in your `PATH`. Vib searches for plugins in a global search path at `/usr/share/vib/plugins/` and inside the `plugins` directory in your project directory. It is recommended to extract `plugins.tar.xz` to `/usr/share/vib/plugins/` as they are considered core vib plugins and may be used by a lot of images.
 
-The following commands will allow you to download and install Vib:
+The following commands will allow you to download and install Vib *(replace amd64 with arm64):
 
 ```bash
-wget https://github.com/Vanilla-OS/Vib/releases/latest/download/vib
-chmod +x vib
-mv vib ~/.local/bin
+wget https://github.com/Vanilla-OS/Vib/releases/latest/download/vib-amd64
+chmod +x vib-amd64
+mv vib-amd64 ~/.local/bin/vib
 ```
 
 If wget is not installed, you can use curl:
 
 ```bash
-curl -SLO https://github.com/Vanilla-OS/Vib/releases/latest/download/vib
-chmod +x vib
-mv vib ~/.local/bin
+curl -SLO https://github.com/Vanilla-OS/Vib/releases/latest/download/vib-amd64
+chmod +x vib-amd64
+mv vib-amd64 ~/.local/bin/vib
 ```
 
 The following commands for the plugins:
 
 ```bash
-wget https://github.com/Vanilla-OS/Vib/releases/latest/download/plugins.tar.xz
+wget https://github.com/Vanilla-OS/Vib/releases/latest/download/plugins-amd64.tar.gz
 sudo mkdir -p /usr/share/vib/plugins
-sudo tar -xvf plugins.tar.xz -C /usr/share/vib/plugins/
+sudo tar -xvf plugins-amd64.tar.gz -C /usr/share/vib/plugins/ --strip-components=2
 ```
 
 Or with curl:
 
 ```bash
-curl -SLO https://github.com/Vanilla-OS/Vib/releases/latest/download/plugins.tar.xz
+curl -SLO https://github.com/Vanilla-OS/Vib/releases/latest/download/plugins-amd64.tar.gz
 sudo mkdir -p /usr/share/vib/plugins
-sudo tar -xvf plugins.tar.xz -C /usr/share/vib/plugins
+sudo tar -xvf plugins-amd64.tar.gz -C /usr/share/vib/plugins --strip-components=2
 ```
 
 ## Usage
