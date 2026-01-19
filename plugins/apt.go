@@ -109,13 +109,9 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char, arch *C.char)
 		}
 	}
 
-	if len(packages) >= 1 {
-		cmd := fmt.Sprintf("apt-get install -y %s %s && apt-get clean", args, packages)
+	cmd := fmt.Sprintf("apt-get install -y %s %s && apt-get clean", args, packages)
 
-		return C.CString(cmd)
-	}
-
-	return C.CString("ERROR: no packages or paths specified")
+	return C.CString(cmd)
 }
 
 func main() {}
