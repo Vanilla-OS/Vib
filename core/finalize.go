@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	cstorage "github.com/containers/storage"
+	cstorage "go.podman.io/storage"
 	"os/exec"
 	"strings"
 )
