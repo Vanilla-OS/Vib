@@ -22,6 +22,8 @@ func NewCompileCommand() *cobra.Command {
   Both docker and podman are supported as runtimes. If none is specified, the detected runtime will be used, giving priority to Docker.`,
 		RunE: compileCommand,
 	}
+
+	cmd.Flags().StringP("containerfile", "f", "Containerfile", "Custom containerfile")
 	cmd.Flags().StringP("runtime", "r", "", "The runtime to use (docker/podman)")
 	cmd.Flags().SetInterspersed(false)
 
@@ -39,9 +41,11 @@ func compileCommand(cmd *cobra.Command, args []string) error {
 	var recipePath string
 	var arch string
 	var containerRuntime string
+	var containerfilePath string
 
 	arch = runtime.GOARCH
 	containerRuntime, _ = cmd.Flags().GetString("runtime")
+	containerfilePath, _ = cmd.Flags().GetString("containerfile")
 
 	if len(args) == 0 {
 		for _, name := range commonNames {
@@ -65,7 +69,7 @@ func compileCommand(cmd *cobra.Command, args []string) error {
 		containerRuntime = detectedRuntime
 	}
 
-	err := core.CompileRecipe(recipePath, arch, containerRuntime, IsRoot, OrigGID, OrigUID)
+	err := core.CompileRecipe(recipePath, arch, containerRuntime, IsRoot, OrigGID, OrigUID, containerfilePath)
 	if err != nil {
 		return err
 	}

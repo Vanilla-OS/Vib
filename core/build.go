@@ -39,7 +39,7 @@ func RestoreWorkingDirectory(workdir string, containerfile *os.File) error {
 }
 
 // Load and build a Containerfile from the specified recipe
-func BuildRecipe(recipePath string, arch string) (api.Recipe, error) {
+func BuildRecipe(recipePath string, arch string, containerfilePath string) (api.Recipe, error) {
 	// load the recipe
 	recipe, err := LoadRecipe(recipePath)
 	if err != nil {
@@ -47,6 +47,14 @@ func BuildRecipe(recipePath string, arch string) (api.Recipe, error) {
 	}
 
 	fmt.Printf("Building recipe %s\n", recipe.Name)
+
+	// assuming the Containerfile location is relative
+	if len(containerfilePath) == 0 {
+		recipe.Containerfile = filepath.Join(filepath.Dir(recipePath), "Containerfile")
+	} else {
+		recipe.Containerfile = filepath.Join(filepath.Dir(recipePath), containerfilePath)
+		fmt.Printf("Containerfile path: %s\n", recipe.Containerfile)
+	}
 
 	// build the Containerfile
 	err = BuildContainerfile(recipe, arch)
@@ -68,6 +76,11 @@ func BuildRecipe(recipePath string, arch string) (api.Recipe, error) {
 
 // Generate a Containerfile from the recipe
 func BuildContainerfile(recipe *api.Recipe, arch string) error {
+	err := os.RemoveAll(recipe.Containerfile)
+	if err != nil {
+		return err
+	}
+
 	containerfile, err := os.Create(recipe.Containerfile)
 	if err != nil {
 		return err

@@ -27,6 +27,8 @@ func NewBuildCommand() *cobra.Command {
     vib build /path/to/recipe.yml`,
 		RunE: buildCommand,
 	}
+
+	cmd.Flags().StringP("containerfile", "f", "Containerfile", "Custom containerfile")
 	cmd.Flags().StringP("arch", "a", runtime.GOARCH, "target architecture")
 	cmd.Flags().SetInterspersed(false)
 
@@ -43,8 +45,10 @@ func buildCommand(cmd *cobra.Command, args []string) error {
 	}
 	var recipePath string
 	var arch string
+	var containerfilePath string
 
 	arch, _ = cmd.Flags().GetString("arch")
+	containerfilePath, _ = cmd.Flags().GetString("containerfile")
 
 	if len(args) == 0 {
 		for _, name := range commonNames {
@@ -86,7 +90,7 @@ func buildCommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("missing recipe path")
 	}
 
-	_, err := core.BuildRecipe(recipePath, arch)
+	_, err := core.BuildRecipe(recipePath, arch, containerfilePath)
 	if err != nil {
 		return err
 	}
