@@ -47,6 +47,10 @@ func BuildShellModule(module interface{}, recipe *api.Recipe, cleanup []string, 
 	}
 
 	var cmd strings.Builder
+	_, err := fmt.Fprintf(&cmd, "RUN --mount=source=sources/%s,target=/sources/%s,rw\nRUN ", shellModule.Name, shellModule.Name)
+	if err != nil {
+		panic(fmt.Sprintf("Fprintf failed during build of shell module `%s`", shellModule.Name))
+	}
 	for i, command := range shellModule.Commands {
 		cmd.WriteString(command)
 		if i < len(shellModule.Commands)-1 {
@@ -55,5 +59,5 @@ func BuildShellModule(module interface{}, recipe *api.Recipe, cleanup []string, 
 	}
 	cmd.WriteString(api.GetCleanupSuffix(append(cleanup, shellModule.Cleanup...)))
 
-	return "RUN " + cmd.String(), nil
+	return cmd.String(), nil
 }
