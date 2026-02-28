@@ -79,13 +79,6 @@ func LoadRecipe(path string) (*api.Recipe, error) {
 	recipe.Path = recipePath
 	recipe.ParentPath = filepath.Dir(recipePath)
 
-	// assuming the Containerfile location is relative
-	recipe.Containerfile = filepath.Join(filepath.Dir(recipePath), "Containerfile")
-	err = os.RemoveAll(recipe.Containerfile)
-	if err != nil {
-		return nil, err
-	}
-
 	// we create the sources directory which is the place where
 	// all the sources will be stored and be available to all
 	// the modules
