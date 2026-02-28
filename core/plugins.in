@@ -67,7 +67,7 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 	// of paths to search.
 	var _errors = make([]error, len(allPluginPaths))
 
-	var fail bool = false
+	var _err error = nil
 
 	for index, path := range allPluginPaths {
 		_, err := os.Stat(path)
@@ -75,13 +75,16 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 			_errors = append(_errors, err)
 
 			if index == lastIndex {
-				_errors = append(_errors, fmt.Errorf("error: couldn't find plugin [%s] on your system.\nnote:  Please copy it into one of the searched folders above.", ))
+				_errors = append(_errors, fmt.Errorf("error: couldn't find plugin [%s] on your system.\nnote:  Please copy it into one of the searched folders above."))
 
 				for _, _err := range _errors {
 					fmt.Printf("%v\n", _err)
 				}
+				_err = err
 				break
-			} else continue
+			} else {
+				continue
+			}
 		}
 
 		loadedPlugin, err = purego.Dlopen(path, purego.RTLD_NOW|purego.RTLD_GLOBAL)
@@ -129,7 +132,7 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 		}
 	}
 
-	return loadedPlugin, *pluginInfo, nil
+	return loadedPlugin, *pluginInfo, _err
 }
 
 func LoadBuildPlugin(name string, moduleInterface interface{}, recipe *api.Recipe, cleanup []string, arch string) ([]string, error) {

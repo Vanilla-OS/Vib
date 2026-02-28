@@ -258,17 +258,6 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 			}
 		}
 
-		// SOURCES
-		sourcePath := filepath.Join("sources", stage.Id)
-		err = os.MkdirAll(sourcePath, 0o755)
-		if err != nil {
-			return fmt.Errorf("could not create source path: %w", err)
-		}
-		_, err = containerfile.WriteString(fmt.Sprintf("ADD %s /sources\n", sourcePath))
-		if err != nil {
-			return err
-		}
-
 		for _, cmd := range cmds {
 			err = ChangeWorkingDirectory(cmd.Workdir, containerfile)
 			if err != nil {
@@ -306,12 +295,6 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 			}
 		}
 
-		// DELETE SOURCES
-		_, err = containerfile.WriteString("RUN rm -r /sources\n")
-		if err != nil {
-			return err
-		}
-
 		// ENTRYPOINT
 		err = ChangeWorkingDirectory(stage.Entrypoint.Workdir, containerfile)
 		if err != nil {
@@ -331,8 +314,6 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 				return err
 			}
 		}
-
-		containerfile.WriteString("\n")
 	}
 
 	return nil
@@ -630,6 +611,8 @@ func BuildModule(recipe *api.Recipe, module interface{}, allModules *[]interface
 		commands = append(commands, command...)
 	}
 
+	moduleSourcePath := filepath.Join(recipe.SourcesPath, decodedModule.Name)
+	_ = os.MkdirAll(moduleSourcePath, 0755)
 	sourcePath := filepath.Join(recipe.SourcesPath, decodedModule.Name)
 	stageSourcePath := filepath.Join(recipe.SourcesPath, stageName, decodedModule.Name)
 
