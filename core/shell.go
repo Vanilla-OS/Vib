@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -55,5 +56,5 @@ func BuildShellModule(moduleInterface interface{}, recipe *api.Recipe, cleanup [
 	}
 	cmd += api.GetCleanupSuffix(append(cleanup, module.Cleanup...))
 
-	return "RUN " + cmd, nil
+	return fmt.Sprintf("RUN --mount=source=sources/%s,target=/sources/%s,rw ", module.Name, module.Name) + cmd, nil
 }
