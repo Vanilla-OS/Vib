@@ -4,7 +4,6 @@ go 1.24.0
 
 require (
 	github.com/containers/storage v1.59.1
-	github.com/ebitengine/purego v0.9.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/cobra v1.10.1
 	github.com/vanilla-os/vib/api v0.0.0-20251020162135-a8680c18c354
