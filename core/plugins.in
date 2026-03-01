@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ebitengine/purego"
+	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
 )
 import (
@@ -125,7 +126,13 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 	return loadedPlugin, *pluginInfo, nil
 }
 
-func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe, arch string) ([]string, error) {
+func LoadBuildPlugin(name string, moduleInterface interface{}, recipe *api.Recipe, arch string) ([]string, error) {
+	var module Module
+	err := mapstructure.Decode(moduleInterface, &module)
+	if err != nil {
+		return []string{""}, err
+	}
+
 	if openedBuildPlugins == nil {
 		openedBuildPlugins = make(map[string]Plugin)
 	}
@@ -146,7 +153,7 @@ func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe, arch s
 		openedBuildPlugins[name] = buildModule
 	}
 	fmt.Printf("Using plugin: %s\n", buildModule.Name)
-	moduleJson, err := json.Marshal(module)
+	moduleJson, err := json.Marshal(moduleInterface)
 	if err != nil {
 		return []string{""}, err
 	}
@@ -159,7 +166,7 @@ func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe, arch s
 	if strings.HasPrefix(res, "ERROR:") {
 		return []string{""}, fmt.Errorf("%s", strings.Replace(res, "ERROR: ", "", 1))
 	} else if !buildModule.PluginInfo.UseContainerCmds {
-		return []string{"RUN " + res}, nil
+		return []string{fmt.Sprintf("RUN --mount=source=sources/%s,target=/sources/%s,rw ", module.Name, module.Name) + res}, nil
 	} else {
 		return decodeBuildCmds(res)
 	}
