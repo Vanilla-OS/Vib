@@ -28,7 +28,7 @@ func NewBuildCommand() *cobra.Command {
 		RunE: buildCommand,
 	}
 
-	cmd.Flags().StringP("containerfile", "f", "Containerfile", "Custom containerfile")
+	cmd.Flags().StringP("output", "o", "Containerfile", "Output path for the generated Containerfile, relative to the recipe file")
 	cmd.Flags().StringP("arch", "a", runtime.GOARCH, "target architecture")
 	cmd.Flags().SetInterspersed(false)
 
@@ -48,7 +48,7 @@ func buildCommand(cmd *cobra.Command, args []string) error {
 	var containerfilePath string
 
 	arch, _ = cmd.Flags().GetString("arch")
-	containerfilePath, _ = cmd.Flags().GetString("containerfile")
+	containerfilePath, _ = cmd.Flags().GetString("output")
 
 	if len(args) == 0 {
 		for _, name := range commonNames {
