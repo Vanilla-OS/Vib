@@ -23,7 +23,7 @@ func NewCompileCommand() *cobra.Command {
 		RunE: compileCommand,
 	}
 
-	cmd.Flags().StringP("containerfile", "f", "Containerfile", "Custom containerfile")
+	cmd.Flags().StringP("output", "o", "Containerfile", "Output path for the generated Containerfile, relative to the recipe file")
 	cmd.Flags().StringP("runtime", "r", "", "The runtime to use (docker/podman)")
 	cmd.Flags().SetInterspersed(false)
 
@@ -45,7 +45,7 @@ func compileCommand(cmd *cobra.Command, args []string) error {
 
 	arch = runtime.GOARCH
 	containerRuntime, _ = cmd.Flags().GetString("runtime")
-	containerfilePath, _ = cmd.Flags().GetString("containerfile")
+	containerfilePath, _ = cmd.Flags().GetString("output")
 
 	if len(args) == 0 {
 		for _, name := range commonNames {
