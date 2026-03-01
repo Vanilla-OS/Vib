@@ -36,6 +36,6 @@ jobs:
     - name: Attest generated files
       if: github.repository == 'Vanilla-OS/Vib'
       id: attest
-      uses: actions/attest-build-provenance@v3
+      uses: actions/attest-build-provenance@v4
       with:
         subject-path: 'vib-vendored-deps.tar.gz'
