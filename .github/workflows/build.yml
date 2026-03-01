@@ -43,7 +43,7 @@ jobs:
         GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc make build-plugins
         tar czvf plugins-arm64.tar.gz build/plugins
 
-    - uses: actions/upload-artifact@v6
+    - uses: actions/upload-artifact@v7
       with:
          name: Vib
          path: |
