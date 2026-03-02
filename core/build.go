@@ -92,7 +92,7 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 		// build the modules*
 		// * actually just build the commands that will be used
 		//   in the Containerfile to build the modules
-		cmds, err := BuildModules(recipe, stage.Modules, arch, stage.Id)
+		cmds, err := BuildModules(recipe, stage.Modules, stage.Cleanup, arch, stage.Id)
 		if err != nil {
 			return err
 		}
@@ -192,9 +192,10 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 				return err
 			}
 
+			cleanupSuffix := api.GetCleanupSuffix(stage.Cleanup)
 			for _, cmd := range stage.Runs.Commands {
 				_, err = containerfile.WriteString(
-					fmt.Sprintf("RUN %s\n", cmd),
+					fmt.Sprintf("RUN %s\n", cmd + cleanupSuffix),
 				)
 				if err != nil {
 					return err
@@ -332,7 +333,7 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 }
 
 // Build commands for each module in the recipe
-func BuildModules(recipe *api.Recipe, modules []interface{}, arch string, stageName string) ([]ModuleCommand, error) {
+func BuildModules(recipe *api.Recipe, modules []interface{}, cleanup []string, arch string, stageName string) ([]ModuleCommand, error) {
 	cmds := []ModuleCommand{}
 	for _, moduleInterface := range modules {
 		var module Module
@@ -341,7 +342,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}, arch string, stageN
 			return nil, err
 		}
 
-		cmd, err := BuildModule(recipe, moduleInterface, arch, stageName)
+		cmd, err := BuildModule(recipe, moduleInterface, cleanup, arch, stageName)
 		if err != nil {
 			return nil, err
 		}
@@ -356,7 +357,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}, arch string, stageN
 	return cmds, nil
 }
 
-func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe, arch string, stageName string) (string, error) {
+func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe, cleanup []string, arch string, stageName string) (string, error) {
 	var include IncludesModule
 	err := mapstructure.Decode(moduleInterface, &include)
 	if err != nil {
@@ -396,7 +397,7 @@ func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe, arch s
 			return "", err
 		}
 
-		buildModule, err := BuildModule(recipe, includeModule, arch, stageName)
+		buildModule, err := BuildModule(recipe, includeModule, cleanup, arch, stageName)
 		if err != nil {
 			return "", err
 		}
@@ -406,7 +407,7 @@ func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe, arch s
 }
 
 // Build a command string for the given module in the recipe
-func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string, stageName string) ([]string, error) {
+func BuildModule(recipe *api.Recipe, moduleInterface interface{}, cleanup []string, arch string, stageName string) ([]string, error) {
 	var module Module
 	err := mapstructure.Decode(moduleInterface, &module)
 	if err != nil {
@@ -419,7 +420,7 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string, s
 
 	if len(module.Modules) > 0 {
 		for _, nestedModule := range module.Modules {
-			buildModule, err := BuildModule(recipe, nestedModule, arch, stageName)
+			buildModule, err := BuildModule(recipe, nestedModule, append(cleanup, module.Cleanup...), arch, stageName)
 			if err != nil {
 				return []string{""}, err
 			}
@@ -429,19 +430,19 @@ func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string, s
 
 	switch module.Type {
 	case "shell":
-		command, err := BuildShellModule(moduleInterface, recipe, arch)
+		command, err := BuildShellModule(moduleInterface, recipe, cleanup, arch)
 		if err != nil {
 			return []string{""}, err
 		}
 		commands = append(commands, command)
 	case "includes":
-		command, err := buildIncludesModule(moduleInterface, recipe, arch, stageName)
+		command, err := buildIncludesModule(moduleInterface, recipe, cleanup, arch, stageName)
 		if err != nil {
 			return []string{""}, err
 		}
 		commands = append(commands, command)
 	default:
-		command, err := LoadBuildPlugin(module.Type, moduleInterface, recipe, arch)
+		command, err := LoadBuildPlugin(module.Type, moduleInterface, recipe, cleanup, arch)
 		if err != nil {
 			return []string{""}, err
 		}

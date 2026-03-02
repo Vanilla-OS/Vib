@@ -10,6 +10,7 @@ type Module struct {
 	Type    string `json:"type"`
 	Modules []map[string]interface{}
 	Content []byte // The entire module unparsed as a []byte, used by plugins
+	Cleanup []string `json:"cleanup"`
 }
 
 // Configuration for finalization steps
