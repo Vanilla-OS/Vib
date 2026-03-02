@@ -98,7 +98,7 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 		// build the modules*
 		// * actually just build the commands that will be used
 		//   in the Containerfile to build the modules
-		cmds, err := BuildModules(recipe, stage.Modules, arch, stage.Id)
+		cmds, err := BuildModules(recipe, stage.Modules, stage.Cleanup, arch, stage.Id)
 		if err != nil {
 			return err
 		}
@@ -198,9 +198,10 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 				return err
 			}
 
+			cleanupSuffix := api.GetCleanupSuffix(stage.Cleanup)
 			for _, cmd := range stage.Runs.Commands {
 				_, err = containerfile.WriteString(
-					fmt.Sprintf("RUN %s\n", cmd),
+					fmt.Sprintf("RUN %s\n", cmd+cleanupSuffix),
 				)
 				if err != nil {
 					return err
@@ -425,7 +426,7 @@ func CollectModulesRecursively(modules []interface{}, allModules *[]interface{},
 }
 
 // Build commands for each module in the recipe
-func BuildModules(recipe *api.Recipe, modules []interface{}, arch string, stageName string) ([]ModuleCommand, error) {
+func BuildModules(recipe *api.Recipe, modules []interface{}, cleanup []string, arch string, stageName string) ([]ModuleCommand, error) {
 	var _errors []error
 	var allModules []interface{}
 	modNameOccursInMod := make(map[string][]int)
@@ -435,7 +436,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}, arch string, stageN
 	cmds := []ModuleCommand{}
 
 	for _, moduleInterface := range modules {
-		decodedModule, cmd, err := BuildModule(recipe, moduleInterface, &allModules, &modNameOccursInMod, arch, stageName, &_errors)
+		decodedModule, cmd, err := BuildModule(recipe, moduleInterface, &allModules, &modNameOccursInMod, cleanup, arch, stageName, &_errors)
 		if err != nil {
 			if !(decodedModule.Type == "includes" && (errors.Is(err, os.ErrNotExist) || errors.Is(err, fs.ErrNotExist))) {
 				_errors = append(_errors, err)
@@ -486,7 +487,7 @@ func BuildModules(recipe *api.Recipe, modules []interface{}, arch string, stageN
 	return cmds, nil
 }
 
-func BuildIncludesModule(recipe *api.Recipe, module interface{}, allModules *[]interface{}, occurances *map[string][]int, arch string, stageName string, _errors *[]error) (string, error) {
+func BuildIncludesModule(recipe *api.Recipe, module interface{}, allModules *[]interface{}, occurances *map[string][]int, cleanup []string, arch string, stageName string, _errors *[]error) (string, error) {
 	// Note: errors is called _errors here because this function needs the errors package.
 
 	includeDepth++
@@ -549,7 +550,7 @@ func BuildIncludesModule(recipe *api.Recipe, module interface{}, allModules *[]i
 
 		var _errors []error // temporary
 
-		decodedModule, cmd, _err := BuildModule(recipe, generatedModule, allModules, occurances, arch, stageName, &_errors)
+		decodedModule, cmd, _err := BuildModule(recipe, generatedModule, allModules, occurances, cleanup, arch, stageName, &_errors)
 		if _err != nil {
 			// _errors = append(_errors, _err)
 			ExhaustCollectedErrors(&_errors)
@@ -569,7 +570,7 @@ func BuildIncludesModule(recipe *api.Recipe, module interface{}, allModules *[]i
 		modulesLeftToBuild := len(*allModules) - includeModuleIdx
 
 		for i := modulesLeftToBuild; i > 0; i-- {
-			_, buildModule, _err := BuildModule(recipe, (*allModules)[len(*allModules)-i], allModules, occurances, arch, stageName, &_errors)
+			_, buildModule, _err := BuildModule(recipe, (*allModules)[len(*allModules)-i], allModules, occurances, cleanup, arch, stageName, &_errors)
 			if _err != nil {
 				ExhaustCollectedErrors(&_errors)
 				fmt.Printf("%d/%d Building [%s] module of submodule `%s` included in `%s`: failed\n", i, len(decodedModule.Modules), decodedModule.Type, decodedModule.Name, includeModule.Name)
@@ -592,7 +593,7 @@ func BuildIncludesModule(recipe *api.Recipe, module interface{}, allModules *[]i
 }
 
 // Build a command string for the given module in the recipe
-func BuildModule(recipe *api.Recipe, module interface{}, allModules *[]interface{}, occurances *map[string][]int, arch string, stageName string, _errors *[]error) (Module, []string, error) {
+func BuildModule(recipe *api.Recipe, module interface{}, allModules *[]interface{}, occurances *map[string][]int, cleanup []string, arch string, stageName string, _errors *[]error) (Module, []string, error) {
 	decodedModule, err := DecodeModuleToGenericModule(module, _errors)
 	if err != nil {
 		return decodedModule, []string{""}, err
@@ -607,13 +608,13 @@ func BuildModule(recipe *api.Recipe, module interface{}, allModules *[]interface
 
 	switch decodedModule.Type {
 	case "shell":
-		command, err := BuildShellModule(module, recipe, arch)
+		command, err := BuildShellModule(module, recipe, cleanup, arch)
 		if err != nil {
 			return decodedModule, []string{""}, err
 		}
 		commands = append(commands, command)
 	case "includes":
-		command, err := BuildIncludesModule(recipe, module, allModules, occurances, arch, stageName, _errors)
+		command, err := BuildIncludesModule(recipe, module, allModules, occurances, cleanup, arch, stageName, _errors)
 		if err != nil {
 			return decodedModule, []string{""}, err
 		}
@@ -622,7 +623,7 @@ func BuildModule(recipe *api.Recipe, module interface{}, allModules *[]interface
 		err := fmt.Errorf("error: module `%s` tried to use a plugin but specified no name", decodedModule.Name)
 		return decodedModule, []string{""}, err
 	default:
-		command, err := LoadBuildPlugin(decodedModule.Type, module, recipe, arch)
+		command, err := LoadBuildPlugin(decodedModule.Type, module, recipe, cleanup, arch)
 		if err != nil {
 			return decodedModule, []string{""}, err
 		}

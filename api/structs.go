@@ -44,6 +44,7 @@ type Stage struct {
 	Cmd         Cmd               `json:"cmd"`
 	Modules     []interface{}     `json:"modules"`
 	Entrypoint  Entrypoint
+	Cleanup     []string          `json:"cleanup"`
 }
 
 type PluginType int

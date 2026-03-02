@@ -14,12 +14,13 @@ type ShellModule struct {
 	Type     string `json:"type"`
 	Sources  []api.Source
 	Commands []string
+	Cleanup  []string
 }
 
 // Build shell module commands and return them as a single string
 //
 // Returns: Concatenated shell commands or an error if any step fails
-func BuildShellModule(module interface{}, recipe *api.Recipe, arch string) (string, error) {
+func BuildShellModule(module interface{}, recipe *api.Recipe, cleanup []string, arch string) (string, error) {
 	var shellModule ShellModule
 
 	if err := mapstructure.Decode(module, &shellModule); err != nil {
@@ -52,6 +53,7 @@ func BuildShellModule(module interface{}, recipe *api.Recipe, arch string) (stri
 			cmd.WriteString(" && ")
 		}
 	}
+	cmd.WriteString(api.GetCleanupSuffix(append(cleanup, shellModule.Cleanup...)))
 
 	return "RUN " + cmd.String(), nil
 }
