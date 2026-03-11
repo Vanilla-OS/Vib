@@ -10,8 +10,8 @@ import (
 	"github.com/vanilla-os/vib/api"
 )
 import (
-	"errors"
 	"encoding/base64"
+	"errors"
 	"os"
 	"syscall"
 )
@@ -33,10 +33,12 @@ func decodeBuildCmds(cmds string) ([]string, error) {
 }
 
 func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uintptr, api.PluginInfo, error) {
-	fmt.Println("Loading new plugin")
+	if len(name) == 0 {
+		panic("Cannot load a module without its name. Needs a fix in the codebase.")
+	}
 
+	fmt.Println("Loading plugin [%s]", name)
 	projectPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
-
 	installPrefixPath := fmt.Sprintf("%INSTALLPREFIX%/share/vib/plugins/%s.so", name)
 
 	globalPluginPathsEnv, isXDDDefined := os.LookupEnv("XDG_DATA_DIRS")
@@ -64,24 +66,28 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 	// of paths to search.
 	var _errors = make([]error, len(allPluginPaths))
 
+	var fail bool = false
+
 	for index, path := range allPluginPaths {
 		_, err := os.Stat(path)
 		if err != nil {
 			_errors = append(_errors, err)
-			if index == lastIndex {
-				// If the last available path doesn't exist,
-				// panic with all the error messages.
-				panic(errors.Join(_errors...))
-			}
 
-			continue
+			if index == lastIndex {
+				_errors = append(_errors, fmt.Errorf("error: couldn't find plugin [%s] on your system.\nnote:  Please copy it into one of the searched folders above.", ))
+
+				for _, _err := range _errors {
+					fmt.Printf("%v\n", _err)
+				}
+				break
+			} else continue
 		}
 
 		loadedPlugin, err = purego.Dlopen(path, purego.RTLD_NOW|purego.RTLD_GLOBAL)
 		if err != nil {
 			_errors = append(_errors, err)
 			if index == lastIndex {
-				// If the last available plugin can't be loaded,
+				// If the last available plugin path can't be loaded,
 				// panic with all the error messages.
 				panic(errors.Join(_errors...))
 			}
@@ -145,7 +151,7 @@ func LoadBuildPlugin(name string, module interface{}, recipe *api.Recipe, arch s
 		buildModule.PluginInfo = pluginInfo
 		openedBuildPlugins[name] = buildModule
 	}
-	fmt.Printf("Using plugin: %s\n", buildModule.Name)
+	fmt.Printf("Using plugin [%s]\n", buildModule.Name)
 	moduleJson, err := json.Marshal(module)
 	if err != nil {
 		return []string{""}, err

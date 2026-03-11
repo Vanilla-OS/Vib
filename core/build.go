@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,11 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/vanilla-os/vib/api"
 )
+
+var modulesCount int
+var includeDepth int
+var maxIncludeDepth = 1
+var errorCount = 0
 
 // Add a WORKDIR instruction to the containerfile
 func ChangeWorkingDirectory(workdir string, containerfile *os.File) error {
@@ -46,7 +52,7 @@ func BuildRecipe(recipePath string, arch string, containerfilePath string) (api.
 		return api.Recipe{}, err
 	}
 
-	fmt.Printf("Building recipe %s\n", recipe.Name)
+	fmt.Printf("Building recipe `%s`\n", recipe.Name)
 
 	// assuming the Containerfile location is relative
 	if len(containerfilePath) == 0 {
@@ -331,44 +337,177 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 	return nil
 }
 
+func ExhaustCollectedErrors(_errors *[]error) int {
+	length := len(*_errors)
+	if length == 0 {
+		return 0
+	}
+
+	for _, err := range *_errors {
+		fmt.Printf("%v\n", err)
+	}
+
+	*_errors = nil
+	errorCount += length
+	return length
+}
+
+func MapSlicesToInterfaceSlices(inter []map[string]interface{}) []interface{} {
+	result := make([]interface{}, len(inter))
+	for i, m := range inter {
+		result[i] = m
+	}
+	return result
+}
+
+func MapToInterfaceSlices(m map[string]interface{}) []interface{} {
+	panic("If you need to use this function, you're likely handling module interfaces wrong")
+	// result := make([]interface{}, 0, len(m))
+	// for _, v := range m {
+	// 	result = append(result, v)
+	// }
+	// return result
+}
+
+func DecodeModuleToGenericModule(module interface{}, errors *[]error) (Module, error) {
+	var decodedModule Module
+	var customErr error = nil
+	defaultErr := mapstructure.Decode(module, &decodedModule)
+
+	if defaultErr != nil {
+		customErr = fmt.Errorf("error: yaml decode error: failed to decode module to generic module with further error: %v", defaultErr)
+		(*errors) = append((*errors), customErr)
+	}
+
+	return decodedModule, customErr
+}
+
+func CollectModulesRecursively(modules []interface{}, allModules *[]interface{}, occurances *map[string][]int, errors *[]error) {
+	for _, module := range modules {
+		modulesCount++
+
+		decodedModule, err := DecodeModuleToGenericModule(module, errors)
+		if err != nil {
+			continue
+		}
+
+		c := 0
+		if decodedModule.Name == "" {
+			c |= 0b10
+		}
+		if decodedModule.Type == "" {
+			c |= 0b01
+		}
+
+		switch c {
+		case 0b11:
+			fmt.Printf("error: module name and type cannot be == \"\"")
+			continue
+		case 0b10:
+			fmt.Printf("error: module name cannot be == \"\"")
+			continue
+		case 0b01:
+			fmt.Printf("error: module type cannot be == \"\"")
+			continue
+		case 0b00:
+			// fallthrough
+		}
+
+		*allModules = append(*allModules, module)
+		(*occurances)[decodedModule.Name] = append((*occurances)[decodedModule.Name], modulesCount)
+
+		ExhaustCollectedErrors(errors)
+
+		if len(decodedModule.Modules) > 0 {
+			CollectModulesRecursively(MapSlicesToInterfaceSlices(decodedModule.Modules), allModules, occurances, errors)
+		}
+	}
+}
+
 // Build commands for each module in the recipe
 func BuildModules(recipe *api.Recipe, modules []interface{}, arch string, stageName string) ([]ModuleCommand, error) {
+	var _errors []error
+	var allModules []interface{}
+	modNameOccursInMod := make(map[string][]int)
+
+	CollectModulesRecursively(modules, &allModules, &modNameOccursInMod, &_errors)
+
 	cmds := []ModuleCommand{}
+
 	for _, moduleInterface := range modules {
-		var module Module
-		err := mapstructure.Decode(moduleInterface, &module)
+		decodedModule, cmd, err := BuildModule(recipe, moduleInterface, &allModules, &modNameOccursInMod, arch, stageName, &_errors)
 		if err != nil {
-			return nil, err
+			if !(decodedModule.Type == "includes" && (errors.Is(err, os.ErrNotExist) || errors.Is(err, fs.ErrNotExist))) {
+				_errors = append(_errors, err)
+			}
+			ExhaustCollectedErrors(&_errors)
+			fmt.Printf("Building [%s] module `%s`: failed\n", decodedModule.Type, decodedModule.Name)
+
+			continue
 		}
 
-		cmd, err := BuildModule(recipe, moduleInterface, arch, stageName)
-		if err != nil {
-			return nil, err
-		}
+		ExhaustCollectedErrors(&_errors)
 
 		cmds = append(cmds, ModuleCommand{
-			Name:    module.Name,
+			Name:    decodedModule.Name,
 			Command: append(cmd, ""), // add empty entry to ensure proper newline in Containerfile
-			Workdir: module.Workdir,
+			Workdir: decodedModule.Workdir,
 		})
+	}
+
+	for _, occurancesInMods := range modNameOccursInMod {
+		occurances := len(occurancesInMods)
+
+		if occurances > 1 {
+			decodedModule, err := DecodeModuleToGenericModule(allModules[occurancesInMods[0]], &_errors)
+			if err != nil {
+				panic("This module was previously decoded but now fails to. Needs fix in vib codebase.")
+			}
+			_errors = append(_errors, fmt.Errorf("error: found ambiguous module with name `%s` %d times:", decodedModule.Name, occurances))
+
+			for j := range occurances {
+				if j > 0 {
+					decodedModule, err = DecodeModuleToGenericModule(allModules[occurancesInMods[j]], &_errors)
+				} else if err != nil {
+					continue
+				}
+				_errors = append(_errors, fmt.Errorf("note:                     found in file `%s`", decodedModule.Workdir))
+				// TODO: This is not the correct variable to get the file path of the module, which we should display.
+			}
+			ExhaustCollectedErrors(&_errors)
+			errorCount += occurances
+		}
+	}
+
+	if errorCount > 0 {
+		return nil, fmt.Errorf("Encoutered %d errors while building %d modules\n", errorCount, modulesCount)
 	}
 
 	return cmds, nil
 }
 
-func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe, arch string, stageName string) (string, error) {
-	var include IncludesModule
-	err := mapstructure.Decode(moduleInterface, &include)
-	if err != nil {
-		return "", err
+func BuildIncludesModule(recipe *api.Recipe, module interface{}, allModules *[]interface{}, occurances *map[string][]int, arch string, stageName string, _errors *[]error) (string, error) {
+	// Note: errors is called _errors here because this function needs the errors package.
+
+	includeDepth++
+	defer func() { includeDepth-- }()
+
+	var includeModule IncludesModule
+	if _err := mapstructure.Decode(module, &includeModule); _err != nil {
+		return "", _err
 	}
 
-	if len(include.Includes) == 0 {
-		return "", errors.New("includes module must have at least one module to include")
+	if includeDepth > 1 {
+		return "", fmt.Errorf("[includes] module nesting is currently limited to `%d` layers.\n       Found includes module in `%s`\n", maxIncludeDepth, includeModule.Name)
+	}
+
+	if len(includeModule.Includes) == 0 {
+		return "", fmt.Errorf("[includes] module `%s` must have at least one module to include", includeModule.Name)
 	}
 
 	var commands []string
-	for _, include := range include.Includes {
+	var err error = nil
+	for _, include := range includeModule.Includes {
 		var modulePath string
 
 		// in case of a remote include, we need to download the
@@ -391,74 +530,120 @@ func buildIncludesModule(moduleInterface interface{}, recipe *api.Recipe, arch s
 			modulePath = filepath.Join(recipe.ParentPath, include)
 		}
 
-		includeModule, err := GenModule(modulePath)
-		if err != nil {
-			return "", err
+		generatedModule, _err := GenModule(modulePath)
+
+		if errors.Is(_err, os.ErrNotExist) || errors.Is(_err, fs.ErrNotExist) {
+			customErr := fmt.Errorf("error: [%s] module `%s` includes\n       `%s`,\n       which doesn't exist", includeModule.Type, includeModule.Name, modulePath)
+
+			(*_errors) = append(*_errors, customErr)
+			(*_errors) = append(*_errors, _err)
+
+			err = _err
+			continue
+		} else if _err != nil {
+			(*_errors) = append(*_errors, _err)
+			return "", _err
 		}
 
-		buildModule, err := BuildModule(recipe, includeModule, arch, stageName)
-		if err != nil {
-			return "", err
+		ExhaustCollectedErrors(_errors)
+
+		var _errors []error // temporary
+
+		decodedModule, cmd, _err := BuildModule(recipe, generatedModule, allModules, occurances, arch, stageName, &_errors)
+		if _err != nil {
+			// _errors = append(_errors, _err)
+			ExhaustCollectedErrors(&_errors)
+			err = _err
+			continue
 		}
-		commands = append(commands, buildModule...)
+
+		commands = append(commands, cmd...)
+		*allModules = append(*allModules, decodedModule)
+		(*occurances)[decodedModule.Name] = append((*occurances)[decodedModule.Name], modulesCount)
+
+		fmt.Printf("Building all %d submodules of [%s] module `%s` included in `%s`\n", len(decodedModule.Modules), decodedModule.Type, decodedModule.Name, includeModule.Name)
+		var failed bool = false
+		includeModuleIdx := len(*allModules)
+		CollectModulesRecursively(MapSlicesToInterfaceSlices(decodedModule.Modules), allModules, occurances, &_errors)
+
+		modulesLeftToBuild := len(*allModules) - includeModuleIdx
+
+		for i := modulesLeftToBuild; i > 0; i-- {
+			_, buildModule, _err := BuildModule(recipe, (*allModules)[len(*allModules)-i], allModules, occurances, arch, stageName, &_errors)
+			if _err != nil {
+				ExhaustCollectedErrors(&_errors)
+				fmt.Printf("%d/%d Building [%s] module of submodule `%s` included in `%s`: failed\n", i, len(decodedModule.Modules), decodedModule.Type, decodedModule.Name, includeModule.Name)
+				failed = true
+				err = _err
+				continue
+			}
+
+			commands = append(commands, buildModule...)
+		}
+
+		ExhaustCollectedErrors(&_errors)
+		if failed {
+			fmt.Printf("Building all %d submodules of [%s] module `%s` included in `%s`: failed\n", len(decodedModule.Modules), decodedModule.Type, decodedModule.Name, includeModule.Name)
+		} else {
+			fmt.Printf("Buildung all %d submodules of [%s] module `%s` included in `%s`: success\n", len(decodedModule.Modules), decodedModule.Type, decodedModule.Name, includeModule.Name)
+		}
 	}
-	return strings.Join(commands, "\n"), nil
+	return strings.Join(commands, "\n"), err
 }
 
 // Build a command string for the given module in the recipe
-func BuildModule(recipe *api.Recipe, moduleInterface interface{}, arch string, stageName string) ([]string, error) {
-	var module Module
-	err := mapstructure.Decode(moduleInterface, &module)
+func BuildModule(recipe *api.Recipe, module interface{}, allModules *[]interface{}, occurances *map[string][]int, arch string, stageName string, _errors *[]error) (Module, []string, error) {
+	decodedModule, err := DecodeModuleToGenericModule(module, _errors)
 	if err != nil {
-		return []string{""}, err
+		return decodedModule, []string{""}, err
 	}
 
-	fmt.Printf("Building module [%s] of type [%s]\n", module.Name, module.Type)
+	commands := []string{fmt.Sprintf("\n# Begin Module %s - %s", decodedModule.Name, decodedModule.Type)}
+	defer func() {
+		commands = append(commands, fmt.Sprintf("# End Module %s - %s\n", decodedModule.Name, decodedModule.Type))
+	}()
 
-	commands := []string{fmt.Sprintf("\n# Begin Module %s - %s", module.Name, module.Type)}
+	fmt.Printf("Building [%s] module `%s`\n", decodedModule.Type, decodedModule.Name)
 
-	if len(module.Modules) > 0 {
-		for _, nestedModule := range module.Modules {
-			buildModule, err := BuildModule(recipe, nestedModule, arch, stageName)
-			if err != nil {
-				return []string{""}, err
-			}
-			commands = append(commands, buildModule...)
-		}
-	}
-
-	switch module.Type {
+	switch decodedModule.Type {
 	case "shell":
-		command, err := BuildShellModule(moduleInterface, recipe, arch)
+		command, err := BuildShellModule(module, recipe, arch)
 		if err != nil {
-			return []string{""}, err
+			return decodedModule, []string{""}, err
 		}
 		commands = append(commands, command)
 	case "includes":
-		command, err := buildIncludesModule(moduleInterface, recipe, arch, stageName)
+		command, err := BuildIncludesModule(recipe, module, allModules, occurances, arch, stageName, _errors)
 		if err != nil {
-			return []string{""}, err
+			return decodedModule, []string{""}, err
 		}
 		commands = append(commands, command)
+	case "":
+		err := fmt.Errorf("error: module `%s` tried to use a plugin but specified no name", decodedModule.Name)
+		return decodedModule, []string{""}, err
 	default:
-		command, err := LoadBuildPlugin(module.Type, moduleInterface, recipe, arch)
+		command, err := LoadBuildPlugin(decodedModule.Type, module, recipe, arch)
 		if err != nil {
-			return []string{""}, err
+			return decodedModule, []string{""}, err
 		}
 		commands = append(commands, command...)
 	}
 
-	sourcePath := filepath.Join(recipe.SourcesPath, module.Name)
-	stageSourcePath := filepath.Join(recipe.SourcesPath, stageName, module.Name)
+	sourcePath := filepath.Join(recipe.SourcesPath, decodedModule.Name)
+	stageSourcePath := filepath.Join(recipe.SourcesPath, stageName, decodedModule.Name)
+
 	_ = os.MkdirAll(sourcePath, 0o777)
 	_ = os.MkdirAll(filepath.Dir(stageSourcePath), 0o777)
+
 	err = os.Rename(sourcePath, stageSourcePath)
 	if err != nil {
-		return []string{}, fmt.Errorf("could not move source: %w", err)
+		if errors.Is(err, os.ErrExist) || errors.Is(err, fs.ErrExist) {
+			fmt.Printf("Multiple module name error!\n")
+			return decodedModule, []string{}, nil
+		}
+		return decodedModule, []string{}, fmt.Errorf("could not rename `%s` to `%s`: %w\n", sourcePath, stageSourcePath, err)
 	}
 
-	commands = append(commands, fmt.Sprintf("# End Module %s - %s\n", module.Name, module.Type))
-
-	fmt.Printf("Module [%s] built successfully\n", module.Name)
-	return commands, nil
+	fmt.Printf("Building [%s] module `%s`: success\n", decodedModule.Type, decodedModule.Name)
+	return decodedModule, commands, nil
 }

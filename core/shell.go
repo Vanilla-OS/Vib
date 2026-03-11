@@ -1,7 +1,7 @@
 package core
 
 import (
-	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/mitchellh/mapstructure"
@@ -19,21 +19,21 @@ type ShellModule struct {
 // Build shell module commands and return them as a single string
 //
 // Returns: Concatenated shell commands or an error if any step fails
-func BuildShellModule(moduleInterface interface{}, recipe *api.Recipe, arch string) (string, error) {
-	var module ShellModule
-	err := mapstructure.Decode(moduleInterface, &module)
-	if err != nil {
+func BuildShellModule(module interface{}, recipe *api.Recipe, arch string) (string, error) {
+	var shellModule ShellModule
+
+	if err := mapstructure.Decode(module, &shellModule); err != nil {
 		return "", err
 	}
 
-	for _, source := range module.Sources {
+	for _, source := range shellModule.Sources {
 		if api.TestArch(source.OnlyArches, arch) {
 			if strings.TrimSpace(source.Type) != "" {
-				err := api.DownloadSource(recipe, source, module.Name)
+				err := api.DownloadSource(recipe, source, shellModule.Name)
 				if err != nil {
 					return "", err
 				}
-				err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, source, module.Name)
+				err = api.MoveSource(recipe.DownloadsPath, recipe.SourcesPath, source, shellModule.Name)
 				if err != nil {
 					return "", err
 				}
@@ -41,17 +41,17 @@ func BuildShellModule(moduleInterface interface{}, recipe *api.Recipe, arch stri
 		}
 	}
 
-	if len(module.Commands) == 0 {
-		return "", errors.New("no commands specified")
+	if len(shellModule.Commands) == 0 {
+		return "", fmt.Errorf("no commands specified")
 	}
 
-	cmd := ""
-	for i, command := range module.Commands {
-		cmd += command
-		if i < len(module.Commands)-1 {
-			cmd += " && "
+	var cmd strings.Builder
+	for i, command := range shellModule.Commands {
+		cmd.WriteString(command)
+		if i < len(shellModule.Commands)-1 {
+			cmd.WriteString(" && ")
 		}
 	}
 
-	return "RUN " + cmd, nil
+	return "RUN " + cmd.String(), nil
 }
