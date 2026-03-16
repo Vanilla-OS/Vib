@@ -201,7 +201,7 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 			cleanupSuffix := api.GetCleanupSuffix(stage.Cleanup)
 			for _, cmd := range stage.Runs.Commands {
 				_, err = containerfile.WriteString(
-					fmt.Sprintf("RUN %s\n", cmd+cleanupSuffix),
+					fmt.Sprintf("RUN %s\n", cmd + cleanupSuffix),
 				)
 				if err != nil {
 					return err
