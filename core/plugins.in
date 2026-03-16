@@ -38,7 +38,7 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 		panic("Cannot load a module without its name. Needs a fix in the codebase.")
 	}
 
-	fmt.Println("Loading plugin [%s]", name)
+	fmt.Printf("Loading plugin [%s]", name)
 	projectPluginPath := fmt.Sprintf("%s/%s.so", recipe.PluginPath, name)
 	installPrefixPath := fmt.Sprintf("%INSTALLPREFIX%/share/vib/plugins/%s.so", name)
 
@@ -75,7 +75,7 @@ func LoadPlugin(name string, plugintype api.PluginType, recipe *api.Recipe) (uin
 			_errors = append(_errors, err)
 
 			if index == lastIndex {
-				_errors = append(_errors, fmt.Errorf("error: couldn't find plugin [%s] on your system.\nnote:  Please copy it into one of the searched folders above."))
+				_errors = append(_errors, fmt.Errorf("error: couldn't find plugin [%s] on your system.\nnote:  Please copy it into one of the searched folders above.", name))
 
 				for _, _err := range _errors {
 					fmt.Printf("%v\n", _err)

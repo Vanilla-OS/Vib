@@ -201,7 +201,7 @@ func BuildContainerfile(recipe *api.Recipe, arch string) error {
 			cleanupSuffix := api.GetCleanupSuffix(stage.Cleanup)
 			for _, cmd := range stage.Runs.Commands {
 				_, err = containerfile.WriteString(
-					fmt.Sprintf("RUN %s\n", cmd + cleanupSuffix),
+					fmt.Sprintf("RUN %s\n", cmd+cleanupSuffix),
 				)
 				if err != nil {
 					return err
@@ -498,6 +498,7 @@ func BuildIncludesModule(recipe *api.Recipe, module interface{}, allModules *[]i
 			fmt.Printf("Downloading recipe from %s\n", include)
 			modulePath, err = downloadRecipe(include)
 			if err != nil {
+				*_errors = append(*_errors, err)
 				return "", err
 			}
 		} else if followsGhPattern(include) {
@@ -506,7 +507,8 @@ func BuildIncludesModule(recipe *api.Recipe, module interface{}, allModules *[]i
 			fmt.Printf("Downloading recipe from %s\n", include)
 			modulePath, err = downloadGhRecipe(include)
 			if err != nil {
-				return "", err
+				*_errors = append(*_errors, err)
+				continue
 			}
 		} else {
 			modulePath = filepath.Join(recipe.ParentPath, include)
