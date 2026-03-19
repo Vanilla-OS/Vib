@@ -6,6 +6,7 @@ Listed: true
 Authors:
   - mirkobrombin
   - axtloss
+  - NN708
 Tags:
   - github
   - build
@@ -37,7 +38,7 @@ Each build plugin must implement the following functions:
 | Function Name | Arguments | Return Type | Description |
 |---------------|-----------|-------------|-------------|
 | `PlugInfo` |  | `char*` | Returns information about the plugin, typically as a JSON string. |
-| `BuildModule` | `moduleInterface *char`, `recipeInterface *char` | `char*` | The main entry point for the plugin. Called by `vib` to retrieve the command to be executed. The command is returned as a JSON string. |
+| `BuildModule` | `char* moduleInterface`, `char* recipeInterface`, `char* arch` | `char*` | The main entry point for the plugin. Called by `vib` to retrieve the command to be executed. The command is returned as a JSON string. |
 
 ### char* PlugInfo()
 
@@ -45,7 +46,7 @@ This function returns information about the plugin, most notably the type of plu
 
 Plugins that do not define this function are considered deprecated, while they still work, support may be dropped in future releases.
 
-The function returns the `api.PluginInfo` struct serialised as a json:
+The function returns the `api.PluginInfo` struct serialised as a JSON:
 
 ```json
 {
@@ -67,7 +68,7 @@ char* PlugInfo() {
 }
 ```
 
-### char* BuildModule(char* moduleInterface, char\* recipeInterface)
+### char* BuildModule(char\* moduleInterface, char\* recipeInterface, char\* arch)
 
 This is the entry point for plugins that vib calls. It returns a string prefixed with `ERROR:` if an error occurs, otherwise it returns the commands generated for the module.
 
@@ -78,7 +79,7 @@ The `recipeInterface` argument is a json serialised version of the entire recipe
 example function:
 
 ```C
-char* BuildModule(char* moduleInterface, char* recipeInterface) {
+char* BuildModule(char* moduleInterface, char* recipeInterface, char* arch) {
 	return "echo HAII";
 }
 ```
@@ -102,8 +103,8 @@ echo "useradd -m ${username} && echo '${username}' | passwd ${username} --stdin"
 
 ## Plugin examples
 
-We provide a plugin template for plugins written in go in the [vib-plugin repo](https://github.com/Vanilla-OS/vib-plugin).
+We provide a plugin template for plugins written in Go in the [vib-plugin repo](https://github.com/Vanilla-OS/vib-plugin).
 
-Example plugins written in languages other than go can be found in axtlos' [vib-plugins repo](https://github.com/axtloss/vib-plugins/)
+Example plugins written in languages other than Go can be found in axtlos' [vib-plugins repo](https://github.com/axtloss/vib-plugins/)
 
 A Rust crate for making plugins can be found in stoorps' [vib-rs repo](https://github.com/stoorps/vib-rs), with an example implementation [here](https://github.com/stoorps/vib-rs/tree/main/examples/example-plugin).
