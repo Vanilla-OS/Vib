@@ -6,6 +6,7 @@ Listed: true
 Authors:
   - mirkobrombin
   - kbdharun
+  - NN708
 Tags:
   - modules
 ---
@@ -77,12 +78,12 @@ sources:
 modules:
   - name: apx-gui-deps-install
     type: apt
-    source:
-      packages:
-        - build-essential
-        - gettext
-        - libadwaita-1-dev
-        - meson
+    sources:
+      - packages:
+          - build-essential
+          - gettext
+          - libadwaita-1-dev
+          - meson
 ```
 
 Supported fields for a git source are:

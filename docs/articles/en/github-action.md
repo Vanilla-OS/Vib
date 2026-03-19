@@ -6,6 +6,7 @@ Listed: true
 Authors:
   - mirkobrombin
   - kbdharun
+  - NN708
 Tags:
   - github
   - build
@@ -30,11 +31,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: vanilla-os/vib-gh-action@v1.0.0
+      - uses: vanilla-os/vib-gh-action@v1.1.0
         with:
-          recipe: "vib.yml"
+          recipe: "recipe.yml"
           plugins: "org/repo:tag, org/repo:tag"
 
       - name: Build the Docker image
@@ -46,10 +47,10 @@ Let's break down the workflow file:
 - `name`: The name of the workflow.
 - `on`: The events that trigger the workflow. In this case, the workflow runs on every push to the `main` branch and when manually triggered.
 - `jobs`: A workflow can contain one or more jobs. In this case, there is only one job called `build`.
-- `runs-on`: The type of machine to run the job on. In this case, the job runs on the latest version of Ubuntu; check [here](https://github.com/actions/runner-images?tab=readme-ov-file#available-images) for the available machine types.
+- `runs-on`: The type of machine to run the job on. In this case, the job runs on the latest version of Ubuntu; check [here](https://docs.github.com/en/actions/reference/runners/github-hosted-runners) for the available machine types.
 - `steps`: The sequence of tasks to run in the job.
-  - `actions/checkout@v4`: A standard action to check out the repository.
-  - `vanilla-os/vib-gh-action@v0.7.0`: The Vib GitHub Action to build the image. The `with` section specifies the recipe file and additional plugins to use.
+  - `actions/checkout@v6`: A standard action to check out the repository.
+  - `vanilla-os/vib-gh-action@v1.1.0`: The Vib GitHub Action to build the image. The `with` section specifies the recipe file and additional plugins to use.
   - `run`: Contains a standard command to build the Docker image. The `--tag` option specifies the name and tag of the image, in this case, the tag is `ghcr.io/your_org/your_image:main`, you can change it according to your needs.
 
 ### Using Custom Plugins
@@ -58,9 +59,9 @@ If you are using custom Vib plugins in your recipe, you can include them in the 
 
 ```yaml
 # other steps
-- uses: vanilla-os/vib-gh-action@v0.7.0
+- uses: vanilla-os/vib-gh-action@v1.1.0
   with:
-    recipe: "vib.yml"
+    recipe: "recipe.yml"
     plugins: "your_org/my-plugin:v0.0.1"
 # the rest of the workflow
 ```
@@ -75,9 +76,9 @@ To use more than one plugin, simply separate them with a comma:
 
 ```yaml
 # other steps
-- uses: vanilla-os/vib-gh-action@v0.7.0
+- uses: vanilla-os/vib-gh-action@v1.1.0
   with:
-    recipe: "vib.yml"
+    recipe: "recipe.yml"
     plugins: "your_org/my-plugin:v0.0.1, another_org/another-plugin:v1.2.3"
 # the rest of the workflow
 ```
@@ -103,11 +104,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: vanilla-os/vib-gh-action@v0.7.0
+      - uses: vanilla-os/vib-gh-action@v1.1.0
         with:
-          recipe: "vib.yml"
+          recipe: "recipe.yml"
 
       - name: Build the Docker image
         run: docker image build -f Containerfile --tag ghcr.io/your_org/your_image:main .

@@ -7,6 +7,7 @@ Authors:
   - mirkobrombin
   - kbdharun
   - lambdaclan
+  - NN708
 Tags:
   - modules
   - recipe
@@ -26,12 +27,12 @@ The following is a complete example of a Vib recipe:
 # metadata
 name: My Image
 id: my-image-id
+vibversion: 1.1.0
 
 # stages
 stages:
   - id: build
     base: debian:sid-slim
-    singlelayer: false
     labels:
       maintainer: My Awesome Team
     adds:
@@ -57,10 +58,10 @@ stages:
         - another-command --help
     # specify working directory for commands
     # runs:
-    #  workdir: /app
-    #  commands:
-    #    - cp /tmp/start.sh .
-    #    - start.sh
+    #   workdir: /app
+    #   commands:
+    #     - cp /tmp/start.sh .
+    #     - start.sh
     # copy from host
     copy:
       - srcdst:
@@ -92,13 +93,12 @@ stages:
         modules:
           - name: build-deps
             type: apt
-            source:
-              packages:
-                - golang-go
+            sources:
+              - packages:
+                  - golang-go
 
   - id: dist
     base: debian:sid-slim
-    singlelayer: false
     labels:
       maintainer: My Awesome Team
     expose:
@@ -143,6 +143,8 @@ stages:
     #   exec:
     #     - npm
     #     - run
+    cleanup:
+      - /tmp/*
     modules:
       - name: run
         type: shell
@@ -161,12 +163,11 @@ stages:
 
 The metadata block contains the following mandatory fields:
 
-- `base`: the base image to start from, can be any Docker image from any registry or even `scratch`.
 - `name`: the name of the image.
 - `id`: the ID of the image is used to specify an image's unique identifier, it is used by platforms like [Atlas](https://images.vanillaos.org/#/) to identify the image.
 - `stages`: a list of stages to build the image, useful to split the build process into multiple stages (e.g. to build the application in one stage and copy the artifacts into another one).
 - `vibversion`: the vib version with which this recipe was created, used to avoid vib from processing incompatible recipes
-- `includsepath`: an alternative includes path other than `includes.container`
+- `includespath`: an alternative includes path other than `includes.container`
 
 ## Stages
 
@@ -174,7 +175,8 @@ Stages are a list of instructions to build an image, useful to split the build p
 
 Each stage has the following fields:
 
-- `singlelayer`: a boolean value that indicates if the image should be built as a single layer. This is useful in some cases to reduce the size of the image (e.g. when building an image using a rootfs, an example [here](https://github.com/Vanilla-OS/pico-image/blob/5b0e064677f78f6e89d619dcb4df4e585bef378f/recipe.yml)).
+- `id`: the ID of the stage.
+- `base`: the base image to start from, can be any Docker image from any registry or even `scratch`.
 - `labels`: a map of labels to apply to the image, useful to add metadata to the image that can be read by the container runtime.
 - `adds`: a list of files or directories to add to the image, useful to include files in the image that are not part of the source code (the preferred way to include files in the image is to use the `includes.container/` directory, see [Project Structure](/docs/articles/en/project-structure)).
 - `args`: a list of environment variables to set in the image.
@@ -184,7 +186,8 @@ Each stage has the following fields:
 - `entrypoint`: the entry point for the container, it's similar to `cmd` but it's not overridden by the command passed to the container at runtime, useful to handle the container as an executable.
 - `copy`: a list of files or directories to copy from another stage (or copy from host), useful to copy files from one stage to another.
 - `modules`: a list of modules to use in the stage.
-- `addincludes`: whether `includes.container` should be copied into this stage
+- `addincludes`: whether `includes.container` should be copied into this stage.
+- `cleanup`: a list of paths to be cleaned up after every command in this stage.
 
 ### Modules
 

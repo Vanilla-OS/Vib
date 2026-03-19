@@ -7,6 +7,7 @@ Authors:
   - mirkobrombin
   - kbdharun
   - surinameclubcard
+  - NN708
 Tags:
   - getting-started
 ---
@@ -15,7 +16,7 @@ Vib is a powerful tool that allows you to create container images using a YAML r
 
 ## Requirements
 
-To use Vib, there are no specific requirements; you just need a Linux\* operating system (Mac OS and Windows will be supported in the future). Optionally, you can install a container engine to test and publish the images created to a registry.
+To use Vib, there are no specific requirements; you just need a Linux\* operating system (macOS and Windows will be supported in the future). Optionally, you can install a container engine to test and publish the images created to a registry.
 
 \* Currently, Vib requires a Linux distribution with `glibc`.
 
@@ -28,9 +29,9 @@ Other container engines might work but have not been tested. If you have tested 
 
 ## Installation
 
-Vib is distributed as a single binary, so there's no need to install any runtime or dependencies. You can download the latest version of Vib from the [GitHub releases page](https://github.com/Vanilla-OS/Vib/releases). In addition to this, Vib has official plugins which are used for all the Vanilla-OS images, they can also be downlaoded from the [Github releases page](https://github.com/Vanilla-OS/Vib/releases) as the `plugins-*.tar.gz` archive. Once downloaded, make `vib` executable and move it to a directory included in your `PATH`. Vib searches for plugins in a global search path at `/usr/share/vib/plugins/` and inside the `plugins` directory in your project directory. It is recommended to extract `plugins-*.tar.gz` to `/usr/share/vib/plugins/` as they are considered core vib plugins and may be used by a lot of images.
+Vib is distributed as a single binary, so there's no need to install any runtime or dependencies. You can download the latest version of Vib from the [GitHub releases page](https://github.com/Vanilla-OS/Vib/releases). In addition to this, Vib has official plugins which are used for all the Vanilla-OS images, they can also be downloaded from the [Github releases page](https://github.com/Vanilla-OS/Vib/releases) as the `plugins-*.tar.gz` archive. Once downloaded, make `vib` executable and move it to a directory included in your `PATH`. Vib searches for plugins in a global search path at `/usr/share/vib/plugins/` and inside the `plugins` directory in your project directory. It is recommended to extract `plugins-*.tar.gz` to `/usr/share/vib/plugins/` as they are considered core Vib plugins and may be used by a lot of images.
 
-The following commands will allow you to download and install Vib (_supported architectures amd64, arm64_):
+The following commands will allow you to download and install Vib (supported architectures: `amd64`, `arm64`):
 
 ```bash
 wget https://github.com/Vanilla-OS/Vib/releases/latest/download/vib-amd64
@@ -38,7 +39,7 @@ chmod +x vib-amd64
 mv vib-amd64 ~/.local/bin/vib
 ```
 
-If wget is not installed, you can use curl:
+If `wget` is not installed, you can use `curl`:
 
 ```bash
 curl -SLO https://github.com/Vanilla-OS/Vib/releases/latest/download/vib-amd64
@@ -54,7 +55,7 @@ sudo mkdir -p /usr/share/vib/plugins
 sudo tar -xvf plugins-amd64.tar.gz -C /usr/share/vib/plugins/ --strip-components=2
 ```
 
-Or with curl:
+Or with `curl`:
 
 ```bash
 curl -SLO https://github.com/Vanilla-OS/Vib/releases/latest/download/plugins-amd64.tar.gz
@@ -64,19 +65,20 @@ sudo tar -xvf plugins-amd64.tar.gz -C /usr/share/vib/plugins --strip-components=
 
 ## Usage
 
-To start using Vib, create a `vib.yml` file in a new directory. This file will contain the recipe for your container image.
+To start using Vib, create a `recipe.yml` file in a new directory. This file will contain the recipe for your container image.
 
 ```bash
 mkdir my-vib-project
 cd my-vib-project
-touch vib.yml
+touch recipe.yml
 ```
 
-Here's an example `vib.yml` file:
+Here's an example `recipe.yml` file:
 
 ```yml
 name: my-recipe
 id: my-node-app
+vibversion: 1.1.0
 stages:
   - id: build
     base: node:current-slim
@@ -96,13 +98,13 @@ stages:
     modules:
     - name: build-app
       type: shell
-      source:
-        type: git
-        url: https://github.com/mirkobrombin/node-sample
-        branch: main
-        commit: latest
+      sources:
+        - type: git
+          url: https://github.com/mirkobrombin/node-sample
+          branch: main
+          commit: latest
       commands:
-        - mv /sources/build-app /app
+        - mv /sources/build-app/node-sample /app
         - cd /app
         - npm i
         - npm run build
@@ -110,10 +112,10 @@ stages:
 
 In this example, we're creating a container image with one stage based on `node:current-slim` with some custom labels and environment variables. The image uses a single module to build a Node.js application from a Git repository. The application is then installed and built using `npm`. Then it exposes the port `3000` and sets the entrypoint to node `/app/app.js`. 
 
-Once you've created the `vib.yml` file, you can run the command:
+Once you've created the `recipe.yml` file, you can run the command:
 
 ```bash
-vib build vib.yml
+vib build recipe.yml
 ```
 
 to turn your recipe into a Containerfile. Use that file to build the container image with your container engine. To streamline the process, you can use the `compile` command to build the container image directly:
