@@ -3,7 +3,6 @@ module github.com/vanilla-os/vib
 go 1.25.0
 
 require (
-	github.com/ebitengine/purego v0.10.0
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/spf13/cobra v1.10.2
 	github.com/vanilla-os/vib/api v0.0.0-20260302155300-20bdf619aaba
@@ -12,7 +11,6 @@ require (
 )
 
 require (
-	cyphar.com/go-pathrs v0.2.4 // indirect
 	github.com/BurntSushi/toml v1.6.0 // indirect
 	github.com/cyphar/filepath-securejoin v0.5.2 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
