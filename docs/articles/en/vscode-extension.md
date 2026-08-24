@@ -1,7 +1,7 @@
 ---
 Title: Working with Vib in Visual Studio Code
 Description: Learn how to work with Vib recipes in Visual Studio Code using our extension.
-PublicationDate: 2024-02-14
+PublicationDate: 2026-08-24
 Listed: true
 Authors:
   - mirkobrombin
@@ -14,6 +14,10 @@ Tags:
 Visual Studio Code is a popular code editor that provides a wide range of features to help you write, debug, and deploy your code, other than being highly customizable, it also offers a wide range of extensions to enhance your development experience, for example for working with YAML files.
 
 Vib recipes are written in YAML, and usually, a standard text editor or the YAML support provided by Visual Studio Code is enough to work with them. However, we have developed a dedicated extension for Visual Studio Code to make working with Vib recipes even easier and more efficient.
+
+> **Maintenance notice**: The Vib extension has not been updated recently.
+> Following the release of Vanilla OS 3 Reunion, we plan to resume its
+> development and bring it in line with current Vib releases.
 
 ## Features
 

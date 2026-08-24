@@ -1,7 +1,7 @@
 ---
-Title: Structure of a Vib recipe
-Description: Learn about the structure of a Vib recipe.
-PublicationDate: 2024-02-13
+Title: Structure of a Vib Recipe
+Description: Reference for Vib 1.1 recipe and stage fields.
+PublicationDate: 2026-08-24
 Listed: true
 Authors:
   - mirkobrombin
@@ -13,249 +13,123 @@ Tags:
   - recipe
 ---
 
-> **Note**
-> Stages were introduced in Vib v0.6.0, if you are using an older version, please keep in mind all the stage fields are at the top level of the recipe, so no multiple stages are supported.
+A Vib recipe contains image metadata, one or more stages, and optional finalize
+plugins.
 
-A Vib recipe is a YAML file that contains the instructions to build a container image. It's composed of two blocks:
-
-- metadata
-- stages
-
-The following is a complete example of a Vib recipe:
-
-```yml
-# metadata
-name: My Image
-id: my-image-id
+```yaml
+name: Example Image
+id: example-image
 vibversion: 1.1.0
+includespath: includes.container
 
-# stages
 stages:
   - id: build
-    base: debian:sid-slim
-    labels:
-      maintainer: My Awesome Team
-    adds:
-      - srcdst:
-          /extra/path/to/add/1: /path/to/destination/1
-    # multiple additions
-    # adds:
-    #  - srcdst:
-    #      /extra/path/to/add/1: /path/to/destination/1
-    #      /extra/path/to/add/2: /path/to/destination/2
-    # specify working directory for destination
-    # adds:
-    #  - workdir: /tmp
-    #    srcdst:
-    #      /extra/path/to/add/1: .
-    #      /extra/path/to/add/2: .
+    base: golang:bookworm
     args:
-      - arg1: value1
-      - arg2: value2
-    runs:
-      commands:
-        - some-random-command --that-must-run --on-top-of-all modules
-        - another-command --help
-    # specify working directory for commands
-    # runs:
-    #   workdir: /app
-    #   commands:
-    #     - cp /tmp/start.sh .
-    #     - start.sh
-    # copy from host
-    copy:
-      - srcdst:
-          /app/awesome.txt: .
-    # copy multiple
-    # copy:
-    #   - srcdst:
-    #       /app/awesome.txt: .
-    #       /tmp/test.txt: .
-    # specify working directory for destination
-    # copy:
-    #   - workdir: /tmp
-    #     srcdst:
-    #       /app/awesome.txt: .
-    #       /app/test.txt: .
-    #   - workdir: /etc
-    #     srcdst:
-    #       /app/hello.txt: .
+      DEBIAN_FRONTEND: noninteractive
     modules:
-      - name: build
-        type: go
-        buildvars:
-          GO_OUTPUT_BIN: "/path/to/output"
-        source:
-          url: https://github.com/my-awesome-team/my-awesome-repo
-          type: git
-          branch: main
-          commit: sdb997f0eeb67deaa5940f7c31a19fe1101d3d49
-        modules:
-          - name: build-deps
-            type: apt
-            sources:
-              - packages:
-                  - golang-go
+      - name: build-app
+        type: shell
+        commands:
+          - go build -o /output/app ./cmd/app
 
-  - id: dist
-    base: debian:sid-slim
+  - id: runtime
+    base: debian:bookworm-slim
     labels:
-      maintainer: My Awesome Team
-    expose:
-      "8080": "tcp"
-      "8081": ""
-    entrypoint:
-      exec:
-        - /app
-    # entrypoint command with params
-    # entrypoint:
-    #  exec:
-    #    - npm
-    #    - run
-    # specify working directory for entrypoint command
-    # entrypoint:
-    #  workdir: /app
-    #  exec:
-    #    - npm
-    #    - run
-    # copy from previous stage
+      org.opencontainers.image.title: Example Image
     copy:
       - from: build
         srcdst:
-          /path/to/output: /app
-    # copy from previous stage with custom working directory for destination
-    # copy:
-    #   - workdir: /app
-    #     from: build
-    #     srcdst:
-    #       /path/to/output: .
-    cmd:
-      exec:
-        - /app
-    # command with params
-    # cmd:
-    #   exec:
-    #     - npm
-    #     - run
-    # specify working directory for command
-    # cmd:
-    #   workdir: /app
-    #   exec:
-    #     - npm
-    #     - run
+          /output/app: /usr/bin/app
     cleanup:
-      - /tmp/*
-    modules:
-      - name: run
-        type: shell
-        commands:
-          - ls -la /app
-    # specify working directory for all module commands
-    # modules:
-    #   - name: run
-    #     type: shell
-    #     workdir: /app
-    #     commands:
-    #       - ls -la
+      - /var/lib/apt/lists/*
+    expose:
+      "8080": "tcp"
+    entrypoint:
+      exec:
+        - /usr/bin/app
 ```
 
-## Metadata
+## Recipe fields
 
-The metadata block contains the following mandatory fields:
+- `name`: display name of the image.
+- `id`: stable image identifier.
+- `vibversion`: recipe format version. Vib 1.1 accepts versions starting at 1.0.0.
+- `stages`: ordered image stages.
+- `includespath`: optional path used in place of `includes.container`.
+- `finalize`: optional plugins run after the image build.
 
-- `name`: the name of the image.
-- `id`: the ID of the image is used to specify an image's unique identifier, it is used by platforms like [Atlas](https://images.vanillaos.org/#/) to identify the image.
-- `stages`: a list of stages to build the image, useful to split the build process into multiple stages (e.g. to build the application in one stage and copy the artifacts into another one).
-- `vibversion`: the vib version with which this recipe was created, used to avoid vib from processing incompatible recipes
-- `includespath`: an alternative includes path other than `includes.container`
+## Stage fields
 
-## Stages
+- `id`: unique stage identifier.
+- `base`: source image, including `scratch` where appropriate.
+- `labels`: OCI image labels.
+- `env`: environment values written to the image.
+- `args`: build arguments.
+- `runs`: commands run before modules.
+- `modules`: ordered build modules.
+- `adds`: host files or directories added to the stage.
+- `addincludes`: add the `includespath` filesystem tree to the stage.
+- `copy`: files copied from the host or another stage.
+- `cleanup`: paths removed after generated module and run commands.
+- `expose`: port and protocol mapping.
+- `cmd`: default container command.
+- `entrypoint`: container entry point.
 
-Stages are a list of instructions to build an image, useful to split the build process into multiple stages (e.g. to build the application in one stage and copy the artifacts into another one). Each stage is a YAML snippet that defines a set of instructions.
+## Working directories
 
-Each stage has the following fields:
+`runs`, `modules`, `adds`, `copy`, `cmd`, and `entrypoint` accept `workdir` in
+their respective structures. For example:
 
-- `id`: the ID of the stage.
-- `base`: the base image to start from, can be any Docker image from any registry or even `scratch`.
-- `labels`: a map of labels to apply to the image, useful to add metadata to the image that can be read by the container runtime.
-- `adds`: a list of files or directories to add to the image, useful to include files in the image that are not part of the source code (the preferred way to include files in the image is to use the `includes.container/` directory, see [Project Structure](/docs/articles/en/project-structure)).
-- `args`: a list of environment variables to set in the image.
-- `runs`: a list of commands to run in the image (as an alternative to the `shell` module, useful for dividing the commands of your recipe from those needed to configure the image, for example, to disable the recommended packages in apt).
-- `expose`: a list of ports to expose in the image.
-- `cmd`: the command to run when the container starts.
-- `entrypoint`: the entry point for the container, it's similar to `cmd` but it's not overridden by the command passed to the container at runtime, useful to handle the container as an executable.
-- `copy`: a list of files or directories to copy from another stage (or copy from host), useful to copy files from one stage to another.
-- `modules`: a list of modules to use in the stage.
-- `addincludes`: whether `includes.container` should be copied into this stage.
-- `cleanup`: a list of paths to be cleaned up after every command in this stage.
-
-### Modules
-
-The modules block contains a list of modules to use in the recipe. Each module is a YAML snippet that defines a set of instructions. The common structure is:
-
-```yml
-- name: name-of-the-module
-  type: type-of-the-module
-  # specific fields for the module type
-```
-
-Refer to the [Use Modules](/vib/en/use-modules) article for more information on how to use modules in a recipe and [Built-in Modules](/vib/en/built-in-modules) for a list of the built-in modules and their specific fields.
-
-You can also write your custom modules by making a Vib plugin, see the [Making a Plugin](/vib/en/making-plugin) article for more information.
-
-#### Setting up the working directory
-
-Each module can have a `workdir` field that changes the directory before executing the rest of the module operations. The following is an example of how to use the `workdir` field:
-
-```yml
-- name: example-module
-  type: shell
+```yaml
+runs:
   workdir: /app
   commands:
-    - touch file.txt
-  
-- name: example-module-2
-  type: shell
+    - ./configure
+
+modules:
+  - name: build
+    type: shell
+    workdir: /app
+    commands:
+      - make
+```
+
+## Add host files
+
+Map project files to image paths with `adds`:
+
+```yaml
+adds:
+  - srcdst:
+      files/example.conf: /etc/example.conf
+```
+
+For a complete filesystem tree, put files under `includes.container/` and set
+`addincludes: true` on the target stage. See
+[Project Structure](/vib/en/project-structure).
+
+## Copy between stages
+
+Use the source stage ID in `from`:
+
+```yaml
+copy:
+  - from: build
+    srcdst:
+      /output/app: /usr/bin/app
+```
+
+## Commands
+
+`cmd` and `entrypoint` use an `exec` list and an optional `workdir`:
+
+```yaml
+entrypoint:
   workdir: /app
-  commands:
-    - ls -la
+  exec:
+    - /usr/bin/app
+    - --serve
 ```
 
-In this example, the `example-module` module creates a file named `file.txt` in the `/app` directory, and the `example-module-2` module lists the contents of the `/app` directory.
-
-### Copying files between stages
-
-You can copy files between stages using the `copy` field. This consists of a list of files or directories to copy from another stage. Each item in the list is a YAML snippet that defines the source and destination of the copy operation. The common structure is:
-
-```yml
-- from: stage-id-to-copy-from
-  srcdst:
-    /path/to/source: /path/to/destination
-```
-
-For example, to copy the `/path/to/output` directory from the `build` stage to the `/app` directory in the `dist` stage, you can use the following snippet:
-
-```yml
-- from: build
-  srcdst:
-    /path/to/output: /app
-```
-
-so it becomes available in the `dist` stage.
-
-### Using a custom working directory (`workdir`)
-
-The following commands are supported:
-
-- adds
-  - workdir sets destination path
-- copy
-  - workdir sets destination path
-- runs
-  - workdir changes directory (cd) before executing command
-- cmd
-  - workdir changes directory (cd) before executing command
-- entrypoint
-  - workdir changes directory (cd) before executing command
-- modules
-  - workdir changes directory (cd) before executing command list
+See [How to Use Vib Modules](/vib/en/use-modules) for module fields.

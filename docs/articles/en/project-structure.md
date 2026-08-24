@@ -1,7 +1,7 @@
 ---
 Title: Project Structure
 Description: How to structure your Vib project.
-PublicationDate: 2024-02-13
+PublicationDate: 2026-08-24
 Listed: true
 Authors:
   - mirkobrombin
