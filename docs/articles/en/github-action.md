@@ -1,7 +1,7 @@
 ---
 Title: Build using GitHub Actions
 Description: How to build a Vib image using GitHub Actions.
-PublicationDate: 2024-02-14
+PublicationDate: 2026-08-24
 Listed: true
 Authors:
   - mirkobrombin
@@ -12,7 +12,7 @@ Tags:
   - build
 ---
 
-Many projects use GitHub to host their code, and GitHub Actions to automate their workflows. Vib can be integrated into your GitHub Actions workflow to build your images automatically. To streamline the process, you can use the [Vib GitHub Action](https://github.com/Vanilla-OS/vib-gh-action).
+Many projects use GitHub to host their code, and GitHub Actions to automate their workflows. Vib can be integrated into your GitHub Actions workflow to build your images automatically. The [Vib GitHub Action](https://github.com/Vanilla-OS/vib-gh-action) provides the required build step.
 
 ## Setup the Workflow
 
@@ -117,7 +117,7 @@ jobs:
       - name: Push To GHCR
         if: github.repository == 'your_org/your_repo'
         run: |
-          docker login ghcr.io -u ${{ env.REGISTRY_USER }} -p ${{ env.REGISTRY_PASSWORD }}
+          echo "${{ env.REGISTRY_PASSWORD }}" | docker login ghcr.io -u "${{ env.REGISTRY_USER }}" --password-stdin
           docker image push "ghcr.io/your_org/your_image:main"
 ```
 

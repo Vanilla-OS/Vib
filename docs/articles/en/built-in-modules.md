@@ -1,7 +1,7 @@
 ---
-Title: Built-in modules
-Description: Learn about the built-in modules that come with Vib and how to use them in your recipes.
-PublicationDate: 2024-02-13
+Title: Built-in Modules
+Description: Reference for the modules distributed with Vib 1.1.
+PublicationDate: 2026-08-24
 Listed: true
 Authors:
   - mirkobrombin
@@ -10,238 +10,168 @@ Tags:
   - modules
 ---
 
-Vib supports a variety of built-in modules that you can use to build your recipes. These modules are designed to automate common tasks, such as installing packages, building software, and running custom scripts.
+Vib 1.1 distributes build plugins for APT, CMake, dpkg-buildpackage, Flatpak,
+Go, Make, and Meson. The `shell` and `includes` modules are part of Vib itself.
 
-Before proceeding, make sure to familiarize yourself with [how modules work](/vib/en/use-modules) since this article assumes you have a basic understanding of the module structure and how to use them in your recipes.
+Every module needs a unique `name` and a `type`. Sources used by a module are
+mounted under `/sources/MODULE_NAME` while its generated build command runs.
 
-To keep this article concise, we'll cover only the fields that are specific to each module type, so `name`, `type` and `sources` will be omitted if they don't have any specific fields.
+## Source fields
 
-## Summary
+A source can define:
 
-- [Package manager](#package-manager)
-- [CMake](#cmake)
-- [Dpkg-buildpackage](#dpkg-buildpackage)
-- [Dpkg](#dpkg)
-- [Go](#go)
-- [Make](#make)
-- [Meson](#meson)
-- [Shell](#shell)
-- [Flatpak](#flatpak)
+- `type`: `git`, `tar`, `file`, or `local`.
+- `url`: remote source URL.
+- `checksum`: SHA-256 checksum for a file or archive.
+- `branch`, `tag`, or `commit`: Git revision selector.
+- `packages`: package names for a package-manager plugin.
+- `path`: local source path or package-list file.
+- `only-arches`: CPU architectures allowed to use the source.
 
-## Package manager
+## APT
 
-This module allow to install packages using the package manager using the repositories configured in the image. You can change the package manager by changing the value of the `type` field. The following are currently supported:
-
-- `apt`: Debian-based systems.
-- `dnf`: Red Hat-based systems.
-
-The following specific fields are available:
-
-- `source`: Defines the source of the packages.
-
-### Example
-
-```yaml
-- name: install-utils
-  type: apt # or any other supported package manager
-  sources:
-    packages:
-      - curl
-      - git
-```
-
-In the context of this module, this directive also supports the `packages` and `paths` fields. The `packages` field is a list of package names to install, while the `paths` field is a list of paths to `.inst` files containing package names each on a new line:
-
-```yaml
-- name: install-utils
-  type: apt # or any other supported package manager
-  sources:
-    - path:
-      - "./utils.inst"
-    - path:
-	  - "./more-utils.inst"
-```
-
-where `utils.inst` and `more-utils.inst` follow the format:
-
-```plaintext
-curl
-git
-```
-
-### Apt
-
-> **Note**
-> The following options requires Vib v.0.5.0 or later.
-
-The `apt` module, has some additional fields under the `options` key:
-
-- noRecommends: If set to `true`, the recommended packages will not be installed.
-- installSuggestions: If set to `true`, the suggested packages will be installed.
-- fixMissing: If set to `true`, the package manager will attempt to fix broken dependencies.
-- fixBroken: If set to `true`, the package manager will attempt to fix broken packages.
+Install Debian packages with a list or a local `.inst` file:
 
 ```yaml
 - name: install-utils
   type: apt
   sources:
-    packages:
-      - curl
-      - git
+    - packages:
+        - curl
+        - git
+    - path: ./extra-packages.inst
   options:
-    noRecommends: true
-    installSuggests: true
-    fixMissing: true
-    fixBroken: true
+    no_recommends: true
+    install_suggests: false
+    fix_missing: false
+    fix_broken: false
 ```
 
-> **Note**
-> The above options if set to `false`, might still be overridden by the package manager's configuration.
+Each line in an `.inst` file is passed as a package name. The supported option
+keys map to the corresponding `apt-get install` flags.
 
 ## CMake
-
-The CMake module builds a project using the CMake build system. It's suitable for projects that use CMake as their build configuration tool.
-
-The following specific fields are available:
-
-- `buildFlags`: Additional flags to pass to the `cmake` command.
-
-### Example
 
 ```yaml
 - name: example-cmake-project
   type: cmake
-  buildflags: "-DCMAKE_BUILD_TYPE=Release"
+  buildflags: -DCMAKE_BUILD_TYPE=Release
   source:
-    url: "https://example.com/example-project.tar.gz"
     type: tar
+    url: https://example.com/example-project.tar.gz
+    checksum: SHA256
 ```
 
-## Dpkg-buildpackage
+`buildvars` can provide build variables used by the plugin.
 
-This module builds Debian packages from source using `dpkg-buildpackage` and installs the resulting `.deb` packages.
+## dpkg-buildpackage
 
-The following specific fields are available:
-
-- `source`: source of the Debian package source code.
-
-### Example
+Build a Debian source package and install its resulting packages:
 
 ```yaml
-- name: build-deb-package
+- name: example-debian-package
   type: dpkg-buildpackage
   source:
-    url: "https://example.com/package-source.tar.gz"
-    type: tar
+    type: git
+    url: https://example.com/example-debian-package.git
+    tag: v1.0.0
 ```
 
+The source must contain valid Debian packaging metadata.
+
 ## Go
-
-The Go module compiles Go projects, allowing for customization through build variables and flags.
-
-The following specific fields are available:
-
-- `buildFlags`: Flags for the `go build` command.
-
-### Example
 
 ```yaml
 - name: example-go-app
   type: go
-  buildflags: "-v"
+  buildflags: -trimpath
+  buildvars:
+    GO_OUTPUT_BIN: /usr/bin/example-go-app
   source:
-    url: "https://example.com/go-app-source.tar.gz"
-    type: tar
+    type: git
+    url: https://example.com/example-go-app.git
+    commit: latest
 ```
 
+`GO_OUTPUT_BIN` sets the output path. Without it, the module name is used.
+
 ## Make
-
-The Make module automates the build process for projects that use GNU Make.
-
-The following specific fields are available:
-
-- `buildCommand`: What command different command for the build, defaults to `make build`
-- `intermediateSteps`: Extra commands to run between the build and install command
-- `installCommand`: What command to run for installing, defaults to `make install`
-
-### Example
 
 ```yaml
 - name: example-make-project
   type: make
-  buildCommand: "make PREFIX=/custompath build"
-  intermediateSteps:
-    - "make docs-all -j4"
-  installCommand: "make DESTDIR=/root install"
+  buildcommand: make PREFIX=/usr
+  intermediatesteps:
+    - make test
+  installcommand: make PREFIX=/usr install
   sources:
-    url: "https://example.com/make-project-source.tar.gz"
-    type: tar
+    - type: tar
+      url: https://example.com/example-make-project.tar.gz
+      checksum: SHA256
 ```
 
+The defaults are `make` and `make install`.
+
 ## Meson
-
-This module is used for building projects configured with the Meson build system.
-
-The following specific fields are available:
-
-- `buildFlags`: Additional flags to pass to the `meson` command.
-
-### Example
 
 ```yaml
 - name: example-meson-project
   type: meson
   buildflags:
-  - "-Dfoo=bar"
+    - -Dfoo=enabled
   sources:
-    url: "https://example.com/meson-project-source.tar.gz"
-    type: tar
+    - type: tar
+      url: https://example.com/example-meson-project.tar.gz
+      checksum: SHA256
 ```
 
 ## Shell
 
-The Shell module executes arbitrary shell commands, offering the most flexibility for custom operations.
-
-The following specific fields are available:
-
-- `commands`: A list of shell commands to execute.
-
-### Example
+Run custom commands in order:
 
 ```yaml
 - name: custom-setup
   type: shell
+  sources:
+    - type: file
+      url: https://example.com/example.conf
+      checksum: SHA256
   commands:
-    - "echo Hello, World!"
-    - "apt update && apt install -y curl"
+    - install -Dm644 /sources/custom-setup/example.conf /etc/example.conf
+  cleanup:
+    - /tmp/example-cache
 ```
+
+Module-level `cleanup` paths are removed after the module commands.
 
 ## Flatpak
 
-The Flatpak module installs Flatpak packages using the `flatpak` command.
-
-The following specific fields are available:
-
-- `system`: If configured, the module will install the applications system-wide.
-- `user`: If configured, the module will install the applications user-wide.
-
-### Example
+Configure system or user Flatpak remotes and application lists:
 
 ```yaml
-- name: install-flatpak-app
+- name: install-flatpak-apps
   type: flatpak
   system:
-    repourl: "https://flathub.org/repo/flathub.flatpakrepo"
-    reponame: "flathub"
+    repo-url: https://flathub.org/repo/flathub.flatpakrepo
+    repo-name: flathub
     install:
-      - "org.gnome.Epiphany"
-    remove:
-      - "org.gnome.Epiphany"
-  user:
-    repourl: "https://flathub.org/repo/flathub.flatpakrepo"
-    reponame: "flathub"
-    install:
-      - "org.gnome.Epiphany"
-    remove:
-      - "org.gnome.Epiphany"
+      - org.gnome.Epiphany
+    remove: []
 ```
+
+The `user` block accepts the same fields. The plugin creates setup services so
+the selected applications are installed when the image runs.
+
+## Includes
+
+Insert modules stored in local or remote YAML files:
+
+```yaml
+- name: shared-modules
+  type: includes
+  includes:
+    - modules/common.yml
+    - gh:organization/repository:main:modules/desktop.yml
+```
+
+Included modules run in the listed order.

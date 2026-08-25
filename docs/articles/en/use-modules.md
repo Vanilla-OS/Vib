@@ -1,7 +1,7 @@
 ---
-Title: How to use Vib modules
-Description: How to use predefined and custom modules in your Vib recipes.
-PublicationDate: 2024-02-13
+Title: How to Use Vib Modules
+Description: Add built-in, nested, and custom modules to a Vib recipe.
+PublicationDate: 2026-08-24
 Listed: true
 Authors:
   - mirkobrombin
@@ -11,92 +11,101 @@ Tags:
   - modules
 ---
 
-Modules are a fundamental part of Vib, likely the thing you will interact with the most. We can see them as the building blocks of your container image, each one performing a specific task.
+A module produces one or more build steps inside an image stage. Modules run in
+the order listed by the recipe.
 
-## Familiarize with Vib Recipes
+## Module structure
 
-> **Note**
-> Stages were introduced in Vib v0.6.0, if you are using an older version, please keep in mind all the stage fields are at the top level of the recipe, so no multiple stages are supported.
+Every module has a unique `name` and a `type`:
 
-Before diving into the modules, it's important to understand the structure of a Vib recipe.
-
-![Vib Recipe Structure](https://raw.githubusercontent.com/Vanilla-OS/Vib/main/docs/uploads/vib-recipe-structure.png)
-
-As you can see, a recipe has two main entities:
-
-- **Recipe**: your recipe, the YAML file that contains the instructions to build the image.
-- **Stages**: one or more stages that define a set of operations to perform. Each stage can have a set of modules that will be executed in order.
-
-Think of a recipe as a floor plan for a house, and the stages as the rooms. Each room has a set of tasks to complete, and each task is a module but all the rooms together make the house, your container image.
-
-To get more information about the structure of a recipe and its fields, please refer to the [recipe structure](/vib/en/recipe-structure) article.
-
-## Architecture of a Module
-
-A module is a YAML snippet that defines a set of instructions, the common structure is:
-
-```yml
-name: name-of-the-module
-type: type-of-the-module
-# specific fields for the module type
+```yaml
+- name: install-build-tools
+  type: apt
+  sources:
+    - packages:
+        - build-essential
+        - git
 ```
 
-While the `name` and `type` fields are mandatory, the specific fields depend on the module type. For example, a `shell` module has a `commands` field that contains the shell commands to execute to complete the task.
+The other fields depend on the module type. See
+[Built-in Modules](/vib/en/built-in-modules) for the plugin-specific fields.
 
-You will find that some modules have a common `source` field, this instructs Vib to download a resource required for the module to work:
+## Sources
 
-```yml
-- name: vanilla-tools
+Modules can download or copy resources before their commands run:
+
+```yaml
+- name: install-vanilla-tools
   type: shell
   sources:
     - type: tar
-      url: https://github.com/Vanilla-OS/vanilla-tools/releases/download/continuous/vanilla-tools.tar.gz
+      url: https://github.com/Vanilla-OS/vanilla-tools/releases/download/v1.0.1/vanilla-tools-amd64.tar.gz
+      checksum: aef32f07820e0993e534e6bccfa1a6daae6c8c6f0543d3e073f4f121f2ef2e31
   commands:
-    - mkdir -p /usr/bin
-    - cp /sources/vanilla-tools/lpkg /usr/bin/lpkg
-    - cp /sources/vanilla-tools/cur-gpu /usr/bin/cur-gpu
-    - chmod +x /usr/bin/lpkg
-    - chmod +x /usr/bin/cur-gpu
+    - install -Dm755 /sources/install-vanilla-tools/vanilla-tools/lpkg /usr/bin/lpkg
 ```
 
-In the above example we define a `shell` module that downloads a tarball from a GitHub release and then copies the binaries to `/usr/bin`. A source can be of three types:
+Vib 1.1 mounts a module's prepared sources at `/sources/MODULE_NAME`. Source
+types include `git`, `tar`, `file`, and `local`.
 
-- `tar`: a tarball archive. You can also define a `checksum` field to verify the integrity of the downloaded archive using a `sha256` hash.
-- `file`: a single file. You can also define a `checksum` field to verify the integrity of the downloaded file using a `sha256` hash.
-- `git`: a Git repository.
-
-In the latter case, you can specify the branch, tag or commit to checkout like this:
+A Git source accepts one revision strategy:
 
 ```yaml
-name: apx-gui
-type: meson
-sources:
-  - type: git
-	url: https://github.com/Vanilla-OS/apx-gui
-	branch: main
-	commit: latest
-modules:
-  - name: apx-gui-deps-install
-    type: apt
-    sources:
-      - packages:
-          - build-essential
-          - gettext
-          - libadwaita-1-dev
-          - meson
+- name: apx-gui
+  type: meson
+  sources:
+    - type: git
+      url: https://github.com/Vanilla-OS/apx-gui
+      branch: main
 ```
 
-Supported fields for a git source are:
+Use `branch`, `tag`, or `commit`. A `commit` can be a commit hash or `latest`.
+Use `checksum` for downloaded files and archives whenever the source publishes
+a stable digest.
 
-- `url`: the address of the repository to clone
-- `tag`: the tag to checkout, collides with `branch` and `commit`.
-- `branch`: the branch to checkout, collides with `tag`.
-- `commit`: the commit to checkout, collides with `tag` and `branch`. It can be a commit hash or `latest` to checkout the latest commit.
+Limit a source to selected architectures with:
 
-## Built-in Modules
+```yaml
+only-arches:
+  - amd64
+  - arm64
+```
 
-Vib comes with a set of predefined modules that you can use in your recipes. You can find the list of available modules in the [list of modules](/vib/en/built-in-modules) article.
+## Nested modules
 
-## Custom Modules via Plugins
+A module can contain child modules that prepare its build dependencies:
 
-You can also extend Vib with custom modules by writing a plugin. Please refer to [making a plugin](/vib/en/make-plugin) for more information.
+```yaml
+- name: build-application
+  type: go
+  source:
+    type: git
+    url: https://example.com/application.git
+    tag: v1.0.0
+  modules:
+    - name: install-go
+      type: apt
+      sources:
+        - packages:
+            - golang-go
+```
+
+## Included module files
+
+Reuse local or remote module lists with `includes`:
+
+```yaml
+- name: shared-modules
+  type: includes
+  includes:
+    - modules/common.yml
+    - gh:organization/repository:main:modules/desktop.yml
+```
+
+Included files are expanded at their position in the module list.
+
+## Custom plugins
+
+Place project plugins in `plugins/` or shared plugins in
+`/usr/share/vib/plugins/`. See [Making a Plugin](/vib/en/making-plugin) for the
+plugin interface.

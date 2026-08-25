@@ -1,7 +1,7 @@
 ---
 Title: Making a Build Plugin
 Description: How to create a custom build plugin for Vib.
-PublicationDate: 2024-02-14
+PublicationDate: 2026-08-24
 Listed: true
 Authors:
   - mirkobrombin
@@ -52,13 +52,14 @@ The function returns the `api.PluginInfo` struct serialised as a JSON:
 {
 	"name": "<plugin name>",
 	"type": 0,
-	"usecontainercmds": 0/1
+	"usecontainercmds": false
 }
 ```
 
 Vib gets the plugin type from the `type` field: `0` means `BuildPlugin`, and `1` means `FinalizePlugin`. For this article, it should be set to `0`, as it does not cover the requirements for a finalize plugin.
 
-`usecontainercmds` tells vib whether the plugin adds the relevant containerfile directives itself, or if vib should automatically prepend `CMD` to them, this allows plugins to do more advanced things outside of just specifing commands to run.
+`usecontainercmds` tells Vib whether the plugin returns complete Containerfile
+directives. When it is `false`, Vib wraps the returned shell command in `RUN`.
 
 example function:
 
@@ -72,9 +73,9 @@ char* PlugInfo() {
 
 This is the entry point for plugins that vib calls. It returns a string prefixed with `ERROR:` if an error occurs, otherwise it returns the commands generated for the module.
 
-The `moduleInterface` argument is a json serialised version of the module defined in the recipe.
+The `moduleInterface` argument is a JSON-serialized version of the module defined in the recipe.
 
-The `recipeInterface` argument is a json serialised version of the entire recipe.
+The `recipeInterface` argument is a JSON-serialized version of the entire recipe.
 
 example function:
 
