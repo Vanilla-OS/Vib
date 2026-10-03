@@ -11,6 +11,12 @@ import (
 	"strings"
 )
 
+// GetSourceFileName returns the file name (with extension) derived from the source URL
+func GetSourceFileName(source Source) string {
+	url := strings.Split(source.URL, "/")
+	return strings.Split(url[len(url)-1], "?")[0]
+}
+
 // Generate the destination path for the source based on its type and module name
 func GetSourcePath(source Source, moduleName string) string {
 	if len(strings.TrimSpace(source.Path)) > 0 {
@@ -30,9 +36,7 @@ func GetSourcePath(source Source, moduleName string) string {
 			return filepath.Join(moduleName, strings.Join(tarParts[:len(tarParts)-2], "."))
 		}
 	case "file":
-		url := strings.Split(source.URL, "/")
-		file := strings.Split(url[len(url)-1], "?")[0]
-		fileParts := strings.Split(file, ".")
+		fileParts := strings.Split(GetSourceFileName(source), ".")
 		return filepath.Join(moduleName, strings.Join(fileParts[:len(fileParts)-1], "."))
 	case "local":
 		toplevelDir := strings.Split(source.URL, "/")
@@ -61,9 +65,7 @@ func DownloadSource(recipe *Recipe, source Source, moduleName string) error {
 			return err
 		}
 
-		extension := filepath.Ext(source.URL)
-		filename := fmt.Sprintf("%s%s", moduleName, extension)
-		destinationPath := filepath.Join(recipe.DownloadsPath, GetSourcePath(source, moduleName), filename)
+		destinationPath := filepath.Join(recipe.DownloadsPath, GetSourcePath(source, moduleName), GetSourceFileName(source))
 
 		return checksumValidation(source, destinationPath)
 	case "local":
@@ -319,8 +321,7 @@ func DownloadFileSource(downloadPath string, source Source, moduleName string) e
 
 	defer res.Body.Close()
 	// Create the destination file
-	extension := filepath.Ext(source.URL)
-	filename := fmt.Sprintf("%s%s", moduleName, extension)
+	filename := GetSourceFileName(source)
 	dest := filepath.Join(destDir, filename)
 
 	file, err := os.Create(dest)
