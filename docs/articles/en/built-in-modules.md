@@ -6,11 +6,12 @@ Listed: true
 Authors:
   - mirkobrombin
   - NN708
+  - FangcatChina
 Tags:
   - modules
 ---
 
-Vib 1.1 distributes build plugins for APT, CMake, dpkg-buildpackage, Flatpak,
+Vib 1.1 distributes build plugins for APT, CMake, dpkg-buildpackage, cargo-deb, Flatpak,
 Go, Make, and Meson. The `shell` and `includes` modules are part of Vib itself.
 
 Every module needs a unique `name` and a `type`. Sources used by a module are
@@ -78,6 +79,20 @@ Build a Debian source package and install its resulting packages:
 ```
 
 The source must contain valid Debian packaging metadata.
+
+## cargo-deb
+
+Build a Debian package of a Cargo project and install its resulting packages:
+
+```yaml
+- name: example-cargo-project
+  type: cargo-deb
+  buildflags: --all-features
+  source:
+    type: git
+    url: https://example.com/example-cargo-project.git
+    tag: v1.0.0
+```
 
 ## Go
 
