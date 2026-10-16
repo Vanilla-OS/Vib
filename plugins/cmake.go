@@ -4,7 +4,6 @@ import (
 	"C"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 
 	"github.com/vanilla-os/vib/api"
 )
@@ -72,7 +71,7 @@ func BuildModule(moduleInterface *C.char, recipeInterface *C.char, arch *C.char)
 
 	cmd := fmt.Sprintf(
 		"cd /sources/%s && mkdir -p build && cd build && cmake ../%s && make",
-		filepath.Join(recipe.SourcesPath, api.GetSourcePath(module.Source, module.Name)),
+		api.GetSourcePath(module.Source, module.Name),
 		buildFlags,
 	)
 
