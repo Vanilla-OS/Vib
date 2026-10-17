@@ -77,12 +77,12 @@ func buildCommand(cmd *cobra.Command, args []string) error {
 		*/
 		extension := strings.ToLower(strings.TrimLeft(filepath.Ext(recipePath), "."))
 		if len(extension) == 0 || (extension != "yml" && extension != "yaml") {
-			return fmt.Errorf("%s is an invalid recipe file", recipePath)
+			return fmt.Errorf("Recipe `%s` is an invalid recipe file", recipePath)
 		}
 
 		// Check whether the provided file exists, if not, then return an error
 		if _, err := os.Stat(recipePath); errors.Is(err, os.ErrNotExist) {
-			return fmt.Errorf("%s does not exist", recipePath)
+			return fmt.Errorf("Recipe `%s` does not exist", recipePath)
 		}
 	}
 

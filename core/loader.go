@@ -156,6 +156,10 @@ func downloadRecipe(url string) (path string, err error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusNotFound {
+		return "", fmt.Errorf("error: resource not found: %s", url)
+	}
+
 	tmpFile, err := os.CreateTemp("", "vib-recipe-")
 	if err != nil {
 		return "", err
